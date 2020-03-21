@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useHistory } from "react-router-dom";
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -48,13 +49,14 @@ const useStyles = makeStyles(theme => ({
 }));
 
 export default function SignUp() {
+  const history = useHistory();
   const classes = useStyles();
   const [user_name, set_name] = useState(null);
   const [email, set_email] = useState(null);
   const [student_id, set_stu_id] = useState(null);
   const [password, set_psd] = useState(null);
 
-  const check = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const required_check = user_name && email
     const stu_id_check = !isNaN(student_id) && student_id.length == 10
@@ -71,14 +73,18 @@ export default function SignUp() {
       alert("密碼格式錯誤(英數混合6~30字元)")
       return
     }
-    const res = await axios.post('http://localhost:5000/user/new', {
+    const { data } = await axios.post('http://localhost:5000/user/new', {
       user_name,
       email,
       student_id,
       password
     })
-
-    console.log(res)
+    if(data.status) {
+      alert("註冊成功! 將自動導向登入畫面...")
+      history.replace({pathname: '/login'})
+    } else {
+      alert(data.payload)
+    }
   }
 
   return (
@@ -89,9 +95,9 @@ export default function SignUp() {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          登入
+          註冊
         </Typography>
-        <form className={classes.form} onSubmit={check}>
+        <form className={classes.form} onSubmit={submit}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -138,7 +144,7 @@ export default function SignUp() {
             <Grid item xs={12}>
               <FormControlLabel
                 control={<Checkbox value="allowExtraEmails" color="primary" />}
-                label="I want to receive inspiration, marketing promotions and updates via email."
+                label="我同意使用這個網站規則"
               />
             </Grid>
           </Grid>
@@ -153,8 +159,8 @@ export default function SignUp() {
           </Button>
           <Grid container justify="flex-end">
             <Grid item>
-              <Link href="#" variant="body2">
-                Already have an account? Sign in
+              <Link href="/login" variant="body2">
+                已經有帳號了? 登入吧
               </Link>
             </Grid>
           </Grid>

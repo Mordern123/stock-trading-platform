@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -12,6 +12,7 @@ import Grid from '@material-ui/core/Grid';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
+import axios from 'axios'
 
 function Copyright() {
   return (
@@ -59,7 +60,27 @@ const useStyles = makeStyles(theme => ({
 
 export default function SignInSide() {
   const classes = useStyles();
+  const [student_id, set_stu_id] = useState(null)
+  const [password, set_psd] = useState(null);
 
+  const submit = async (e) => {
+    e.preventDefault()
+    if(student_id && password) {
+      const { data } = await axios.post("http://localhost:5000/user/login", {
+        student_id,
+        password
+      })
+      if(data.status) {
+        alert("登入成功")
+        console.log(data.payload)
+      } else {
+        alert(data.payload)
+      }
+    } else {
+      alert("輸入不能為空!")
+    }
+  }
+  
   return (
     <Grid container component="main" className={classes.root}>
       <CssBaseline />
@@ -70,30 +91,27 @@ export default function SignInSide() {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
-            Sign in
+            登入
           </Typography>
-          <form className={classes.form} onSubmit={()=> console.log(123)}>
+          <form className={classes.form} onSubmit={submit}>
             <TextField
               variant="outlined"
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              label="學號"
               autoFocus
+              onChange={(e) => set_stu_id(e.target.value)}
             />
             <TextField
               variant="outlined"
               margin="normal"
               required
               fullWidth
-              name="password"
-              label="Password"
+              label="密碼"
               type="password"
-              id="password"
               autoComplete="current-password"
+              onChange={(e) => set_psd(e.target.value)}
             />
             <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
@@ -106,17 +124,17 @@ export default function SignInSide() {
               color="primary"
               className={classes.submit}
             >
-              Sign In
+              登入
             </Button>
             <Grid container>
               <Grid item xs>
                 <Link href="#" variant="body2">
-                  Forgot password?
+                  忘記密碼?
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="#" variant="body2">
-                  {"Don't have an account? Sign Up"}
+                <Link href="/signup" variant="body2">
+                  {"還沒有帳號? 創建一個吧"}
                 </Link>
               </Grid>
             </Grid>

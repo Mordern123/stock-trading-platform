@@ -76,7 +76,10 @@ const dashboardStyle = {
       fontWeight: "400",
       lineHeight: "1"
     }
-  }
+  },
+  media: {
+    height: 140,
+  },
 };
 
 export default dashboardStyle;

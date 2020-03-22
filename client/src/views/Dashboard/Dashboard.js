@@ -27,9 +27,27 @@ import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardIcon from "components/Card/CardIcon.js";
 import CardBody from "components/Card/CardBody.js";
+import Button from "components/CustomButtons/Button.js";
 import CardFooter from "components/Card/CardFooter.js";
-
 import { bugs, website, server } from "variables/general.js";
+// @material-ui/core
+import { 
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  CardActions,
+  CardActionArea,
+  CardContent,
+  CardMedia,
+  Typography,
+} from '@material-ui/core';
+import UIButton from "@material-ui/core/Button"
+import UICard from "@material-ui/core/Card"
+// others
+import Carousel from 'react-slick'
+import "slick-carousel/slick/slick.css"; 
+import "slick-carousel/slick/slick-theme.css";
 
 import {
   dailySalesChart,
@@ -45,6 +63,147 @@ export default function Dashboard() {
   const classes = useStyles();
   return (
     <div>
+      <GridContainer>
+        <GridItem xs={12} sm={12} md={12}>
+          <Card>
+            <CardHeader color="primary">
+              <h4 className={classes.cardTitleWhite}>課程公告</h4>
+              <p className={classes.cardCategoryWhite}>
+                最新更新時間
+              </p>
+            </CardHeader>
+            <CardBody>
+              <List component="nav" className={classes.root} aria-label="mailbox folders">
+                <ListItem button>
+                  <ListItemText
+                    primary="Inbox"
+                    secondary="測試資料"
+                  />
+                </ListItem>
+                <Divider />
+                <ListItem button divider>
+                  <ListItemText primary="Drafts" />
+                </ListItem>
+                <ListItem button>
+                  <ListItemText primary="Trash" />
+                </ListItem>
+                <Divider light />
+                <ListItem button>
+                  <ListItemText primary="Spam" />
+                </ListItem>
+              </List>
+            </CardBody>
+          </Card>
+        </GridItem>
+      </GridContainer>
+      <GridContainer>
+        <GridItem xs={4} sm={12} md={4}>
+          <UICard>
+            <CardActionArea>
+              <CardMedia
+                className={classes.media}
+                image="https://static-cdn.123rf.com/images/v5/featured/tech_visual_ai.jpg"
+                title="Contemplative Reptile"
+              />
+              <CardContent>
+                <Typography gutterBottom variant="h5" component="h2">
+                  提示
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
+                  across all continents except Antarctica
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+            <CardActions>
+              <UIButton size="small" color="primary">
+                Share
+              </UIButton>
+              <UIButton size="small" color="primary">
+                Learn More
+              </UIButton>
+            </CardActions>
+          </UICard>
+        </GridItem>
+        <GridItem xs={4} sm={12} md={4}>
+          <UICard>
+            <CardActionArea>
+              <CardMedia
+                className={classes.media}
+                image="https://static-cdn.123rf.com/images/v5/featured/tech_visual_ai.jpg"
+                title="Contemplative Reptile"
+              />
+              <CardContent>
+                <Typography gutterBottom variant="h5" component="h2">
+                  Lizard
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
+                  across all continents except Antarctica
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+            <CardActions>
+              <UIButton size="small" color="primary">
+                Share
+              </UIButton>
+              <UIButton size="small" color="primary">
+                Learn More
+              </UIButton>
+            </CardActions>
+          </UICard>
+        </GridItem>
+        <GridItem xs={4} sm={12} md={4}>
+          <UICard>
+            <CardActionArea>
+              <CardMedia
+                className={classes.media}
+                image="https://static-cdn.123rf.com/images/v5/featured/tech_visual_ai.jpg"
+                title="Contemplative Reptile"
+              />
+              <CardContent>
+                <Typography gutterBottom variant="h5" component="h2">
+                  Lizard
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
+                  across all continents except Antarctica
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+            <CardActions>
+              <UIButton size="small" color="primary">
+                Share
+              </UIButton>
+              <UIButton size="small" color="primary">
+                Learn More
+              </UIButton>
+            </CardActions>
+          </UICard>
+        </GridItem>
+      </GridContainer>
+      <GridContainer>
+        <GridItem xs={12} sm={12} md={12}>
+          <UICard className="mt-5">
+            <CardActionArea>
+              <CardMedia
+                className={classes.media}
+                image="https://static-cdn.123rf.com/images/v5/featured/tech_visual_ai.jpg"
+                title="Contemplative Reptile"
+              />
+              <CardContent>
+                <Typography gutterBottom variant="h5" component="h2">
+                  Lizard
+                </Typography>
+                <Typography variant="body2" color="textSecondary" component="p">
+                  Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
+                  across all continents except Antarctica
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+          </UICard>
+        </GridItem>
+      </GridContainer>
       <GridContainer>
         <GridItem xs={12} sm={6} md={3}>
           <Card>

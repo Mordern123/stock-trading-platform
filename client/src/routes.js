@@ -20,16 +20,9 @@ import UpgradeToPro from "views/UpgradeToPro/UpgradeToPro.js";
 const dashboardRoutes = [
   {
     path: "/dashboard",
-    name: "Dashboard",
+    name: "首頁",
     icon: Dashboard,
     component: DashboardPage,
-    layout: "/admin"
-  },
-  {
-    path: "/user",
-    name: "User Profile",
-    icon: Person,
-    component: UserProfile,
     layout: "/admin"
   },
   {
@@ -51,6 +44,13 @@ const dashboardRoutes = [
     name: "Icons",
     icon: BubbleChart,
     component: Icons,
+    layout: "/admin"
+  },
+  {
+    path: "/user",
+    name: "User Profile",
+    icon: Person,
+    component: UserProfile,
     layout: "/admin"
   },
   {

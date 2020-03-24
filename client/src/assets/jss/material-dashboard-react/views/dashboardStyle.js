@@ -43,6 +43,7 @@ const dashboardStyle = {
     marginBottom: "0"
   },
   cardCategoryWhite: {
+    fontFamily: "'Noto Sans TC', sans-serif",
     color: "rgba(" + hexToRgb(whiteColor) + ",.62)",
     margin: "0",
     fontSize: "14px",
@@ -68,7 +69,7 @@ const dashboardStyle = {
     marginTop: "0px",
     minHeight: "auto",
     fontWeight: "300",
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+    fontFamily: "'Noto Sans TC', sans-serif",
     marginBottom: "3px",
     textDecoration: "none",
     "& small": {

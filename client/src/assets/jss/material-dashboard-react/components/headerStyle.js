@@ -47,7 +47,8 @@ const headerStyle = () => ({
     margin: "0",
     "&:hover,&:focus": {
       background: "transparent"
-    }
+    },
+    fontFamily: "'Noto Sans TC', sans-serif",
   },
   appResponsive: {
     top: "8px"

@@ -26,36 +26,36 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
-    path: "/table",
-    name: "Table List",
-    icon: "content_paste",
-    component: TableList,
+    path: "/user",
+    name: "使用者管理",
+    icon: Person,
+    component: UserProfile,
     layout: "/admin"
   },
   {
     path: "/typography",
-    name: "Typography",
+    name: "股票交易",
     icon: LibraryBooks,
     component: Typography,
     layout: "/admin"
   },
   {
     path: "/icons",
-    name: "Icons",
+    name: "股票管理",
     icon: BubbleChart,
     component: Icons,
     layout: "/admin"
   },
   {
-    path: "/user",
-    name: "User Profile",
-    icon: Person,
-    component: UserProfile,
+    path: "/table",
+    name: "股票排名",
+    icon: "content_paste",
+    component: TableList,
     layout: "/admin"
   },
   {
     path: "/notifications",
-    name: "Notifications",
+    name: "聯繫我們",
     icon: Notifications,
     component: NotificationsPage,
     layout: "/admin"

@@ -73,7 +73,8 @@ const sidebarStyle = theme => ({
       right: "15px",
       width: "calc(100% - 30px)",
       backgroundColor: "rgba(" + hexToRgb(grayColor[6]) + ", 0.3)"
-    }
+    },
+    fontFamily: "'Noto Sans TC', sans-serif",
   },
   logoLink: {
     ...defaultFont,
@@ -88,7 +89,8 @@ const sidebarStyle = theme => ({
     backgroundColor: "transparent",
     "&,&:hover": {
       color: whiteColor
-    }
+    },
+    fontFamily: "'Noto Sans TC', sans-serif",
   },
   logoLinkRTL: {
     textAlign: "right"
@@ -177,13 +179,15 @@ const sidebarStyle = theme => ({
     margin: "0",
     lineHeight: "30px",
     fontSize: "14px",
-    color: whiteColor
+    color: whiteColor,
+    fontFamily: "'Noto Sans TC', sans-serif",
   },
   itemTextRTL: {
     textAlign: "right"
   },
   whiteFont: {
-    color: whiteColor
+    color: whiteColor,
+    fontFamily: "'Noto Sans TC', sans-serif",
   },
   purple: {
     backgroundColor: primaryColor[0],

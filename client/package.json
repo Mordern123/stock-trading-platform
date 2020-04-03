@@ -10,6 +10,7 @@
     "bootstrap": "^4.4.1",
     "chartist": "0.10.1",
     "classnames": "2.2.6",
+    "clsx": "^1.1.0",
     "highcharts": "^8.0.4",
     "highcharts-react-official": "^3.0.0",
     "history": "4.9.0",
@@ -24,6 +25,7 @@
     "react-scripts": "^3.4.1",
     "react-slick": "^0.25.2",
     "react-swipeable-views": "^0.13.3",
+    "react-virtualized": "^9.21.2",
     "slick-carousel": "^1.8.1"
   },
   "scripts": {

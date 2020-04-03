@@ -27,7 +27,6 @@ import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardIcon from "components/Card/CardIcon.js";
 import CardBody from "components/Card/CardBody.js";
-import Button from "components/CustomButtons/Button.js";
 import CardFooter from "components/Card/CardFooter.js";
 import { bugs, website, server } from "variables/general.js";
 // @material-ui/core
@@ -45,7 +44,6 @@ import {
 import UIButton from "@material-ui/core/Button"
 import UICard from "@material-ui/core/Card"
 // others
-import Carousel from 'react-slick'
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
 

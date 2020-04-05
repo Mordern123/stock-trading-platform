@@ -13,6 +13,7 @@ import Icons from "views/Icons/Icons.js";
 import NotificationsPage from "views/Notifications/Notifications.js";
 import Transaction from "views/Transaction";
 import StockManage from "views/StockManage";
+import StockStatus from "views/StockStatus";
 import StockRank from "views/StockRank";
 
 const dashboardRoutes = [
@@ -31,26 +32,34 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
-    path: "/typography",
-    name: "股票交易",
+    path: "/stock_buy",
+    name: "股票查詢/買入",
     icon: LibraryBooks,
     component: Transaction,
     layout: "/admin"
   },
   {
-    path: "/icons",
+    path: "/stock_sell",
+    name: "股票管理/賣出",
+    icon: "content_paste",
+    component: StockManage,
+    layout: "/admin"
+  },
+  {
+    path: "/txn_status",
+    name: "交易狀態",
+    icon: "content_paste",
+    component: StockStatus,
+    layout: "/admin"
+  },
+  {
+    path: "/rank",
     name: "股票排名",
     icon: BubbleChart,
     component: StockRank,
     layout: "/admin"
   },
-  {
-    path: "/table",
-    name: "股票管理",
-    icon: "content_paste",
-    component: StockManage,
-    layout: "/admin"
-  },
+  
   {
     path: "/notifications",
     name: "聯繫我們",

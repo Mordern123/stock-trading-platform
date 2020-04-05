@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
 import { Menu, Search, Directions, Store, DateRange } from '@material-ui/icons';
@@ -11,6 +11,7 @@ import CardBody from "components/Card/CardBody.js";
 import CardFooter from "components/Card/CardFooter.js";
 import Table from "components/Transaction/Table.js";
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
+import MUI_Table from 'components/Table/MUI_Table';
 
 const styles = theme => ({
   root: {
@@ -93,7 +94,7 @@ const Transaction = () => {
             <Directions />
           </IconButton>
         </Paper>
-        <Table />
+        <MUI_Table />
       </GridItem>
     </GridContainer>
     </>

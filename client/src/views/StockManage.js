@@ -13,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { TextField, FormHelperText, InputAdornment, Input } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
+import Material_Table from 'components/Table/Material_Table';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -40,6 +41,19 @@ const StockManage = () => {
   const classes = useStyles();
 
   return (
+    <>
+    <GridContainer>
+      <GridItem xs={12} sm={12} md={12}>
+        <Card>
+          <CardHeader color="primary">
+            追蹤的股票
+          </CardHeader>
+          <CardBody>
+            <Material_Table />
+          </CardBody>
+        </Card>
+      </GridItem>
+    </GridContainer>
     <GridContainer>
       <GridItem xs={12} sm={6} md={6}>
         <Card>
@@ -150,6 +164,7 @@ const StockManage = () => {
         </Card>
       </GridItem>
     </GridContainer>
+    </>
   )
 }
 

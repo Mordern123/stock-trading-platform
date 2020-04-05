@@ -42,7 +42,8 @@ const useStyles = makeStyles(styles);
 const StockRank = () => {
   const classes = useStyles();
   return (
-    <GridItem xs={12} sm={12} md={12}>
+    <GridContainer>
+      <GridItem xs={12} sm={12} md={12}>
         <Card>
           <CardHeader plain color="warning">
             <h4 className={classes.cardTitleWhite}>
@@ -68,6 +69,8 @@ const StockRank = () => {
           </CardBody>
         </Card>
       </GridItem>
+    </GridContainer>
+   
   )
 }
 

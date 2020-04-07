@@ -23,6 +23,13 @@ const TabPanel = (props) => {
 }
 
 const styles = theme => ({
+  customTab: {
+    fontFamily: "'Noto Sans TC', sans-serif",
+    color: 'white',
+    "&:focus": {
+      outline: "none"
+    }
+  },
   customTabs_success: {
     color: 'white',
     backgroundColor: theme.palette.success.main,
@@ -34,13 +41,6 @@ const styles = theme => ({
   customTabs_error: {
     color: 'white',
     backgroundColor: theme.palette.error.main,
-  },
-  customTab: {
-    fontFamily: "'Noto Sans TC', sans-serif",
-    color: 'white',
-    "&:focus": {
-      outline: "none"
-    }
   },
   tabRoot_success: {
     backgroundColor: theme.palette.success.dark,

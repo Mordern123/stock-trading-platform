@@ -18,7 +18,7 @@ import StockRank from "views/StockRank";
 
 const dashboardRoutes = [
   {
-    path: "/dashboard",
+    path: "/home",
     name: "首頁",
     icon: Dashboard,
     component: DashboardPage,
@@ -32,21 +32,21 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
-    path: "/stock_buy",
+    path: "/stockBuy",
     name: "股票查詢/買入",
     icon: LibraryBooks,
     component: Transaction,
     layout: "/admin"
   },
   {
-    path: "/stock_sell",
+    path: "/stockSell",
     name: "股票管理/賣出",
     icon: "content_paste",
     component: StockManage,
     layout: "/admin"
   },
   {
-    path: "/txn_status",
+    path: "/status",
     name: "交易狀態",
     icon: "content_paste",
     component: StockStatus,
@@ -68,7 +68,7 @@ const dashboardRoutes = [
     layout: "/admin"
   },
   {
-    path: "/test",
+    path: "/contact",
     name: "聯繫我們",
     icon: Notifications,
     component: Typography,

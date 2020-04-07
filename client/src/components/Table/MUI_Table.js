@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MUIDataTable, { TableHead } from "mui-datatables";
 
 const columns = ["Name", "Company", "City", "State"];
@@ -11,8 +11,9 @@ const data = [
   ["James Houston", "Test Corp", "Dallas", "TX"],
   ["James Houston", "Test Corp", "Dallas", "TX"],
 ];
-const MUI_Table = (props) => {
-  const [searchText, setSearchText] = useState("")
+
+export default function MUI_Table(props) {
+  const { searchText } = props
   const [count, setCount] = useState(0)
   const options = {
     filterType: "checkbox",
@@ -20,18 +21,16 @@ const MUI_Table = (props) => {
     searchOpen: true,
     print: false,
     searchPlaceholder: '請輸入查詢關鍵字',
+    search: false,
     searchText: searchText,
+    customSearchRender: () => null
   };
-  const test = () => {
-    setSearchText("Joe")
-    setCount(count+1)
-  }
 
-  console.log(options)
+  useEffect(() => {
+    setCount(count+1)
+  }, [searchText])
 
   return (
-    <>
-    <button onClick={test}>123</button>
     <MUIDataTable
       key={count}
       title={"Employee List"}
@@ -39,8 +38,5 @@ const MUI_Table = (props) => {
       columns={columns}
       options={options}
     />
-    </>
   )
 }
-
-export default MUI_Table;

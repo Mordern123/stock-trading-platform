@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
 import { Menu, Search, Directions, Store, DateRange } from '@material-ui/icons';
@@ -34,9 +34,11 @@ const styles = theme => ({
 })
 const useStyles = makeStyles(styles);
 const useDash = makeStyles(dashboardStyle);
+
 const Transaction = () => {
   const classes = useStyles();
   const d_classes = useDash();
+  const [ searchText, setSearchText ] = useState("");
   return (
     <>
     <GridContainer>
@@ -85,6 +87,7 @@ const Transaction = () => {
             className={classes.input}
             placeholder="Search Google Maps"
             inputProps={{ 'aria-label': 'search google maps' }}
+            onChange={e => setSearchText(e.target.value)}
           />
           <IconButton type="submit" className={classes.iconButton} aria-label="search">
             <Search />
@@ -94,7 +97,7 @@ const Transaction = () => {
             <Directions />
           </IconButton>
         </Paper>
-        <MUI_Table />
+        <MUI_Table searchText={searchText}/>
       </GridItem>
     </GridContainer>
     </>

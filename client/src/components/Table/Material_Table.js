@@ -1,28 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MaterialTable, { MTableToolbar } from 'material-table';
 
-export default function MaterialTableDemo() {
-  const [state, setState] = React.useState({
-    columns: [
-      { title: 'Name', field: 'name' },
-      { title: 'Surname', field: 'surname' },
-      { title: 'Birth Year', field: 'birthYear', type: 'numeric' },
-      {
-        title: 'Birth Place',
-        field: 'birthCity',
-        lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
-      },
-    ],
-    data: [
-      { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-      {
-        name: 'Zerya Betül',
-        surname: 'Baran',
-        birthYear: 2017,
-        birthCity: 34,
-      },
-    ],
-  });
+const table_state = {
+  columns: [
+    { title: 'Name', field: 'name' },
+    { title: 'Surname', field: 'surname' },
+    { title: 'Birth Year', field: 'birthYear', type: 'numeric' },
+    {
+      title: 'Birth Place',
+      field: 'birthCity',
+      lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
+    },
+  ],
+  data: [
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    {
+      name: 'Zerya Betül',
+      surname: 'Baran',
+      birthYear: 2017,
+      birthCity: 34,
+    },
+  ],
+}
+
+export default function MaterialTableDemo(props) {
+  const { showToolBar } = props
+  const [state, setState] = useState(table_state);
+  const options = {
+    toolbar: showToolBar || true
+  }
 
   return (
     <MaterialTable
@@ -66,6 +72,7 @@ export default function MaterialTableDemo() {
             }, 600);
           }),
       }}
+      options={options}
       components={{
         // Toolbar: props => (
         //     <div style={{ backgroundColor: '#e8eaf5' }}>

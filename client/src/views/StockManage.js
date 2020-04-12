@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, Fragment } from "react";
 import clsx from 'clsx';
 import { makeStyles } from "@material-ui/core/styles";
 import GridItem from "components/Grid/GridItem.js";
@@ -13,6 +13,7 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { TextField, FormHelperText, InputAdornment, Input } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
+import Material_Table from 'components/Table/Material_Table';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -36,121 +37,78 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const StockManage = () => {
+export default function StockManage() {
   const classes = useStyles();
+  const [searchText, setSearchText] = useState("");
 
   return (
-    <GridContainer>
-      <GridItem xs={12} sm={6} md={6}>
-        <Card>
-          <CardHeader color="primary">
-            追蹤的股票
-          </CardHeader>
-          <CardBody>
-            <Input
-              id="standard-adornment-weight"
-              value={100}
-              onChange={() => {}}
-              startAdornment={<InputAdornment position="start">輸入股票代號：</InputAdornment>}
-              endAdornment={<InputAdornment position="end"><Search /></InputAdornment>}
-            />
-            <FormHelperText>請確認代號</FormHelperText>
-            <div className={classes.root}>
-              <ExpansionPanel>
-                <ExpansionPanelSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel1c-content"
-                  id="panel1c-header"
-                >
-                  <div className={classes.column}>
-                    <Typography className={classes.heading}>Location</Typography>
-                  </div>
-                  <div className={classes.column}>
-                    <Typography className={classes.secondaryHeading}>Select trip destination</Typography>
-                  </div>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
-                  <Typography>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-                    sit amet blandit leo lobortis eget.
-                  </Typography>
-                </ExpansionPanelDetails>
-              </ExpansionPanel>
-              <ExpansionPanel>
-                <ExpansionPanelSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel2a-content"
-                  id="panel2a-header"
-                >
-                  <Typography className={classes.heading}>Expansion Panel 2</Typography>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
-                  <Typography>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-                    sit amet blandit leo lobortis eget.
-                  </Typography>
-                </ExpansionPanelDetails>
-              </ExpansionPanel>
-            </div>
-          </CardBody>
-        </Card>
-      </GridItem>
-      <GridItem xs={12} sm={6} md={6}>
-        <Card>
-          <CardHeader color="primary">
-            追蹤的股票
-          </CardHeader>
-          <CardBody>
-            <Input
-              id="standard-adornment-weight"
-              value={100}
-              onChange={() => {}}
-              startAdornment={<InputAdornment position="start">輸入股票代號：</InputAdornment>}
-              endAdornment={<InputAdornment position="end"><Search /></InputAdornment>}
-            />
-            <FormHelperText>請確認代號</FormHelperText>
-            <div className={classes.root}>
-              <ExpansionPanel>
-                <ExpansionPanelSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel1c-content"
-                  id="panel1c-header"
-                >
-                  <div className={classes.column}>
-                    <Typography className={classes.heading}>Location</Typography>
-                  </div>
-                  <div className={classes.column}>
-                    <Typography className={classes.secondaryHeading}>Select trip destination</Typography>
-                  </div>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
-                  <Typography>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-                    sit amet blandit leo lobortis eget.
-                  </Typography>
-                </ExpansionPanelDetails>
-              </ExpansionPanel>
-              <ExpansionPanel>
-                <ExpansionPanelSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls="panel2a-content"
-                  id="panel2a-header"
-                >
-                  <Typography className={classes.heading}>Expansion Panel 2</Typography>
-                </ExpansionPanelSummary>
-                <ExpansionPanelDetails>
-                  <Typography>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-                    sit amet blandit leo lobortis eget.
-                  </Typography>
-                </ExpansionPanelDetails>
-              </ExpansionPanel>
-            </div>
-          </CardBody>
-        </Card>
-      </GridItem>
-    </GridContainer>
+    <Fragment>
+      <GridContainer>
+        <GridItem xs={12} sm={12} md={12}>
+          <Card>
+            <CardHeader color="primary">
+              擁有的股票
+            </CardHeader>
+            <CardBody>
+              <TextField
+                label="擁有股票搜尋"
+                style={{ margin: 8, width: '40%' }}
+                placeholder="輸入任何關鍵字"
+                margin="dense"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                variant="outlined"
+                onChange={e => setSearchText(e.target.value)}
+              />
+              <Material_Table
+                searchText={searchText}
+                showToolBar={false}
+              />
+            </CardBody>
+          </Card>
+        </GridItem>
+      </GridContainer>
+      <GridContainer>
+        <GridItem xs={12} sm={12} md={12}>
+          <Card>
+            <CardHeader color="primary">
+              追蹤的股票
+            </CardHeader>
+            <CardBody>
+              <TextField
+                label="追蹤股票搜尋"
+                style={{ margin: 8, width: '40%' }}
+                placeholder="輸入任何關鍵字"
+                margin="dense"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                variant="outlined"
+                onChange={e => setSearchText(e.target.value)}
+              />
+              <Material_Table
+                searchText={searchText}
+                showToolBar={false}
+              />
+            </CardBody>
+          </Card>
+        </GridItem>
+      </GridContainer>
+    </Fragment>
   )
 }
-
-export default StockManage;

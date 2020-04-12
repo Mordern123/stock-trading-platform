@@ -104,7 +104,7 @@ export default function Custom_MaterialTable(props) {
           <div {...props}>
           </div>
         )
-    }}
+      }}
     />
   );
 }

@@ -5,7 +5,6 @@ import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import { Paper, Tabs, Tab, Typography, Box } from "@material-ui/core";
 import SwipeableViews from 'react-swipeable-views';
-import MUI_Table from 'components/Table/MUI_Table';
 import Material_Table from "components/Table/Material_Table";
 
 
@@ -54,7 +53,6 @@ const styles = theme => ({
   },
   indicator: {
     opacity: 0,
-    // backgroundColor: 'black'
   },
 })
 
@@ -67,10 +65,15 @@ export default function StockStatus() {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  const getTabStyles = (i) => {
-    if(i==0) return classes.customTabs_success
-    else if(i==1) return classes.customTabs_wait
-    else if(i==2) return classes.customTabs_error
+  const getTabBarStyles = (current_i) => {
+    if(current_i==0) return classes.customTabs_success
+    else if(current_i==1) return classes.customTabs_wait
+    else if(current_i==2) return classes.customTabs_error
+  }
+  const getTabStyles = (current_i, i) => {
+    if(i==0 && current_i == i) return classes.tabRoot_success
+    else if(i==1 && current_i == i) return classes.tabRoot_wait
+    else if(i==2 && current_i == i) return classes.tabRoot_fail
   }
   console.log(classes.customTabs)
   return (
@@ -81,11 +84,11 @@ export default function StockStatus() {
             value={value}
             onChange={handleChange}
             classes={{indicator: classes.indicator}}
-            className={getTabStyles(value)}
+            className={getTabBarStyles(value)}
           >
-            <Tab label="成功交易" className={classes.customTab} classes={value == 0 && {root: classes.tabRoot_success}} />
-            <Tab label="等待交易" className={classes.customTab} classes={value == 1 && {root: classes.tabRoot_wait}} />
-            <Tab label="失敗交易" className={classes.customTab} classes={value == 2 && {root: classes.tabRoot_fail}} />
+            <Tab label="成功交易" className={clsx(classes.customTab, getTabStyles(value, 0))} />
+            <Tab label="等待交易" className={clsx(classes.customTab, getTabStyles(value, 1))} />
+            <Tab label="失敗交易" className={clsx(classes.customTab, getTabStyles(value, 2))} />
           </Tabs>
           <SwipeableViews
             axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}

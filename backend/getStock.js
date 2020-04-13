@@ -10,8 +10,8 @@ const init = () => {
   connection.once('open', () => {
     console.log("MongoDB database connection established successfully");
     console.log("The database is " + connection.name)
-    // getStock(new Date(Date.now()))
-    getStock(new Date('2020-04-10'))
+    getStock(new Date(Date.now())) //之後判斷日期
+    // getStock(new Date('2020-04-10'))
   })
   mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
 }

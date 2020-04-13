@@ -12,7 +12,7 @@ import Grid from '@material-ui/core/Grid';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import axios from 'axios'
+import { apiUser_login } from '../api';
 
 function Copyright() {
   return (
@@ -66,7 +66,7 @@ export default function SignInSide() {
   const submit = async (e) => {
     e.preventDefault()
     if(student_id && password) {
-      const { data } = await axios.post("http://localhost:5000/user/login", {
+      const { data } = await apiUser_login({
         student_id,
         password
       })

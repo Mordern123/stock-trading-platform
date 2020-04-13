@@ -40,6 +40,16 @@ const userSchema = new Schema({
     type: String,
     default: null
   },
+  img: {
+    data: {
+      type: Buffer,
+      default: null
+    },
+    contentType: {
+      type: String,
+      default: null
+    },
+  }
 }, {
   timestamps: true,
 });

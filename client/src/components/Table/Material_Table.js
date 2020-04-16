@@ -2,119 +2,104 @@ import React, { useState, useEffect } from 'react';
 import { makeStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import MaterialTable, { MTableToolbar } from 'material-table';
+import Card from '@material-ui/core/Card';
 
-const table_state = {
-  columns: [
-    { title: 'Name', field: 'name' },
-    { title: 'Surname', field: 'surname' },
-    { title: 'Birth Year', field: 'birthYear', type: 'numeric' },
-    {
-      title: 'Birth Place',
-      field: 'birthCity',
-      lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
-    },
-  ],
-  data: [
-    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-  ],
-}
 
-const styles = ({
-
+const styles = theme => ({
+  emptyDataSourceMessage: {
+    position: 'absolute',
+    top: '300px',
+    width: '100%',
+  }
 })
 
 const useStyles = makeStyles(styles);
 export default function Custom_MaterialTable(props) {
-  const { title, useExport, filter, showToolBar, search, searchText } = props
   const classes = useStyles();
   const [count, setCount] = useState(0)
-  const [state, setState] = useState(table_state);
+  const {
+    tableRef,
+    title,
+    columns,
+    data,
+    showToolBar,
+    useExport,
+    useFilter,
+    useSearch,
+    useColumns,
+    searchText,
+    isLoading,
+    noContainer,
+    pageSize,
+    pageSizeOptions,
+    maxBodyHeight,
+  } = props
+  
   const options = {
     toolbar: showToolBar && true,
-    search: search && true,
+    search: useSearch && true,
     exportButton: useExport && true,
-    filtering: filter && true,
-    searchText,
+    filtering: useFilter && true,
+    columnsButton: useColumns && true,
+    searchText: searchText || "",
+    pageSize: pageSize || 50,
+    pageSizeOptions: pageSizeOptions || [50, 100, 200],
+    maxBodyHeight: maxBodyHeight || 600,
   }
 
+  // 更改key變數才會吃到搜尋字串
   useEffect(() => {
     setCount(count+1)
-  }, [searchText])
+  }, [searchText, pageSize])
 
   return (
     <MaterialTable
+      tableRef={tableRef}
       key={count}
-      title={(
-        <div className="ch_font">{title}</div>
-      )}
-      columns={state.columns}
-      data={state.data}
-      editable={{
-        onRowAdd: (newData) =>
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve();
-              setState((prevState) => {
-                const data = [...prevState.data];
-                data.push(newData);
-                return { ...prevState, data };
-              });
-            }, 600);
-          }),
-        onRowUpdate: (newData, oldData) =>
-          new Promise((resolve) => {
-            setTimeout(() => {  
-              resolve();
-              if (oldData) {
-                setState((prevState) => {
-                  const data = [...prevState.data];
-                  data[data.indexOf(oldData)] = newData;
-                  return { ...prevState, data };
-                });
-              }
-            }, 600);
-          }),
-        onRowDelete: (oldData) =>
-          new Promise((resolve) => {
-            setTimeout(() => {
-              resolve();
-              setState((prevState) => {
-                const data = [...prevState.data];
-                data.splice(data.indexOf(oldData), 1);
-                return { ...prevState, data };
-              });
-            }, 600);
-          }),
-      }}
+      isLoading={isLoading}
+      title={(<div className="ch_font">{title}</div>)}
+      columns={columns}
+      data={data}
+      // editable={}
       options={options}
       components={{
-        // Toolbar: props => (
-        //     <div style={{ backgroundColor: '#e8eaf5' }}>
-        //         <MTableToolbar {...props} />
-        //     </div>
-        // ),
-        Container: props => (
-          <div {...props}>
-          </div>
-        )
+        Container: props => noContainer ? (
+          <div {...props}></div>
+        ) : <Card raised {...props}></Card>
       }}
+      localization={{
+        body: {
+          emptyDataSourceMessage: <div>沒有資料可以顯示</div>
+        }
+      }}
+      onRowClick={(event, rowData) => console.log(event, rowData)}
+      actions={[
+        {
+          icon: 'refresh',
+          tooltip: 'Refresh Data',
+          isFreeAction: true,
+          onClick: () => tableRef.current && tableRef.current.onQueryChange(),
+        }
+      ]}
     />
   );
 }
 
 Custom_MaterialTable.propTypes = {
+  tableRef: PropTypes.object,
   title: PropTypes.string,
+  columns: PropTypes.array,
+  data: PropTypes.array,
   showToolBar: PropTypes.bool,
   useExport: PropTypes.bool,
-  filter: PropTypes.bool,
-  search: PropTypes.bool,
-  searchText: PropTypes.string
+  useFilter: PropTypes.bool,
+  useSearch: PropTypes.bool,
+  useColumns: PropTypes.bool,
+  searchText: PropTypes.string,
+  isLoading: PropTypes.bool,
+  noContainer: PropTypes.bool,
+  pageSize: PropTypes.number,
+  pageSizeOptions: PropTypes.array,
+  maxBodyHeight: PropTypes.number
 }
 

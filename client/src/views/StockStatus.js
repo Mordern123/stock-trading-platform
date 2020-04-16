@@ -7,6 +7,28 @@ import { Paper, Tabs, Tab, Typography, Box } from "@material-ui/core";
 import SwipeableViews from 'react-swipeable-views';
 import Material_Table from "components/Table/Material_Table";
 
+const table_state = {
+  columns: [
+    { title: 'Name', field: 'name' },
+    { title: 'Surname', field: 'surname' },
+    { title: 'Birth Year', field: 'birthYear', type: 'numeric' },
+    {
+      title: 'Birth Place',
+      field: 'birthCity',
+      lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
+    },
+  ],
+  data: [
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+  ],
+}
 
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
@@ -100,6 +122,9 @@ export default function StockStatus() {
                 title="顯示所有交易紀錄"
                 showToolBar
                 search
+                columns={table_state.columns}
+                data={table_state.data}
+                noContainer
               />
             </TabPanel>
             <TabPanel value={value} index={1} dir={theme.direction}>
@@ -107,6 +132,9 @@ export default function StockStatus() {
                 title="顯示所有未完成交易紀錄"
                 showToolBar
                 search
+                columns={table_state.columns}
+                data={table_state.data}
+                noContainer
               />
             </TabPanel>
             <TabPanel value={value} index={2} dir={theme.direction}>
@@ -114,6 +142,9 @@ export default function StockStatus() {
                 title="顯示所有失敗交易紀錄"
                 showToolBar
                 search
+                columns={table_state.columns}
+                data={table_state.data}
+                noContainer
               />
             </TabPanel>
           </SwipeableViews>

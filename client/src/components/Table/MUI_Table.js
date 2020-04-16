@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MUIDataTable, { TableHead } from "mui-datatables";
 
-const columns = ["Name", "Company", "City", "State"];
 const data = [
   ["Joe James", "Test Corp", "Yonkers", "NY"],
   ["John Walsh", "Test Corp", "Hartford", "CT"],
@@ -13,7 +12,7 @@ const data = [
 ];
 
 export default function MUI_Table(props) {
-  const { searchText } = props
+  const { searchText, columns, data } = props
   const [count, setCount] = useState(0)
   const options = {
     filterType: "checkbox",
@@ -26,6 +25,7 @@ export default function MUI_Table(props) {
     customSearchRender: () => null
   };
 
+  // 要加count變數才會觸發改變
   useEffect(() => {
     setCount(count+1)
   }, [searchText])
@@ -33,7 +33,7 @@ export default function MUI_Table(props) {
   return (
     <MUIDataTable
       key={count}
-      title={"Employee List"}
+      title={"Stock"}
       data={data}
       columns={columns}
       options={options}

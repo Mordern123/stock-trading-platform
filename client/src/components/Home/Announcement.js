@@ -123,45 +123,6 @@ function Announcement(props) {
         }
         </CardContent>
     </Card>
-    // <Card>
-      // <CardHeader color="primary">
-      //   <h4 className={classes.title}>課程公告</h4>
-      //   <p className={classes.subTitle}>
-      //     最新更新時間
-      //   </p>
-      // </CardHeader>
-    //   <CardBody>
-    //     {
-    //       collection.map((data, key) => {
-    //         const publish_date = new Date(data.publish_date)
-    //         return (
-    //           <ExpansionPanel key={key} className={classes.customPanel} classes={{expanded: classes.customPanel_Ex}}>
-    //             <ExpansionPanelSummary
-    //               expandIcon={<ExpandMoreIcon />}
-    //               classes={{content: classes.customPanelContent}}
-    //             >
-    //               <div className="d-flex row flex-column w-100 align-content-center justify-content-center">
-    //                 <div className="col-8">
-    //                   <Typography className={classes.heading}>{data.title}</Typography>
-    //                   <Typography className={classes.secondaryHeading}>{data.subTitle}</Typography>
-    //                 </div>
-    //                 <div className="col-4">
-    //                   <Typography className={classes.subHeading}>{publish_date.toLocaleString()}</Typography>
-    //                   <Typography className={classes.publisher}>{data.publisher.user_name}</Typography>
-    //                 </div>
-    //               </div>
-                  
-    //             </ExpansionPanelSummary>
-    //             <ExpansionPanelDetails>
-    //               <Typography>{data.content}</Typography>
-    //             </ExpansionPanelDetails>
-    //           </ExpansionPanel>
-    //         )
-    //       })
-    //     }
-        
-    //   </CardBody>
-    // </Card>
   )
 }
 

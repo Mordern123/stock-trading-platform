@@ -15,6 +15,30 @@ import { TextField, FormHelperText, InputAdornment, Input } from '@material-ui/c
 import { Search } from '@material-ui/icons';
 import Material_Table from 'components/Table/Material_Table';
 
+const table_state = {
+  columns: [
+    { title: 'Name', field: 'name' },
+    { title: 'Surname', field: 'surname' },
+    { title: 'Birth Year', field: 'birthYear', type: 'numeric' },
+    {
+      title: 'Birth Place',
+      field: 'birthCity',
+      lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
+    },
+  ],
+  data: [
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
+    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
+  ],
+}
+
+
 const useStyles = makeStyles((theme) => ({
   root: {
     width: '100%',
@@ -71,6 +95,9 @@ export default function StockManage() {
               <Material_Table
                 searchText={searchText}
                 showToolBar={false}
+                columns={table_state.columns}
+                data={table_state.data}
+                noContainer
               />
             </CardBody>
           </Card>
@@ -104,6 +131,9 @@ export default function StockManage() {
               <Material_Table
                 searchText={searchText}
                 showToolBar={false}
+                columns={table_state.columns}
+                data={table_state.data}
+                noContainer
               />
             </CardBody>
           </Card>

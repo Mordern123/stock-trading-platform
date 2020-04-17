@@ -4,7 +4,7 @@ import Stock from '../models/stock_model'
 const router = Router()
 
 const get_all_stock = async (req, res) => {
-  const date = new Date('2020-04-10')
+  const date = new Date('2020-04-16')
   const result = await Stock.find({data_time: date}).exec()
   res.json(result)
 }

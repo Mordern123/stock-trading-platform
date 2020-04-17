@@ -3,6 +3,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import MaterialTable, { MTableToolbar } from 'material-table';
 import Card from '@material-ui/core/Card';
+import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
 
 
 const styles = theme => ({
@@ -33,6 +34,7 @@ export default function Custom_MaterialTable(props) {
     pageSize,
     pageSizeOptions,
     maxBodyHeight,
+    handleStockBuy,
   } = props
   
   const options = {
@@ -68,8 +70,15 @@ export default function Custom_MaterialTable(props) {
         ) : <Card raised {...props}></Card>
       }}
       localization={{
+        header: {
+          actions: ''
+        },
         body: {
           emptyDataSourceMessage: <div>沒有資料可以顯示</div>
+        },
+        pagination: {
+          labelDisplayedRows: "第 {from}-{to} 共 {count} 筆",
+          labelRowsSelect: "筆"
         }
       }}
       onRowClick={(event, rowData) => console.log(event, rowData)}
@@ -79,6 +88,11 @@ export default function Custom_MaterialTable(props) {
           tooltip: 'Refresh Data',
           isFreeAction: true,
           onClick: () => tableRef.current && tableRef.current.onQueryChange(),
+        },
+        {
+          icon: () => <ShoppingCartOutlinedIcon />,
+          tooltip: 'Save User',
+          onClick: handleStockBuy
         }
       ]}
     />

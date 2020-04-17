@@ -130,8 +130,6 @@ const loadStockData = async(setData, loading) => {
   loading(false)
 }
 
-
-
 const useStyles = makeStyles(styles);
 const useDash = makeStyles(dashboardStyle);
 
@@ -144,6 +142,10 @@ export default function Transaction() {
   const [ stock_data, setStock_data ] = useState([]);
   const [ loading, setLoading ] = useState(false);
   const [ pageSize, setPageSize] = useState(50);
+
+  const handleStockBuy = () => {
+    
+  }
 
   const handleSearch = () => {
     setLoading(true)
@@ -234,6 +236,7 @@ export default function Transaction() {
           useExport={true}
           maxBodyHeight={1000}
           pageSize={pageSize}
+          handleStockBuy={handleStockBuy}
         />
       </GridItem>
     </GridContainer>

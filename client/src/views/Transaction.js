@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Fragment } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
 import { Menu, Search, Directions, Store, DateRange } from '@material-ui/icons';
@@ -12,6 +12,7 @@ import CardFooter from "components/Card/CardFooter.js";
 import Table from "components/Transaction/Table.js";
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import Material_Table from 'components/Table/Material_Table';
+import BuyDialog from 'components/Transaction/Dialog_Buy';
 import { apiStock_list_all } from '../api'
 
 //bubble sort
@@ -142,9 +143,17 @@ export default function Transaction() {
   const [ stock_data, setStock_data ] = useState([]);
   const [ loading, setLoading ] = useState(false);
   const [ pageSize, setPageSize] = useState(50);
+  const [ showBuyDialog, set_showBuyDialog] = useState(false);
+  const [ stockInfo, setStockInfo] = useState(null);
 
-  const handleStockBuy = () => {
-    
+  const handleOpenStockBuy = (event, row) => {
+    console.log(row)
+    setStockInfo(row)
+    set_showBuyDialog(true)
+  }
+
+  const handleCloseStockBuy = () => {
+    set_showBuyDialog(false)
   }
 
   const handleSearch = () => {
@@ -167,79 +176,89 @@ export default function Transaction() {
   }, [])
   
   return (
-    <>
-    <GridContainer>
-      <GridItem xs={12} sm={6} md={6}>
-        <Card>
-          <CardHeader color="success" stats icon>
-            <CardIcon color="success">
-              <Store />
-            </CardIcon>
-            <p className={d_classes.cardCategory}>目前總資產</p>
-            <h3 className={d_classes.cardTitle}>$34,245</h3>
-          </CardHeader>
-          <CardFooter stats>
-            <div className={d_classes.stats}>
-              <DateRange />
-              Last 24 Hours
-            </div>
-          </CardFooter>
-        </Card>
-      </GridItem>
-      <GridItem xs={12} sm={6} md={6}>
-        <Card>
-          <CardHeader color="success" stats icon>
-            <CardIcon color="success">
-              <Store />
-            </CardIcon>
-            <p className={d_classes.cardCategory}>目前股票資產</p>
-            <h3 className={d_classes.cardTitle}>$34,245</h3>
-          </CardHeader>
-          <CardFooter stats>
-            <div className={d_classes.stats}>
-              <DateRange />
-              Last 24 Hours
-            </div>
-          </CardFooter>
-        </Card>
-      </GridItem>
-    </GridContainer>
-    <GridContainer>
-      <GridItem xs={12} sm={12} md={12}>
-        <Paper component="form" elevation={5} className={`${classes.root} mb-3`}>
-          <IconButton className={classes.iconButton} aria-label="menu">
-            <Menu />
-          </IconButton>
-          <InputBase
-            ref={searchRef}
-            className={classes.input}
-            placeholder="Search Google Maps"
-            inputProps={{ 'aria-label': 'search google maps' }}
+    <Fragment>
+      <GridContainer>
+        <GridItem xs={12} sm={6} md={6}>
+          <Card>
+            <CardHeader color="success" stats icon>
+              <CardIcon color="success">
+                <Store />
+              </CardIcon>
+              <p className={d_classes.cardCategory}>目前總資產</p>
+              <h3 className={d_classes.cardTitle}>$34,245</h3>
+            </CardHeader>
+            <CardFooter stats>
+              <div className={d_classes.stats}>
+                <DateRange />
+                Last 24 Hours
+              </div>
+            </CardFooter>
+          </Card>
+        </GridItem>
+        <GridItem xs={12} sm={6} md={6}>
+          <Card>
+            <CardHeader color="success" stats icon>
+              <CardIcon color="success">
+                <Store />
+              </CardIcon>
+              <p className={d_classes.cardCategory}>目前股票資產</p>
+              <h3 className={d_classes.cardTitle}>$34,245</h3>
+            </CardHeader>
+            <CardFooter stats>
+              <div className={d_classes.stats}>
+                <DateRange />
+                Last 24 Hours
+              </div>
+            </CardFooter>
+          </Card>
+        </GridItem>
+      </GridContainer>
+      <GridContainer>
+        <GridItem xs={12} sm={12} md={12}>
+          <Paper component="form" elevation={5} className={`${classes.root} mb-3`}>
+            <IconButton className={classes.iconButton} aria-label="menu">
+              <Menu />
+            </IconButton>
+            <InputBase
+              ref={searchRef}
+              className={classes.input}
+              placeholder="Search Google Maps"
+              inputProps={{ 'aria-label': 'search google maps' }}
+            />
+            <IconButton type="button" className={classes.iconButton} onClick={handleSearch}>
+              <Search />
+            </IconButton>
+            <Divider className={classes.divider} orientation="vertical" />
+            <IconButton color="primary" className={classes.iconButton} aria-label="directions">
+              <Directions />
+            </IconButton>
+          </Paper>
+          <Material_Table
+            tableRef={tableRef}
+            title="今日所有股票"
+            columns={stock_columns}
+            data={stock_data}
+            searchText={searchText}
+            isLoading={loading}
+            showToolBar={true}
+            useSearch={false}
+            useExport={true}
+            maxBodyHeight={1000}
+            pageSize={pageSize}
+            handleOpenStockBuy={handleOpenStockBuy}
           />
-          <IconButton type="button" className={classes.iconButton} onClick={handleSearch}>
-            <Search />
-          </IconButton>
-          <Divider className={classes.divider} orientation="vertical" />
-          <IconButton color="primary" className={classes.iconButton} aria-label="directions">
-            <Directions />
-          </IconButton>
-        </Paper>
-        <Material_Table
-          tableRef={tableRef}
-          title="今日所有股票"
-          columns={stock_columns}
-          data={stock_data}
-          searchText={searchText}
-          isLoading={loading}
-          showToolBar={true}
-          useSearch={false}
-          useExport={true}
-          maxBodyHeight={1000}
-          pageSize={pageSize}
-          handleStockBuy={handleStockBuy}
-        />
-      </GridItem>
-    </GridContainer>
-    </>
+        </GridItem>
+      </GridContainer>
+      {
+        stockInfo ? (
+          <BuyDialog
+            open={showBuyDialog}
+            handleClose={handleCloseStockBuy}
+            stockInfo={stockInfo}
+          />
+        ) : null
+      }
+      
+    </Fragment>
   )
 }

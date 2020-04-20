@@ -34,7 +34,7 @@ export default function Custom_MaterialTable(props) {
     pageSize,
     pageSizeOptions,
     maxBodyHeight,
-    handleStockBuy,
+    handleOpenStockBuy,
   } = props
   
   const options = {
@@ -92,7 +92,7 @@ export default function Custom_MaterialTable(props) {
         {
           icon: () => <ShoppingCartOutlinedIcon />,
           tooltip: 'Save User',
-          onClick: handleStockBuy
+          onClick: handleOpenStockBuy
         }
       ]}
     />
@@ -114,6 +114,7 @@ Custom_MaterialTable.propTypes = {
   noContainer: PropTypes.bool,
   pageSize: PropTypes.number,
   pageSizeOptions: PropTypes.array,
-  maxBodyHeight: PropTypes.number
+  maxBodyHeight: PropTypes.number,
+  handleOpenStockBuy: PropTypes.func
 }
 

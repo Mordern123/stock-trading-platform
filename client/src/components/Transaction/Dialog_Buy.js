@@ -28,6 +28,11 @@ const styles = theme => ({
   },
   dialogContent: {
     overflow: 'hidden'
+  },
+  stockInput: {
+    "& label": {
+      fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+    }
   }
 })
 
@@ -74,9 +79,8 @@ export default function BuyDialog(props) {
             <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`收盤價： ${closing_price}`}</Typography>} />
           </ListItem>
         </List>
-        <div className="d-flex justify-content-center align-items-center">
+        <div className="d-flex justify-content-end align-items-center">
           <TextField
-            autoFocus
             label="請輸入股票購買數量"
             type="number"
             variant="outlined"
@@ -88,20 +92,15 @@ export default function BuyDialog(props) {
                 />
               ),
             }}
-            InputLabelProps={{
-              style: {
-                fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
-              }
-            }}
-            className="w-50"
+            className={clsx("w-50",classes.stockInput)}
           />
         </div>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose} color="primary" className={classes.text}>
+      <DialogActions className="p-3">
+        <Button variant="contained" onClick={handleClose} color="primary" className={clsx(classes.text)}>
           取消訂單
         </Button>
-        <Button onClick={handleClose} color="primary" className={classes.text}>
+        <Button variant="contained" onClick={handleClose} color="primary" className={classes.text}>
           確定下單
         </Button>
       </DialogActions>

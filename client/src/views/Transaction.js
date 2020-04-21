@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, Fragment } from "react";
+import clsx from 'clsx';
 import { makeStyles } from "@material-ui/core/styles";
 import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
-import { Menu, Search, Directions, Store, DateRange } from '@material-ui/icons';
+import { Search, ShowChart, Store, DateRange } from '@material-ui/icons';
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardIcon from "components/Card/CardIcon.js";
@@ -9,9 +10,9 @@ import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import CardBody from "components/Card/CardBody.js";
 import CardFooter from "components/Card/CardFooter.js";
-import Table from "components/Transaction/Table.js";
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import Material_Table from 'components/Table/Material_Table';
+import Typography from '@material-ui/core/Typography';
 import BuyDialog from 'components/Transaction/Dialog_Buy';
 import { apiStock_list_all } from '../api'
 
@@ -105,23 +106,45 @@ const stock_columns = [
 ];
 
 const styles = theme => ({
-  root: {
+  text: {
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+  },
+  searchBox: {
     padding: '2px 4px',
     display: 'flex',
     alignItems: 'center',
     width: '100%',
   },
-  input: {
+  searchInput: {
+    "& input" : {
+      textAlign: 'center',
+      fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+    },
     marginLeft: theme.spacing(1),
     flex: 1,
-  },
-  iconButton: {
-    padding: 10,
+    height: '80px',
+    fontSize: 'xx-large'
   },
   divider: {
-    height: 28,
+    height: '50px',
     margin: 4,
   },
+  cardSubTitle: {
+    color: theme.palette.text.secondary,
+    margin: "0",
+    fontSize: "14px",
+    marginTop: "0",
+    paddingTop: "10px",
+    marginBottom: "0"
+  },
+  cardTitle: {
+    color: theme.palette.text.primary,
+    marginTop: "0px",
+    minHeight: "auto",
+    fontWeight: "300",
+    marginBottom: "3px",
+    textDecoration: "none",
+  }
 })
 
 const loadStockData = async(setData, loading) => {
@@ -184,8 +207,10 @@ export default function Transaction() {
               <CardIcon color="success">
                 <Store />
               </CardIcon>
-              <p className={d_classes.cardCategory}>目前總資產</p>
-              <h3 className={d_classes.cardTitle}>$34,245</h3>
+              <Typography variant="p" className={clsx(classes.text,classes.cardSubTitle)}>目前總資產</Typography>
+              <Typography variant="h4" className={clsx(classes.text,classes.cardTitle)}>$34,245</Typography>
+              {/* <p className={d_classes.cardCategory}>目前總資產</p> */}
+              {/* <h3 className={d_classes.cardTitle}>$34,245</h3> */}
             </CardHeader>
             <CardFooter stats>
               <div className={d_classes.stats}>
@@ -215,22 +240,22 @@ export default function Transaction() {
       </GridContainer>
       <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
-          <Paper component="form" elevation={5} className={`${classes.root} mb-3`}>
-            <IconButton className={classes.iconButton} aria-label="menu">
-              <Menu />
+          <Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
+            <IconButton color="primary" className="p-3" >
+              <ShowChart fontSize="large"/>
             </IconButton>
             <InputBase
               ref={searchRef}
-              className={classes.input}
-              placeholder="Search Google Maps"
-              inputProps={{ 'aria-label': 'search google maps' }}
+              className={classes.searchInput}
+              placeholder="搜尋任何股票關鍵字"
             />
-            <IconButton type="button" className={classes.iconButton} onClick={handleSearch}>
-              <Search />
-            </IconButton>
-            <Divider className={classes.divider} orientation="vertical" />
-            <IconButton color="primary" className={classes.iconButton} aria-label="directions">
-              <Directions />
+            <IconButton
+              type="button"
+              color="primary"
+              className="p-3"
+              onClick={handleSearch}
+            >
+              <Search fontSize="large"/>
             </IconButton>
           </Paper>
           <Material_Table

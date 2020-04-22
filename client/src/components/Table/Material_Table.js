@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { makeStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import MaterialTable, { MTableToolbar } from 'material-table';
@@ -17,9 +17,10 @@ const styles = theme => ({
 const useStyles = makeStyles(styles);
 export default function Custom_MaterialTable(props) {
   const classes = useStyles();
+  const tableRef = useRef();
   const [count, setCount] = useState(0)
+  const [pageSize, setPageSize] = useState(50)
   const {
-    tableRef,
     title,
     columns,
     data,
@@ -31,7 +32,6 @@ export default function Custom_MaterialTable(props) {
     searchText,
     isLoading,
     noContainer,
-    pageSize,
     pageSizeOptions,
     maxBodyHeight,
     handleOpenStockBuy,
@@ -44,7 +44,7 @@ export default function Custom_MaterialTable(props) {
     filtering: useFilter && true,
     columnsButton: useColumns && true,
     searchText: searchText || "",
-    pageSize: pageSize || 50,
+    pageSize: pageSize,
     pageSizeOptions: pageSizeOptions || [50, 100, 200],
     maxBodyHeight: maxBodyHeight || 600,
   }
@@ -54,6 +54,17 @@ export default function Custom_MaterialTable(props) {
     setCount(count+1)
   }, [searchText, pageSize])
 
+  useEffect(() => {
+    let result_count = tableRef.current.state.data.length
+    result_count = result_count < 10 ? 10 : result_count
+    if(result_count < 50) {
+      setPageSize(result_count)
+    } else {
+      setPageSize(50)
+    }
+    console.log(result_count, pageSize)
+  }, [isLoading == false])
+
   return (
     <MaterialTable
       tableRef={tableRef}
@@ -62,7 +73,6 @@ export default function Custom_MaterialTable(props) {
       title={(<div className="ch_font">{title}</div>)}
       columns={columns}
       data={data}
-      // editable={}
       options={options}
       components={{
         Container: props => noContainer ? (
@@ -112,9 +122,11 @@ Custom_MaterialTable.propTypes = {
   searchText: PropTypes.string,
   isLoading: PropTypes.bool,
   noContainer: PropTypes.bool,
-  pageSize: PropTypes.number,
   pageSizeOptions: PropTypes.array,
-  maxBodyHeight: PropTypes.number,
+  maxBodyHeight: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string
+  ]),
   handleOpenStockBuy: PropTypes.func
 }
 

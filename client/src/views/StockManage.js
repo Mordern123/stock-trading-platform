@@ -68,15 +68,15 @@ export default function StockManage() {
   return (
     <Fragment>
       <GridContainer>
-        <GridItem xs={12} sm={12} md={12}>
+        <GridItem xs={12} sm={12} md={6}>
           <Card>
-            <CardHeader color="primary">
+            <CardHeader color="rose">
               擁有的股票
             </CardHeader>
             <CardBody>
               <TextField
                 label="擁有股票搜尋"
-                style={{ margin: 8, width: '40%' }}
+                style={{ margin: 8, width: '50%' }}
                 placeholder="輸入任何關鍵字"
                 margin="dense"
                 InputLabelProps={{
@@ -97,14 +97,13 @@ export default function StockManage() {
                 showToolBar={false}
                 columns={table_state.columns}
                 data={table_state.data}
-                noContainer
+                noContainer={true}
+                maxBodyHeight={'100%'}
               />
             </CardBody>
           </Card>
         </GridItem>
-      </GridContainer>
-      <GridContainer>
-        <GridItem xs={12} sm={12} md={12}>
+        <GridItem xs={12} sm={12} md={6}>
           <Card>
             <CardHeader color="primary">
               追蹤的股票

@@ -1,19 +1,12 @@
 import React, { useState, useEffect, useRef, Fragment } from "react";
-import clsx from 'clsx';
 import { makeStyles } from "@material-ui/core/styles";
 import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
-import { Search, ShowChart, Store, DateRange } from '@material-ui/icons';
-import Card from "components/Card/Card.js";
-import CardHeader from "components/Card/CardHeader.js";
-import CardIcon from "components/Card/CardIcon.js";
+import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from '@material-ui/icons';
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
-import CardBody from "components/Card/CardBody.js";
-import CardFooter from "components/Card/CardFooter.js";
-import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import Material_Table from 'components/Table/Material_Table';
-import Typography from '@material-ui/core/Typography';
 import BuyDialog from 'components/Transaction/Dialog_Buy';
+import CardStat from 'components/Transaction/Card_Stat';
 import { apiStock_list_all } from '../api'
 
 //bubble sort
@@ -129,22 +122,6 @@ const styles = theme => ({
     height: '50px',
     margin: 4,
   },
-  cardSubTitle: {
-    color: theme.palette.text.secondary,
-    margin: "0",
-    fontSize: "14px",
-    marginTop: "0",
-    paddingTop: "10px",
-    marginBottom: "0"
-  },
-  cardTitle: {
-    color: theme.palette.text.primary,
-    marginTop: "0px",
-    minHeight: "auto",
-    fontWeight: "300",
-    marginBottom: "3px",
-    textDecoration: "none",
-  }
 })
 
 const loadStockData = async(setData, loading) => {
@@ -155,17 +132,13 @@ const loadStockData = async(setData, loading) => {
 }
 
 const useStyles = makeStyles(styles);
-const useDash = makeStyles(dashboardStyle);
 
 export default function Transaction() {
   const searchRef = useRef();
-  const tableRef = useRef();
   const classes = useStyles();
-  const d_classes = useDash();
   const [ searchText, setSearchText ] = useState("");
   const [ stock_data, setStock_data ] = useState([]);
   const [ loading, setLoading ] = useState(false);
-  const [ pageSize, setPageSize] = useState(50);
   const [ showBuyDialog, set_showBuyDialog] = useState(false);
   const [ stockInfo, setStockInfo] = useState(null);
 
@@ -183,15 +156,7 @@ export default function Transaction() {
     setLoading(true)
     // 拿InputBase裡面的Input
     setSearchText(searchRef.current.childNodes[0].value)
-    setTimeout(() => {
-      setLoading(false)
-      // 讓提示字串置中
-      if(tableRef.current.state.data.length == 0) {
-        setPageSize(5)
-      } else {
-        setPageSize(50)
-      }
-    }, 2000);
+    setTimeout(() => { setLoading(false) }, 2000);
   }
 
   useEffect(() => {
@@ -202,40 +167,22 @@ export default function Transaction() {
     <Fragment>
       <GridContainer>
         <GridItem xs={12} sm={6} md={6}>
-          <Card>
-            <CardHeader color="success" stats icon>
-              <CardIcon color="success">
-                <Store />
-              </CardIcon>
-              <Typography variant="p" className={clsx(classes.text,classes.cardSubTitle)}>目前總資產</Typography>
-              <Typography variant="h4" className={clsx(classes.text,classes.cardTitle)}>$34,245</Typography>
-              {/* <p className={d_classes.cardCategory}>目前總資產</p> */}
-              {/* <h3 className={d_classes.cardTitle}>$34,245</h3> */}
-            </CardHeader>
-            <CardFooter stats>
-              <div className={d_classes.stats}>
-                <DateRange />
-                Last 24 Hours
-              </div>
-            </CardFooter>
-          </Card>
+          <CardStat
+            title="目前總資產"
+            updateTime="1分鐘前更新"
+            value={34245}
+            color="success"
+            icon={<AccountBalanceRounded />}
+          />
         </GridItem>
         <GridItem xs={12} sm={6} md={6}>
-          <Card>
-            <CardHeader color="success" stats icon>
-              <CardIcon color="success">
-                <Store />
-              </CardIcon>
-              <p className={d_classes.cardCategory}>目前股票資產</p>
-              <h3 className={d_classes.cardTitle}>$34,245</h3>
-            </CardHeader>
-            <CardFooter stats>
-              <div className={d_classes.stats}>
-                <DateRange />
-                Last 24 Hours
-              </div>
-            </CardFooter>
-          </Card>
+          <CardStat
+            title="股票總價值"
+            updateTime="1天前收盤價更新"
+            value={0}
+            color="warning"
+            icon={<LocalAtmRounded />}
+          />
         </GridItem>
       </GridContainer>
       <GridContainer>
@@ -259,7 +206,6 @@ export default function Transaction() {
             </IconButton>
           </Paper>
           <Material_Table
-            tableRef={tableRef}
             title="今日所有股票"
             columns={stock_columns}
             data={stock_data}
@@ -269,7 +215,6 @@ export default function Transaction() {
             useSearch={false}
             useExport={true}
             maxBodyHeight={1000}
-            pageSize={pageSize}
             handleOpenStockBuy={handleOpenStockBuy}
           />
         </GridItem>

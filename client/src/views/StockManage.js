@@ -6,11 +6,7 @@ import GridContainer from "components/Grid/GridContainer.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { TextField, FormHelperText, InputAdornment, Input } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
 import Material_Table from 'components/Table/Material_Table';
@@ -40,6 +36,9 @@ const table_state = {
 
 
 const useStyles = makeStyles((theme) => ({
+  text: {
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+  },
   root: {
     width: '100%',
   },
@@ -59,6 +58,16 @@ const useStyles = makeStyles((theme) => ({
   withoutLabel: {
     marginTop: theme.spacing(3),
   },
+  searchInput1: {
+    margin: 8,
+    width: '50%',
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: 'black',
+    },
+    "& .MuiOutlinedInput-notchedOutline span": {
+      color: 'black'
+    }
+  }
 }));
 
 export default function StockManage() {
@@ -70,18 +79,14 @@ export default function StockManage() {
       <GridContainer>
         <GridItem xs={12} sm={12} md={6}>
           <Card>
-            <CardHeader color="rose">
-              擁有的股票
+            <CardHeader color="warning">
+              <Typography variant="subtitle1" className={classes.text}>擁有的股票</Typography>
             </CardHeader>
             <CardBody>
               <TextField
                 label="擁有股票搜尋"
-                style={{ margin: 8, width: '50%' }}
                 placeholder="輸入任何關鍵字"
                 margin="dense"
-                InputLabelProps={{
-                  shrink: true,
-                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="start">
@@ -89,6 +94,7 @@ export default function StockManage() {
                     </InputAdornment>
                   ),
                 }}
+                className={classes.searchInput1}
                 variant="outlined"
                 onChange={e => setSearchText(e.target.value)}
               />

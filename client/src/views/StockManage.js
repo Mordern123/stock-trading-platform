@@ -11,6 +11,7 @@ import { TextField, FormHelperText, InputAdornment, Input } from '@material-ui/c
 import { Search } from '@material-ui/icons';
 import Material_Table from 'components/Table/Material_Table';
 
+
 const table_state = {
   columns: [
     { title: 'Name', field: 'name' },
@@ -36,38 +37,43 @@ const table_state = {
 
 
 const useStyles = makeStyles((theme) => ({
-  text: {
-    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
-  },
-  root: {
-    width: '100%',
-  },
-  column: {
-    flexBasis: '33.33%',
-  },
-  heading: {
-    fontSize: theme.typography.pxToRem(15),
-  },
-  secondaryHeading: {
-    fontSize: theme.typography.pxToRem(15),
-    color: theme.palette.text.secondary,
-  },
-  margin: {
-    margin: theme.spacing(1),
-  },
-  withoutLabel: {
-    marginTop: theme.spacing(3),
+  '@global': {
+    '.ch_font': {
+      fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+    },
   },
   searchInput1: {
     margin: 8,
     width: '50%',
-    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: 'black',
+    "& input, label": {
+      fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     },
-    "& .MuiOutlinedInput-notchedOutline span": {
-      color: 'black'
-    }
-  }
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: theme.palette.warning.main,
+    },
+    "& label.MuiInputLabel-animated.Mui-focused ": {
+      color: theme.palette.warning.main
+    },
+    "& .MuiOutlinedInput-root.Mui-focused svg": {
+      color: theme.palette.warning.main,
+    },
+  },
+  searchInput2: {
+    margin: 8,
+    width: '50%',
+    "& input, label": {
+      fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+    },
+    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#9830B0",
+    },
+    "& label.MuiInputLabel-animated.Mui-focused ": {
+      color: "#9830B0"
+    },
+    "& .MuiOutlinedInput-root.Mui-focused svg": {
+      color: "#9830B0"
+    },
+  },
 }));
 
 export default function StockManage() {
@@ -80,13 +86,16 @@ export default function StockManage() {
         <GridItem xs={12} sm={12} md={6}>
           <Card>
             <CardHeader color="warning">
-              <Typography variant="subtitle1" className={classes.text}>擁有的股票</Typography>
+              <Typography variant="subtitle1" className="ch_font">擁有的股票</Typography>
             </CardHeader>
             <CardBody>
               <TextField
-                label="擁有股票搜尋"
+                label="搜尋擁有股票"
                 placeholder="輸入任何關鍵字"
+                className={classes.searchInput1}
                 margin="dense"
+                variant="outlined"
+                onChange={e => setSearchText(e.target.value)}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="start">
@@ -94,9 +103,6 @@ export default function StockManage() {
                     </InputAdornment>
                   ),
                 }}
-                className={classes.searchInput1}
-                variant="outlined"
-                onChange={e => setSearchText(e.target.value)}
               />
               <Material_Table
                 searchText={searchText}
@@ -112,17 +118,16 @@ export default function StockManage() {
         <GridItem xs={12} sm={12} md={6}>
           <Card>
             <CardHeader color="primary">
-              追蹤的股票
+              <Typography variant="subtitle1" className="ch_font">追蹤的股票</Typography>
             </CardHeader>
             <CardBody>
               <TextField
-                label="追蹤股票搜尋"
-                style={{ margin: 8, width: '40%' }}
+                label="搜尋追蹤股票"
                 placeholder="輸入任何關鍵字"
                 margin="dense"
-                InputLabelProps={{
-                  shrink: true,
-                }}
+                className={classes.searchInput2}
+                variant="outlined"
+                onChange={e => setSearchText(e.target.value)}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="start">
@@ -130,15 +135,14 @@ export default function StockManage() {
                     </InputAdornment>
                   ),
                 }}
-                variant="outlined"
-                onChange={e => setSearchText(e.target.value)}
               />
               <Material_Table
                 searchText={searchText}
                 showToolBar={false}
                 columns={table_state.columns}
                 data={table_state.data}
-                noContainer
+                noContainer={true}
+                maxBodyHeight={'100%'}
               />
             </CardBody>
           </Card>

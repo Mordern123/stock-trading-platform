@@ -7,7 +7,6 @@ const userSchema = new Schema({
     type: String,
     required: true,
     trim: true,
-    minlength: 3
   },
   sex: { 
     type: Number,
@@ -49,7 +48,7 @@ const userSchema = new Schema({
       type: String,
       default: null
     },
-  }
+  },
 }, {
   timestamps: true,
 });

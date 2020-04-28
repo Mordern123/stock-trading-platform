@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import User from '../models/user_model'
+import Account from '../models/account_model'
+import moment from 'moment'
 
 const router = Router()
 
@@ -7,18 +9,27 @@ const new_user = async (req, res) => {
   try {
     const userData = req.body
     let result = await User.find({student_id: userData.student_id}).exec()
+
     if(result.length > 0) {
       res.json({status: false, payload: "學號已有人使用"});
       return
     }
+
     result = await User.find({email: userData.email}).exec()
     if(result.length > 0) {
       res.json({status: false, payload: "信箱已有人使用"});
       return
     }
-    const newUser = new User(req.body);
-    const userDoc = await newUser.save();
-    res.json({status: true, payload: userDoc});
+
+    const newUser = await new User(req.body).save();
+    const newAccount = await new Account({
+      user: newUser.id,
+      balance: 1000000,
+      last_update: moment()
+    }).save();
+
+    res.json({status: true, payload: {newUser, newAccount}});
+
   } catch(e) {
     res.json({status: false, payload: e.toString()})
   }

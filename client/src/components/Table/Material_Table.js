@@ -3,7 +3,6 @@ import { makeStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import MaterialTable, { MTableToolbar } from 'material-table';
 import Card from '@material-ui/core/Card';
-import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
 
 
 const styles = theme => ({
@@ -29,15 +28,18 @@ export default function Custom_MaterialTable(props) {
     useFilter,
     useSearch,
     useColumns,
+    actions,
     searchText,
     isLoading,
     noContainer,
     pageSizeOptions,
     maxBodyHeight,
-    handleOpenStockBuy,
+    detailPanel,
+    actionsColumnIndex
   } = props
   
   const options = {
+    draggable: false,
     toolbar: showToolBar && true,
     search: useSearch && true,
     exportButton: useExport && true,
@@ -47,6 +49,7 @@ export default function Custom_MaterialTable(props) {
     pageSize: pageSize,
     pageSizeOptions: pageSizeOptions || [50, 100, 200],
     maxBodyHeight: maxBodyHeight || 600,
+    actionsColumnIndex: actionsColumnIndex == null ? 0 : actionsColumnIndex
   }
 
   // 更改key變數才會吃到搜尋字串
@@ -92,19 +95,8 @@ export default function Custom_MaterialTable(props) {
         }
       }}
       onRowClick={(event, rowData) => console.log(event, rowData)}
-      actions={[
-        {
-          icon: 'refresh',
-          tooltip: 'Refresh Data',
-          isFreeAction: true,
-          onClick: () => tableRef.current && tableRef.current.onQueryChange(),
-        },
-        {
-          icon: () => <ShoppingCartOutlinedIcon />,
-          tooltip: 'Save User',
-          onClick: handleOpenStockBuy
-        }
-      ]}
+      actions={actions}
+      detailPanel={detailPanel}
     />
   );
 }
@@ -127,6 +119,7 @@ Custom_MaterialTable.propTypes = {
     PropTypes.number,
     PropTypes.string
   ]),
-  handleOpenStockBuy: PropTypes.func
+  detailPanel: PropTypes.array,
+  actionsColumnIndex: PropTypes.number
 }
 

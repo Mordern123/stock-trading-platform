@@ -3,6 +3,9 @@ import Stock from '../models/stock_model'
 import UserStock from '../models/user_stock_model'
 import UserTrack from '../models/user_track_model'
 import UserTxn from '../models/user_txn_model'
+import moment from 'moment';
+
+moment.locale('zh-tw');
 
 const router = Router()
 
@@ -14,8 +17,19 @@ const get_all_stock = async (req, res) => {
 
 const get_user_stock = async (req, res) => {
   const { uid } = req.body
-  const result = await UserStock.find({user: uid}).populate(['user','stock']).exec()
-  res.json(result)
+  const userStockDoc = await UserStock
+    .find({user: uid})
+    .populate(['stock'])
+    .lean()
+    .exec()
+  const userStockData = userStockDoc.map(item => {
+    let newDoc = item
+    newDoc.last_update = moment(item.last_update).startOf('hour').fromNow()
+    newDoc.updatedAt = moment(item.updatedAt).startOf('hour').fromNow()
+    newDoc.createdAt = moment(item.createdAt).calendar()
+    return newDoc
+  })
+  res.json(userStockData)
 }
 
 const user_place_order = async (req, res) => {
@@ -43,8 +57,21 @@ const user_place_order = async (req, res) => {
 const get_user_track = async (req, res) => {
   try {
     const { uid } = req.body
-    const result = await UserTrack.find({user: uid}).exec()
-    res.json(result)
+    const userTrackDoc = await UserTrack
+      .find({user: uid})
+      .lean()
+      .exec()
+    for(let i = 0; i < userTrackDoc.length; i++) {
+      let { stock_id, track_time, createdAt, updatedAt } = userTrackDoc[i]
+      let stockDoc = await Stock.findOne({stock_id}).sort('-data_time').exec() //取的目前最新股票
+      userTrackDoc[i].stock = stockDoc
+      userTrackDoc[i].track_time = moment(track_time).calendar()
+      userTrackDoc[i].createdAt = moment(createdAt).startOf('hour').fromNow()
+      userTrackDoc[i].updatedAt = moment(updatedAt).startOf('hour').fromNow()
+    }
+    
+    console.log(userTrackDoc)
+    res.json(userTrackDoc)
   } catch (error) {
     res.json(false)
   }

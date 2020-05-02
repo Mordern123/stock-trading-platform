@@ -19,10 +19,11 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import Typography from '@material-ui/core/Typography';
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { apiUserStock_buy } from '../../api'
+import { apiUserStock_sell } from '../../api'
 import { green, red } from '@material-ui/core/colors';
 
-const testUser = "5ea7c55655050f2b883173ce"
+
+const testUser = "5ea7c55655050f2b883173ce" 
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
@@ -74,12 +75,11 @@ const styles = theme => ({
 
 const useStyles = makeStyles(styles);
 
-export default function BuyDialog(props) {
+export default function SellDialog(props) {
   const classes = useStyles();
   const { open, handleClose, stockInfo } = props
-  const { stock, userStock } = stockInfo
-  const { stock_id, stock_name, trading_volume, txn_number, closing_price } = stock
-  const { shares_number } = userStock
+  const { shares_number, stock } = stockInfo
+  const { stock_id, stock_name, txn_number, closing_price } = stock
   const [stock_price, setStock_price] = useState(null)
   const [stock_num, setStock_num] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -93,17 +93,16 @@ export default function BuyDialog(props) {
     setStock_num(n)
   }
 
-  const handleBuyStock = async () => {
+  const handleSellStock = async () => {
     if(stock_num && stock_price) {
       if(stock_num > 0 && stock_price > 0) {
         setLoading(true)
-        const res = await apiUserStock_buy({
+        const res = await apiUserStock_sell({
           uid: testUser,
-          stock_id: stock_id,
+          stock_id: stock.stock_id,
           shares_number: stock_num * 1000, //一張1000股
           price: stock_price
         })
-        
         setLoading(false)
         handleClose()
         console.log(res.data)
@@ -122,9 +121,9 @@ export default function BuyDialog(props) {
       fullWidth={true}
       maxWidth='sm'
     >
-      <DialogTitle className={classes.dialogTitle}>買入資訊</DialogTitle>
+      <DialogTitle className={classes.dialogTitle}>售出資訊</DialogTitle>
       <DialogContent className={clsx(classes.dialogContent, classes.text)}>
-        <DialogContentText className={classes.text}>請確認股票買入內容</DialogContentText>
+        <DialogContentText className={classes.text}>請確認售出股票內容</DialogContentText>
         <List component="nav">
           <ListItem button>
             <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stock_id}`}</Typography>} />
@@ -135,11 +134,7 @@ export default function BuyDialog(props) {
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`總成交股數： ${trading_volume} 股`}</Typography>} />
-          </ListItem>
-          <Divider />
-          <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`總成交筆數： ${txn_number} 筆`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`成交股數： ${txn_number} 股`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
@@ -147,13 +142,15 @@ export default function BuyDialog(props) {
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`目前擁有股數： ${shares_number || 0} 股 (${parseInt(shares_number/1000) || 0}張)`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`目前擁有股數： ${shares_number} 股 (${parseInt(shares_number/1000)}張)`}</Typography>} />
           </ListItem>
+          <Divider />
+          
         </List>
         <div className="row d-flex justify-content-end align-items-center mt-3">
           <div className="col-5">
             <TextField
-              label="每股買入價格"
+              label="每股售出價格"
               type="number"
               variant="outlined"
               InputProps={{
@@ -173,7 +170,7 @@ export default function BuyDialog(props) {
           </div>
           <div className="col-4">
             <TextField
-              label="股票買入數量"
+              label="股票售出數量"
               type="number"
               variant="outlined"
               InputProps={{
@@ -208,7 +205,7 @@ export default function BuyDialog(props) {
         </Button>
         <Button
           variant="contained"
-          onClick={handleBuyStock}
+          onClick={handleSellStock}
           classes={{root: classes.submitButton}}
           className={clsx(classes.text, classes.button)}
         >
@@ -219,7 +216,7 @@ export default function BuyDialog(props) {
   );
 }
 
-BuyDialog.propTypes = {
+SellDialog.propTypes = {
   open: PropTypes.bool,
   handleClose: PropTypes.func,
   stockInfo: PropTypes.object

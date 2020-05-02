@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Fragment } from "react";
+import React, { useState, useEffect, useRef, Fragment, useCallback } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
 import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from '@material-ui/icons';
@@ -7,7 +7,12 @@ import GridContainer from "components/Grid/GridContainer.js";
 import Material_Table from 'components/Table/Material_Table';
 import BuyDialog from 'components/Transaction/Dialog_Buy';
 import CardStat from 'components/Transaction/Card_Stat';
-import { apiStock_list_all } from '../api'
+import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
+import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
+import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
+import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserStock_get } from '../api'
+
+const testUser = "5ea7c55655050f2b883173ce"
 
 //bubble sort
 const customSort = (a, b, field) => {
@@ -124,12 +129,7 @@ const styles = theme => ({
   },
 })
 
-const loadStockData = async(setData, loading) => {
-  loading(true)
-  const res = await apiStock_list_all()
-  setData(res.data)
-  loading(false)
-}
+
 
 const useStyles = makeStyles(styles);
 
@@ -138,15 +138,12 @@ export default function Transaction() {
   const classes = useStyles();
   const [ searchText, setSearchText ] = useState("");
   const [ stock_data, setStock_data ] = useState([]);
+  const [ track_data, setTrack_data ] = useState([]);
+  const [ userStock_data, setUserStock_data ] = useState([]);
   const [ loading, setLoading ] = useState(false);
   const [ showBuyDialog, set_showBuyDialog] = useState(false);
   const [ stockInfo, setStockInfo] = useState(null);
-
-  const handleOpenStockBuy = (event, row) => {
-    console.log(row)
-    setStockInfo(row)
-    set_showBuyDialog(true)
-  }
+  const [ account, setAccount ] = useState(null);
 
   const handleCloseStockBuy = () => {
     set_showBuyDialog(false)
@@ -154,13 +151,80 @@ export default function Transaction() {
 
   const handleSearch = () => {
     setLoading(true)
-    // 拿InputBase裡面的Input
-    setSearchText(searchRef.current.childNodes[0].value)
-    setTimeout(() => { setLoading(false) }, 2000);
+    setSearchText(searchRef.current.childNodes[0].value) //拿InputBase裡面的Input
+    setTimeout(() => { setLoading(false) }, 2000); 
   }
 
+  const handleOpenStockBuy = (event, row) => {
+    const matchStock = userStock_data.find(stock => stock.stock_id == row.stock_id) || {}
+    setStockInfo({
+      stock: row,
+      userStock: matchStock
+    })
+    set_showBuyDialog(true)
+  }
+
+  const handleTrack = async(event, row) => {
+    setLoading(true)
+    const res = await apiUserStock_track({
+      uid: testUser,
+      stock_id: row.stock_id
+    })
+    if(res.data) {
+      const track_res = await apiUserStock_track_get({
+        uid: testUser
+      })
+      let onlyTrackId_data = track_res.data.map(item => item.stock_id)
+      setTrack_data(onlyTrackId_data)
+    }
+    setTimeout(() => { setLoading(false) }, 1000);
+  }
+
+  //取得股票相關資料
+  const loadData = async() => {
+    setLoading(true) 
+    const stock_res = await apiStock_list_all()
+    const userStock_res = await apiUserStock_get({
+      uid: testUser
+    }) 
+    const track_res = await apiUserStock_track_get({
+      uid: testUser
+    })
+    let onlyTrackId_data = track_res.data.map(item => item.stock_id)
+    setUserStock_data(userStock_res.data)
+    setTrack_data(onlyTrackId_data)
+    setStock_data(stock_res.data)
+    setLoading(false)
+  }
+
+  const getActions = useCallback(() => ([
+    {
+      icon: 'refresh',
+      tooltip: 'Refresh Data',
+      isFreeAction: true,
+      onClick: () => {},
+    },
+    {
+      icon: () => <ShoppingCartOutlinedIcon />,
+      tooltip: 'Buy Stock',
+      onClick: handleOpenStockBuy
+    },
+    rowData => {
+      let inCollect = track_data.includes(rowData.stock_id) //判斷此股票使用者有沒有收藏
+      return {
+        icon: () => inCollect
+          ? <FavoriteRoundedIcon />
+          : <FavoriteBorderRoundedIcon />
+        ,
+        tooltip: inCollect ? 'Remove from Collect' : 'Add to Collect',
+        onClick: handleTrack
+      }
+    }
+  ]), [track_data])
+
+
   useEffect(() => {
-    loadStockData(setStock_data, setLoading)
+    loadData()
   }, [])
   
   return (
@@ -214,6 +278,7 @@ export default function Transaction() {
             showToolBar={true}
             useSearch={false}
             useExport={true}
+            actions={getActions()}
             maxBodyHeight={1000}
             handleOpenStockBuy={handleOpenStockBuy}
           />
@@ -228,7 +293,6 @@ export default function Transaction() {
           />
         ) : null
       }
-      
     </Fragment>
   )
 }

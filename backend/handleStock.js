@@ -47,7 +47,7 @@ const runEveryTxn = async () => {
   }
   console.log(`帳戶更新完成`)
   console.log(`處理結束，共${userTxnDocs.length}筆`)
-  // process.exit()
+  process.exit()
 }
 
 const runBuy = async (userTxnDoc) => {
@@ -137,7 +137,7 @@ const runSell = async (userTxnDoc) => {
 
     //賣出股數超過擁有股數(無法賣出)
     let userStockDoc = await UserStock.findOne({user, stock_id}).exec()
-    if(shares_number >= userStockDoc.shares_number) {
+    if(shares_number > userStockDoc.shares_number) {
       updateTxn(_id, 'fail', 4)
       return
     }
@@ -238,14 +238,21 @@ const updateStockValue = async (user) => {
 
   for(let i = 0; i < userAllStocks.length; i++) {
     const { stock_id, shares_number } = userAllStocks[i]
-    const stockDoc = await getStock(stock_id) //取得最新股票
+    //刪除已賣空的股票
+    if(shares_number == 0) {
+      await UserStock.findOneAndDelete({user, stock_id}).exec()
+      continue
+    }
+    //取得最新股票並計算價值
+    const stockDoc = await getStock(stock_id) 
     if(stockDoc) {
       const stock_value = stockDoc.closing_price * shares_number //計算目前最新收盤價*擁有股數
       total_value += stock_value
     }
   }
 
-  const accountDoc = await Account.findOneAndUpdate({
+  //更新帳戶資料
+  await Account.findOneAndUpdate({
     user
   },{
     stock_number: userAllStocks.length,

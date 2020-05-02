@@ -53,7 +53,23 @@ const user_login = async (req, res) => {
   }
 }
 
+const get_User_Account = async (req, res) => {
+  const { uid } = req.body
+  const accountDoc = await Account.findOne({user: uid}).lean().exec()
+  const { updatedAt, createdAt, last_update } = accountDoc
+  if(accountDoc) {
+    const newDoc = accountDoc
+    newDoc.updatedAt = moment(updatedAt).startOf('hour').fromNow()
+    newDoc.createdAt = moment(createdAt).calendar()
+    newDoc.last_update = moment(last_update).calendar()
+    res.json(newDoc)
+  } else {
+    res.json(false)
+  }
+}
+
 router.route('/new').post(new_user);
 router.route('/login').post(user_login);
+router.route('/account').post(get_User_Account);
 
 export default router;

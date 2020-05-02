@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import clsx from 'clsx';
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import GridItem from "components/Grid/GridItem.js";
@@ -6,29 +6,44 @@ import GridContainer from "components/Grid/GridContainer.js";
 import { Paper, Tabs, Tab, Typography, Box } from "@material-ui/core";
 import SwipeableViews from 'react-swipeable-views';
 import Material_Table from "components/Table/Material_Table";
+import { apiTxn_get_success, apiTxn_get_fail, apiTxn_get_waiting } from "../api"
 
-const table_state = {
-  columns: [
-    { title: 'Name', field: 'name' },
-    { title: 'Surname', field: 'surname' },
-    { title: 'Birth Year', field: 'birthYear', type: 'numeric' },
-    {
-      title: 'Birth Place',
-      field: 'birthCity',
-      lookup: { 34: 'İstanbul', 63: 'Şanlıurfa' },
-    },
-  ],
-  data: [
-    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-    { name: 'Mehmet', surname: 'Baran', birthYear: 1987, birthCity: 63 },
-    { name: 'Zerya Betül', surname: 'Baran', birthYear: 2017, birthCity: 34 },
-  ],
-}
+const testUser = "5ea7c55655050f2b883173ce"
+
+const columns = [
+  {
+    field: "stock_id",
+    title: "證券代號",
+  },
+  {
+    field: "stock.stock_name",
+    title: "證券名稱",
+  },
+  {
+    field: "type",
+    title: "交易類型",
+  },
+  {
+    field: "shares_number",
+    title: "交易股數",
+  },
+  {
+    field: "bid_price",
+    title: "每股出價",
+  },
+  {
+    field: "stock.closing_price",
+    title: "每股成交價格",
+  },
+  {
+    field: "order_time",
+    title: "下單時間",
+  },
+  {
+    field: "txn_time",
+    title: "交易處理時間",
+  },
+]
 
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
@@ -83,21 +98,45 @@ const useStyles = makeStyles(styles);
 export default function StockStatus() {
   const classes = useStyles();
   const theme = useTheme();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(0); //控制導覽列
+  const [successData, set_successData] = useState([])
+  const [waitingData, set_waitingData] = useState([])
+  const [failData, set_failData] = useState([])
+  const [ loading, setLoading ] = useState(false);
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-  const getTabBarStyles = (current_i) => {
+
+  const getTabBarStyles = useCallback((current_i) => {
     if(current_i==0) return classes.customTabs_success
     else if(current_i==1) return classes.customTabs_wait
     else if(current_i==2) return classes.customTabs_error
-  }
-  const getTabStyles = (current_i, i) => {
+  }, [value])
+
+  const getTabStyles = useCallback((current_i, i) => {
     if(i==0 && current_i == i) return classes.tabRoot_success
     else if(i==1 && current_i == i) return classes.tabRoot_wait
     else if(i==2 && current_i == i) return classes.tabRoot_fail
+  }, [value])
+
+  const loadData = async() => {
+    setLoading(true)
+    const arg = { uid: testUser }
+    const success_res = await apiTxn_get_success(arg)
+    const waiting_res = await apiTxn_get_waiting(arg)
+    const fail_res = await apiTxn_get_fail(arg)
+
+    set_successData(success_res.data)
+    set_waitingData(waiting_res.data)
+    set_failData(fail_res.data)
+    setLoading(false)
   }
-  console.log(classes.customTabs)
+  
+  useEffect(() => {
+    loadData()
+  }, [])
+
   return (
     <GridContainer>
       <GridItem xs={12} sm={12} md={12}>
@@ -116,14 +155,15 @@ export default function StockStatus() {
             axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
             index={value}
             onChangeIndex={handleChange}
+            className="pl-3 pr-3 pb-3"
           >
             <TabPanel value={value} index={0} dir={theme.direction}>
               <Material_Table
                 title="顯示所有交易紀錄"
                 showToolBar
                 search
-                columns={table_state.columns}
-                data={table_state.data}
+                columns={columns}
+                data={successData}
                 noContainer
               />
             </TabPanel>
@@ -132,8 +172,8 @@ export default function StockStatus() {
                 title="顯示所有未完成交易紀錄"
                 showToolBar
                 search
-                columns={table_state.columns}
-                data={table_state.data}
+                columns={columns}
+                data={waitingData}
                 noContainer
               />
             </TabPanel>
@@ -142,8 +182,8 @@ export default function StockStatus() {
                 title="顯示所有失敗交易紀錄"
                 showToolBar
                 search
-                columns={table_state.columns}
-                data={table_state.data}
+                columns={columns}
+                data={failData}
                 noContainer
               />
             </TabPanel>

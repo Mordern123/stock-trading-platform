@@ -38,9 +38,12 @@ const user_place_order = async (req, res) => {
     const { uid, stock_id, shares_number, price } = req.body
     const time = Date(Date.now())
 
+    const stockDoc = await Stock.findOne({stock_id}).sort('-data_time').exec() //取的目前最新股票
+
     const userTxnDoc = await new UserTxn({
       user: uid,
       stock_id,
+      stock: stockDoc._id,
       type: req.params.type,
       shares_number,
       bid_price: price,
@@ -99,8 +102,9 @@ const user_track_stock = async (req, res) => {
   } catch (error) {
     res.json(false)
   }
-  
 }
+
+
 
 router.route('/get/all').get(get_all_stock);
 router.route('/user/get').post(get_user_stock);
@@ -108,4 +112,4 @@ router.route('/user/order/:type').post(user_place_order);
 router.route('/user/track').post(user_track_stock);
 router.route('/user/track/get').post(get_user_track);
 
-export default router; 
+export default router;

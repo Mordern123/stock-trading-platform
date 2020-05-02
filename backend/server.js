@@ -6,6 +6,7 @@ import Socket from 'socket.io'
 import userRouter from './routes/user'
 import classRouter from './routes/class'
 import stockRouter from './routes/stock'
+import txnRouter from './routes/transaction'
 require('dotenv').config()
 
 const app = express();
@@ -26,6 +27,7 @@ app.use(express.json());
 app.use('/user', userRouter)
 app.use('/class', classRouter)
 app.use('/stock', stockRouter)
+app.use('/txn', txnRouter)
 
 server.listen(port, () => {
   console.log(`Server is running on port: ${port}`);

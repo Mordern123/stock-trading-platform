@@ -14,7 +14,7 @@ const userTxnSchema = new Schema({
   },
   stock: {
     type: Schema.Types.ObjectId,
-    default: null,
+    required: true,
     ref: 'Stock'
   },
   type: {

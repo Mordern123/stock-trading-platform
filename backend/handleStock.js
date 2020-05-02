@@ -54,6 +54,7 @@ const runBuy = async (userTxnDoc) => {
   const { _id, user, stock_id, bid_price, shares_number } = userTxnDoc
   try {
     const stockDoc = await getStock(stock_id) //取得要購買股票
+    console.log(stockDoc)
 
     //未存在此股票
     if(stockDoc == null) {
@@ -83,7 +84,7 @@ const runBuy = async (userTxnDoc) => {
           user,
           stock_id
         }, {
-          stock: stockDoc.id,
+          stock: stockDoc._id,
           $inc: {shares_number}, //增加股數
           last_update: Date(Date.now())
         },{
@@ -95,7 +96,7 @@ const runBuy = async (userTxnDoc) => {
       let newUserStockDoc = await new UserStock({
         user,
         stock_id,
-        stock: stockDoc.id,
+        stock: stockDoc._id,
         shares_number,
         last_update: Date(Date.now())
       }).save()
@@ -149,7 +150,7 @@ const runSell = async (userTxnDoc) => {
         user,
         stock_id
       }, {
-        stock: stockDoc.id,
+        stock: stockDoc._id,
         $inc: {shares_number: -shares_number}, //減少股數
         last_update: Date(Date.now())
       },{
@@ -234,7 +235,7 @@ const updateBalance = async (user, value) => {
 
 const updateStockValue = async (user) => {
   let total_value = 0
-  const userAllStocks = await UserStock.find({user}).exec()
+  let userAllStocks = await UserStock.find({user}).exec()
 
   for(let i = 0; i < userAllStocks.length; i++) {
     const { stock_id, shares_number } = userAllStocks[i]
@@ -252,6 +253,7 @@ const updateStockValue = async (user) => {
   }
 
   //更新帳戶資料
+  userAllStocks = await UserStock.find({user}).exec() //重新確認股票擁有數量
   await Account.findOneAndUpdate({
     user
   },{

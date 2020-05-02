@@ -80,9 +80,9 @@ export default function SellDialog(props) {
   const { open, handleClose, stockInfo } = props
   const { shares_number, stock } = stockInfo
   const { stock_id, stock_name, txn_number, closing_price } = stock
-  const [stock_price, setStock_price] = useState(null)
-  const [stock_num, setStock_num] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [ stock_price, setStock_price ] = useState(null)
+  const [ stock_num, setStock_num ] = useState(null)
+  const [ loading, setLoading ] = useState(false)
 
   const handlePriceChange = (e) => {
     let n = parseInt(e.target.value)
@@ -103,8 +103,10 @@ export default function SellDialog(props) {
           shares_number: stock_num * 1000, //一張1000股
           price: stock_price
         })
-        setLoading(false)
-        handleClose()
+        setTimeout(() => {
+          setLoading(false)
+          handleClose()
+        }, 1000)
         console.log(res.data)
       } else {
         alert('輸入值要大於0')

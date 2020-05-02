@@ -147,7 +147,6 @@ export default function StockManage() {
       uid: testUser
     })
     setUserStock(userStock_res.data)
-    console.log(userStock_res.data)
     setUserTrack(userTrack_res.data)
     setStock_loading(false)
     setTrack_loading(false)

@@ -10,7 +10,7 @@ import CardStat from 'components/Transaction/Card_Stat';
 import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
 import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
 import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
-import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserStock_get } from '../api'
+import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserStock_get, apiUser_account } from '../api'
 
 const testUser = "5ea7c55655050f2b883173ce"
 
@@ -129,8 +129,6 @@ const styles = theme => ({
   },
 })
 
-
-
 const useStyles = makeStyles(styles);
 
 export default function Transaction() {
@@ -180,17 +178,24 @@ export default function Transaction() {
     setTimeout(() => { setLoading(false) }, 1000);
   }
 
+  //取得帳戶相關資料
+  const loadAccount = async() => {
+    const arg = { uid: testUser }
+    const account_res = await apiUser_account(arg)
+
+    setAccount(account_res.data)
+  }
+
   //取得股票相關資料
   const loadData = async() => {
-    setLoading(true) 
+    setLoading(true)
+    loadAccount()
+    const arg = { uid: testUser }
     const stock_res = await apiStock_list_all()
-    const userStock_res = await apiUserStock_get({
-      uid: testUser
-    }) 
-    const track_res = await apiUserStock_track_get({
-      uid: testUser
-    })
-    let onlyTrackId_data = track_res.data.map(item => item.stock_id)
+    const userStock_res = await apiUserStock_get(arg) 
+    const track_res = await apiUserStock_track_get(arg)
+    const onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
+
     setUserStock_data(userStock_res.data)
     setTrack_data(onlyTrackId_data)
     setStock_data(stock_res.data)
@@ -233,8 +238,8 @@ export default function Transaction() {
         <GridItem xs={12} sm={6} md={6}>
           <CardStat
             title="目前總資產"
-            updateTime="1分鐘前更新"
-            value={34245}
+            updateTime={account ? `${account.last_update} 更新` : '更新中...'}
+            value={account ? account.balance : 0}
             color="success"
             icon={<AccountBalanceRounded />}
           />
@@ -242,8 +247,8 @@ export default function Transaction() {
         <GridItem xs={12} sm={6} md={6}>
           <CardStat
             title="股票總價值"
-            updateTime="1天前收盤價更新"
-            value={0}
+            updateTime={account ? `${account.last_update} 更新` : '更新中...'}
+            value={account ? account.stock_value : 0}
             color="warning"
             icon={<LocalAtmRounded />}
           />

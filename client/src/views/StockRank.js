@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -6,9 +6,19 @@ import Table from "components/Table/Table.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
+import { apiRank_list_all } from '../api'
+import clsx from 'clsx'
+
+const column = [
+  "名次",
+  "學號",
+  "帳戶總價值",
+  "擁有股票種類數量"
+]
 
 const styles = {
   cardCategoryWhite: {
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     "&,& a,& a:hover,& a:focus": {
       color: "rgba(255,255,255,.62)",
       margin: "0",
@@ -25,7 +35,7 @@ const styles = {
     marginTop: "0px",
     minHeight: "auto",
     fontWeight: "300",
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     marginBottom: "3px",
     textDecoration: "none",
     "& small": {
@@ -41,30 +51,50 @@ const useStyles = makeStyles(styles);
 
 const StockRank = () => {
   const classes = useStyles();
+  const [rankData, setRankData] = useState([]);
+  const [updateTime, setUpdateTime] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const loadData = async() => {
+    setLoading(true)
+    const res = await apiRank_list_all();
+
+    //製作Table資料
+    const rowData = res.data.accountDocs.map((item, index) => {
+      return [
+        index+1,
+        item.user.student_id,
+        item.totalValue,
+        item.stock_number
+      ]
+    })
+    setRankData(rowData)
+    setUpdateTime(res.data.updateTime)
+    setLoading(false)
+  }
+
+  // 初始執行
+  useEffect(() => {
+    loadData() 
+  }, [])
+
   return (
     <GridContainer>
       <GridItem xs={12} sm={12} md={12}>
         <Card>
           <CardHeader plain color="warning">
-            <h4 className={classes.cardTitleWhite}>
-              Table on Plain Background
+            <h4 className={clsx(classes.cardTitleWhite)}>
+              股票排名
             </h4>
-            <p className={classes.cardCategoryWhite}>
-              Here is a subtitle for this table
+            <p className={clsx(classes.cardCategoryWhite)}>
+              更新時間：{updateTime}
             </p>
           </CardHeader>
           <CardBody>
             <Table
               tableHeaderColor="warning"
-              tableHead={["ID", "Name", "Country", "City", "Salary"]}
-              tableData={[
-                ["1", "Dakota Rice", "$36,738", "Niger", "Oud-Turnhout"],
-                ["2", "Minerva Hooper", "$23,789", "Curaçao", "Sinaai-Waas"],
-                ["3", "Sage Rodriguez", "$56,142", "Netherlands", "Baileux"],
-                ["4", "Philip Chaney", "$38,735", "Korea, South", "Overland Park"],
-                ["5", "Doris Greene", "$63,542", "Malawi", "Feldkirchen in Kärnten"],
-                ["6", "Mason Porter", "$78,615", "Chile", "Gloucester"]
-              ]}
+              tableHead={column}
+              tableData={rankData}
             />
           </CardBody>
         </Card>

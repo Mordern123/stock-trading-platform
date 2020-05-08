@@ -10,7 +10,10 @@ const styles = theme => ({
     position: 'absolute',
     top: '300px',
     width: '100%',
-  }
+  },
+  text: {
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+  },
 })
 
 const useStyles = makeStyles(styles);
@@ -35,7 +38,8 @@ export default function Custom_MaterialTable(props) {
     pageSizeOptions,
     maxBodyHeight,
     detailPanel,
-    actionsColumnIndex
+    actionsColumnIndex,
+    noDataDisplay,
   } = props
   
   const options = {
@@ -87,7 +91,7 @@ export default function Custom_MaterialTable(props) {
           actions: ''
         },
         body: {
-          emptyDataSourceMessage: <div>沒有資料可以顯示</div>
+          emptyDataSourceMessage: <div className={classes.text}>{noDataDisplay}</div>
         },
         pagination: {
           labelDisplayedRows: "第 {from}-{to} 共 {count} 筆",
@@ -120,6 +124,7 @@ Custom_MaterialTable.propTypes = {
     PropTypes.string
   ]),
   detailPanel: PropTypes.array,
-  actionsColumnIndex: PropTypes.number
+  actionsColumnIndex: PropTypes.number,
+  noDataDisplay: PropTypes.string
 }
 

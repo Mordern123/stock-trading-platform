@@ -148,7 +148,7 @@ export default function StockStatus() {
             className={getTabBarStyles(value)}
           >
             <Tab label="成功交易" className={clsx(classes.customTab, getTabStyles(value, 0))} />
-            <Tab label="等待交易" className={clsx(classes.customTab, getTabStyles(value, 1))} />
+            <Tab label="待處理交易" className={clsx(classes.customTab, getTabStyles(value, 1))} />
             <Tab label="失敗交易" className={clsx(classes.customTab, getTabStyles(value, 2))} />
           </Tabs>
           <SwipeableViews
@@ -165,16 +165,18 @@ export default function StockStatus() {
                 columns={columns}
                 data={successData}
                 noContainer
+                noDataDisplay="沒有任何交易紀錄"
               />
             </TabPanel>
             <TabPanel value={value} index={1} dir={theme.direction}>
               <Material_Table
-                title="顯示所有未完成交易紀錄"
+                title="顯示所有待處理交易紀錄"
                 showToolBar
                 search
                 columns={columns}
                 data={waitingData}
                 noContainer
+                noDataDisplay="沒有任何待處理交易紀錄"
               />
             </TabPanel>
             <TabPanel value={value} index={2} dir={theme.direction}>
@@ -185,6 +187,7 @@ export default function StockStatus() {
                 columns={columns}
                 data={failData}
                 noContainer
+                noDataDisplay="沒有任何失敗交易紀錄"
               />
             </TabPanel>
           </SwipeableViews>

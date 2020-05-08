@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
@@ -8,54 +8,19 @@ import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
+import { apiTxn_get_all } from '../../api'
+
+const testUser = "5ea7c55655050f2b883173ce"
 
 const columns = [
-  { id: 'name', label: 'Name', minWidth: 170 },
-  { id: 'code', label: 'ISO\u00a0Code', minWidth: 100 },
-  {
-    id: 'population',
-    label: 'Population',
-    minWidth: 170,
-    align: 'right',
-    format: (value) => value.toLocaleString(),
-  },
-  {
-    id: 'size',
-    label: 'Size\u00a0(km\u00b2)',
-    minWidth: 170,
-    align: 'right',
-    format: (value) => value.toLocaleString(),
-  },
-  {
-    id: 'density',
-    label: 'Density',
-    minWidth: 170,
-    align: 'right',
-    format: (value) => value.toFixed(2),
-  },
-];
-
-function createData(name, code, population, size) {
-  const density = population / size;
-  return { name, code, population, size, density };
-}
-
-const rows = [
-  createData('India', 'IN', 1324171354, 3287263),
-  createData('China', 'CN', 1403500365, 9596961),
-  createData('Italy', 'IT', 60483973, 301340),
-  createData('United States', 'US', 327167434, 9833520),
-  createData('Canada', 'CA', 37602103, 9984670),
-  createData('Australia', 'AU', 25475400, 7692024),
-  createData('Germany', 'DE', 83019200, 357578),
-  createData('Ireland', 'IE', 4857000, 70273),
-  createData('Mexico', 'MX', 126577691, 1972550),
-  createData('Japan', 'JP', 126317000, 377973),
-  createData('France', 'FR', 67022000, 640679),
-  createData('United Kingdom', 'GB', 67545757, 242495),
-  createData('Russia', 'RU', 146793744, 17098246),
-  createData('Nigeria', 'NG', 200962417, 923768),
-  createData('Brazil', 'BR', 210147125, 8515767),
+  { field: 'stock_id', label: '證券代號' },
+  { field: 'stock.stock_name', label: '證券名稱' },
+  { field: 'type', label: '交易類型'},
+  { field: 'shares_number', label: '交易股數' },
+  { field: 'bid_price', label: '每股出價' },
+  { field: 'stock.closing_price', label: '每股成交價格' },
+  { field: 'order_time', label: '下單時間' },
+  { field: 'txn_time', label: '交易處理時間' },
 ];
 
 const useStyles = makeStyles({
@@ -69,8 +34,9 @@ const useStyles = makeStyles({
 
 export default function StickyHeadTable() {
   const classes = useStyles();
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [txnData, setTxnData] = useState([]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -81,17 +47,27 @@ export default function StickyHeadTable() {
     setPage(0);
   };
 
+  const loadData = async() => {
+    const res = await apiTxn_get_all({
+      uid: testUser
+    })
+    setTxnData(res.data) 
+  }
+
+  useEffect(() => {
+    loadData()
+  }, []) 
+
   return (
     <Paper className={classes.root}>
       <TableContainer className={classes.container}>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
             <TableRow>
-              {columns.map((column) => (
+              {columns.map((column, i) => (
                 <TableCell
-                  key={column.id}
-                  align={column.align}
-                  style={{ minWidth: column.minWidth }}
+                  key={i}
+                  align='center'
                 >
                   {column.label}
                 </TableCell>
@@ -99,14 +75,15 @@ export default function StickyHeadTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
+            {txnData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, i) => {
               return (
-                <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                  {columns.map((column) => {
-                    const value = row[column.id];
+                <TableRow hover role="checkbox" tabIndex={-1} key={i}>
+                  {columns.map((column, j) => {
+                    const f = column.field.split(".")
+                    const value = f.length == 1 ? row[f[0]] : row[f[0]][f[1]];
                     return (
-                      <TableCell key={column.id} align={column.align}>
-                        {column.format && typeof value === 'number' ? column.format(value) : value}
+                      <TableCell key={j} align='center'>
+                        {value}
                       </TableCell>
                     );
                   })}
@@ -119,7 +96,7 @@ export default function StickyHeadTable() {
       <TablePagination
         rowsPerPageOptions={[10, 25, 100]}
         component="div"
-        count={rows.length}
+        count={txnData.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}

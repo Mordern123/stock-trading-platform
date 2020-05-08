@@ -86,7 +86,7 @@ const runBuy = async (userTxnDoc) => {
         }, {
           stock: stockDoc._id,
           $inc: {shares_number}, //增加股數
-          last_update: Date(Date.now())
+          last_update: moment()
         },{
           new: true
         })
@@ -98,7 +98,7 @@ const runBuy = async (userTxnDoc) => {
         stock_id,
         stock: stockDoc._id,
         shares_number,
-        last_update: Date(Date.now())
+        last_update: moment()
       }).save()
     }
 
@@ -152,7 +152,7 @@ const runSell = async (userTxnDoc) => {
       }, {
         stock: stockDoc._id,
         $inc: {shares_number: -shares_number}, //減少股數
-        last_update: Date(Date.now())
+        last_update: moment()
       },{
         new: true
       })
@@ -217,7 +217,7 @@ const updateTxn = async (id, status, CODE) => {
   const userTxnDoc = await UserTxn
     .findByIdAndUpdate(id, {
       status,
-      txn_time: Date(Date.now()),
+      txn_time: moment(),
       msg
     })
 }

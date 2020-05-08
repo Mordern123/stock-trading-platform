@@ -3,6 +3,7 @@ import Stock from '../models/stock_model'
 import UserStock from '../models/user_stock_model'
 import UserTrack from '../models/user_track_model'
 import UserTxn from '../models/user_txn_model'
+import Account from '../models/account_model'
 import moment from 'moment';
 
 moment.locale('zh-tw');
@@ -13,6 +14,32 @@ const get_all_stock = async (req, res) => {
   const date = new Date('2020-04-16')
   const result = await Stock.find({data_time: date}).exec()
   res.json(result)
+}
+
+
+const get_stock_rank = async (req, res) => {
+  let accountDocs = await Account
+    .aggregate([
+      {
+        $addFields: {
+          totalValue: {
+            '$add' : [ '$stock_value', '$balance' ]
+          }
+        }
+      },
+      {
+        $sort: {
+          totalValue: 1
+        }
+      },
+      { $limit : 50 }
+    ]).exec()
+  accountDocs = await Account.populate(accountDocs, 'user')
+  const updateTime = moment().calendar()
+  res.json({
+    accountDocs,
+    updateTime
+  })
 }
 
 const get_user_stock = async (req, res) => {
@@ -106,7 +133,9 @@ const user_track_stock = async (req, res) => {
 
 
 
+
 router.route('/get/all').get(get_all_stock);
+router.route('/get/rank').post(get_stock_rank);
 router.route('/user/get').post(get_user_stock);
 router.route('/user/order/:type').post(user_place_order);
 router.route('/user/track').post(user_track_stock);

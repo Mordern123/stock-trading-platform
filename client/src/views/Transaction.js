@@ -286,6 +286,7 @@ export default function Transaction() {
             actions={getActions()}
             maxBodyHeight={1000}
             handleOpenStockBuy={handleOpenStockBuy}
+            noDataDisplay="沒有符合的股票"
           />
         </GridItem>
       </GridContainer>

@@ -9,7 +9,7 @@ const userSchema = new Schema({
     trim: true,
   },
   sex: { 
-    type: Number,
+    type: String,
     default: null
   },
   birthday: { 

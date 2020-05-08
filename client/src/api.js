@@ -12,6 +12,8 @@ const txnReq = axios.create({ baseURL: `${baseURL}/txn`})
 // User
 export const apiUser_login = data => userReq.post('/login', data)
 export const apiUser_new = data => userReq.post('/new', data)
+export const apiUser_get = data => userReq.post('/get', data)
+export const apiUser_update = data => userReq.post('/update', data)
 export const apiUser_account = data => userReq.post('/account', data)
 
 // Class
@@ -20,6 +22,7 @@ export const apiClass_addAnnounce = data => classReq.post('/add_Announce', data)
 
 // Stock
 export const apiStock_list_all = () => stockReq.get('/get/all')
+export const apiRank_list_all = () => stockReq.post('get/rank')
 
 // User's Stock
 export const apiUserStock_get = data => userStockReq.post('/get', data)
@@ -30,6 +33,7 @@ export const apiUserStock_sell = data => userStockReq.post('/order/sell', data)
 
 // Transaction
 export const apiTxn_list_all = () => txnReq.post('get/all')
+export const apiTxn_get_all = data => txnReq.post('get/user/all', data)
 export const apiTxn_get_success = data => txnReq.post('get/user/success', data)
 export const apiTxn_get_fail = data => txnReq.post('get/user/fail', data)
 export const apiTxn_get_waiting = data => txnReq.post('get/user/waiting', data)

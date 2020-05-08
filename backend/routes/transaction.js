@@ -18,12 +18,16 @@ const get_user_txn = async (req, res) => {
   const { uid } = req.body
   const { type } = req.params
 
-  if(!['success', 'fail', 'waiting', 'error'].includes(type)) {
+  if(!['all', 'success', 'fail', 'waiting', 'error'].includes(type)) {
     res.json(false)
     return
   }
 
-  const txnData = await UserTxn.find({user: uid, status: type}).populate('stock').lean().exec()
+  const conditions = (type == 'all')
+    ? { user: uid }
+    : { status: type }
+
+  const txnData = await UserTxn.find(conditions).populate('stock').lean().exec()
   if(txnData) {
     const newTxnData = txnData.map(item => {
       let newDoc = item

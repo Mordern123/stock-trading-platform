@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 // @material-ui/core
 import { makeStyles } from "@material-ui/core/styles";
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Slide, InputLabel, Typography } from '@material-ui/core'
@@ -7,6 +7,7 @@ import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Button from "components/CustomButtons/Button.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
+import { apiUser_update } from "../../api"
 
 const styles = theme => ({
   inputLabel: {
@@ -28,9 +29,28 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 const useStyles = makeStyles(styles)
-const ProfileBox = (props) => {
+
+export default function ProfileBox(props) {
   const classes = useStyles();
-  const { open, handleClose } = props
+  const { open, handleClose, userData, loadData } = props
+  const { _id, student_id, sex, birthday, user_name, email } = userData
+  const [ _user_name, setUserName ] = useState(user_name)
+  const [ _email, setEmail ] = useState(email)
+  const [ _sex, setSex ] = useState(sex)
+  const [ _birthday, setBirthday ] = useState(birthday)
+
+  const handelSubmit = async() => {
+    const res = await apiUser_update({
+      uid: _id,
+      user_name: _user_name,
+      email: _email,
+      sex: _sex,
+      birthday: _birthday
+    })
+    await loadData()
+    handleClose()
+  }
+  
   return (
     <Dialog
       open={open}
@@ -46,33 +66,15 @@ const ProfileBox = (props) => {
       </DialogTitle>
       <DialogContent>
         <GridContainer>
-          <GridItem xs={12} sm={12} md={5}>
+          <GridItem xs={12} sm={12} md={12}>
             <CustomInput
-              labelText="Company (disabled)"
-              id="company-disabled"
+              labelText="用戶ID"
               formControlProps={{
                 fullWidth: true
               }}
               inputProps={{
-                disabled: true
-              }}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={3}>
-            <CustomInput
-              labelText="Username"
-              id="username"
-              formControlProps={{
-                fullWidth: true
-              }}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
-            <CustomInput
-              labelText="Email address"
-              id="email-address"
-              formControlProps={{
-                fullWidth: true
+                disabled: true,
+                defaultValue: _id
               }}
             />
           </GridItem>
@@ -80,76 +82,77 @@ const ProfileBox = (props) => {
         <GridContainer>
           <GridItem xs={12} sm={12} md={6}>
             <CustomInput
-              labelText="First Name"
-              id="first-name"
+              labelText="學號"
               formControlProps={{
                 fullWidth: true
+              }}
+              inputProps={{
+                disabled: true,
+                defaultValue: student_id,
               }}
             />
           </GridItem>
           <GridItem xs={12} sm={12} md={6}>
             <CustomInput
-              labelText="Last Name"
-              id="last-name"
+              labelText="姓名"
               formControlProps={{
                 fullWidth: true
               }}
-            />
-          </GridItem>
-        </GridContainer>
-        <GridContainer>
-          <GridItem xs={12} sm={12} md={4}>
-            <CustomInput
-              labelText="City"
-              id="city"
-              formControlProps={{
-                fullWidth: true
+              inputProps={{
+                defaultValue: user_name,
+                onChange: (e) => setUserName(e.target.value)
               }}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
-            <CustomInput
-              labelText="Country"
-              id="country"
-              formControlProps={{
-                fullWidth: true
-              }}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
-            <CustomInput
-              labelText="Postal Code"
-              id="postal-code"
-              formControlProps={{
-                fullWidth: true
-              }}
+              
             />
           </GridItem>
         </GridContainer>
         <GridContainer>
           <GridItem xs={12} sm={12} md={12}>
-            <InputLabel style={{ color: "#AAAAAA" }}>About me</InputLabel>
             <CustomInput
-              labelText="Lamborghini Mercy, Your chick she so thirsty, I'm in that two seat Lambo."
-              id="about-me"
+              labelText="Email"
               formControlProps={{
                 fullWidth: true
               }}
               inputProps={{
-                multiline: true,
-                rows: 5
+                defaultValue: email,
+                autoComplete: "email",
+                onChange: (e) => setEmail(e.target.value)
+              }}
+            />
+          </GridItem>
+        </GridContainer>
+        <GridContainer>
+          <GridItem xs={12} sm={12} md={6}>
+            <CustomInput
+              labelText="性別"
+              formControlProps={{
+                fullWidth: true
+              }}
+              inputProps={{
+                defaultValue: sex || '未設定',
+                onChange: (e) => setSex(e.target.value)
+              }}
+            />
+          </GridItem>
+          <GridItem xs={12} sm={12} md={6}>
+            <CustomInput
+              labelText="生日"
+              formControlProps={{
+                fullWidth: true
+              }}
+              inputProps={{
+                defaultValue: birthday || '未設定',
+                onChange: (e) => setBirthday(e.target.value)
               }}
             />
           </GridItem>
         </GridContainer>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} color="primary">
+        <Button onClick={handelSubmit} color="primary">
           更新
         </Button>
       </DialogActions>
     </Dialog>
   )
 }
-
-export default ProfileBox;

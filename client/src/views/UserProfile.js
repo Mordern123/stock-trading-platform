@@ -1,23 +1,15 @@
-import React, { useState } from "react";
-// @material-ui/core components
+import React, { useState, useEffect } from "react";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import InputLabel from "@material-ui/core/InputLabel";
-// core components
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
-// import Button from "components/CustomButtons/Button.js";
 import Card from "components/Card/Card.js";
-import CardHeader from "components/Card/CardHeader.js";
-import CardAvatar from "components/Card/CardAvatar.js";
-import CardBody from "components/Card/CardBody.js";
-import CardFooter from "components/Card/CardFooter.js";
 import Table from "components/UserProfile/table.js";
 import Profile from "components/UserProfile/profile.js";
 import Chart from "components/UserProfile/chart.js";
 import Avatar from "components/UserProfile/avatar.js";
 import ProfileBox from "components/UserProfile/profileBox.js";
-// @material-ui/core
 import {
   Typography,
   Paper,
@@ -28,9 +20,10 @@ import {
 } from '@material-ui/core'
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme } from '@material-ui/core/styles';
-// others
 import SwipeableViews from 'react-swipeable-views';
-import avatar from "assets/img/faces/marc.jpg";
+import { apiUser_get } from '../api'
+
+const testUser = "5ea7c55655050f2b883173ce"
 
 const barTheme = createMuiTheme({
   palette: {
@@ -90,11 +83,14 @@ const styles = theme => ({
   }
 });
 const useStyles = makeStyles(styles);
+
 export default function UserProfile() {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(0); //控制Panel轉換
+  const [userData, setUserData] = useState(null);
+
   const handleOpen = () => {
     setOpen(true)
   };
@@ -107,6 +103,18 @@ export default function UserProfile() {
   const handleChangeIndex = index => {
     setValue(index);
   };
+
+  const loadData = async() => {
+    const res = await apiUser_get({
+      uid: testUser
+    })
+    setUserData(res.data) 
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
   return (
     <div>
       <GridContainer>
@@ -115,15 +123,17 @@ export default function UserProfile() {
             <Avatar />
             <ThemeProvider theme={barTheme}>
               <div className="mt-4">
-                <h6 className={classes.cardCategory}>7108026107</h6>
-                <h2 className={`${classes.cardTitleWhite} mb-3`}>胡紘維</h2>
+                <h6 className={classes.cardCategory}>{userData ? userData.student_id : "---"}</h6>
+                <h2 className={`${classes.cardTitleWhite} mb-3`}>{userData ? userData.user_name : "---"}</h2>
                 <Button
                   size="small"
                   variant="outlined"
                   color="primary"
                   className="m-0 p-0 mb-4"
                   onClick={handleOpen}
-                >EDIT</Button>
+                >
+                  修改
+                </Button>
                 <Tabs
                   value={value}
                   indicatorColor="primary"
@@ -143,17 +153,24 @@ export default function UserProfile() {
                   onChangeIndex={handleChangeIndex}
                 >
                   <TabPanel value={value} index={0} dir={theme.direction}>
-                    <Paper elevation={3} className={classes.customPaper}>
-                      <Profile handleOpen={handleOpen}/>
+                    <Paper elevation={2} className={classes.customPaper}>
+                      {
+                        userData ? (
+                          <Profile
+                            handleOpen={handleOpen}
+                            userData={userData}
+                          />
+                        ) : null
+                      }
                     </Paper>
                   </TabPanel>
                   <TabPanel value={value} index={1} dir={theme.direction}>
-                    <Paper elevation={3} className={classes.customPaper}>
+                    <Paper elevation={2} className={classes.customPaper}>
                       <Chart />
                     </Paper>
                   </TabPanel>
                   <TabPanel value={value} index={2} dir={theme.direction}>
-                    <Paper elevation={3} className={classes.customPaper}>
+                    <Paper elevation={2} className={classes.customPaper}>
                       <Table />
                     </Paper>
                   </TabPanel>
@@ -163,7 +180,17 @@ export default function UserProfile() {
           </Card>
         </GridItem>
       </GridContainer>
-      <ProfileBox open={open} handleClose={handleClose}/>
+      {
+        userData
+          ? (
+            <ProfileBox
+              open={open}
+              handleClose={handleClose}
+              userData={userData}
+              loadData={loadData}
+            />
+          ) : null
+      }
     </div>
   );
 }

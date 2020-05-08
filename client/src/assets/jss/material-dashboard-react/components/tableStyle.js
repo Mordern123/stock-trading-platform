@@ -40,14 +40,16 @@ const tableStyle = theme => ({
     borderCollapse: "collapse"
   },
   tableHeadCell: {
+    textAlign: 'center',
     color: "inherit",
-    ...defaultFont,
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     "&, &$tableCell": {
       fontSize: "1em"
     }
   },
   tableCell: {
-    ...defaultFont,
+    textAlign: 'center',
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     lineHeight: "1.42857143",
     padding: "12px 8px",
     verticalAlign: "middle",

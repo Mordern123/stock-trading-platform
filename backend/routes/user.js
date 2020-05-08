@@ -53,7 +53,42 @@ const user_login = async (req, res) => {
   }
 }
 
-const get_User_Account = async (req, res) => {
+const get_user_data = async (req, res) => {
+  const { uid } = req.body
+  const userDoc = await User.findById(uid).lean().exec()
+  if(userDoc) {
+    const newDoc = userDoc
+    newDoc.updatedAt = moment(userDoc.updatedAt).startOf('hour').fromNow()
+    newDoc.createdAt = moment(userDoc.createdAt).calendar()
+    res.json(newDoc)
+  } else {
+    res.json(false)
+  }
+}
+
+
+const update_user_data = async (req, res) => {
+  const { uid, user_name, sex, birthday, email } = req.body
+  const userDoc = await User
+    .findByIdAndUpdate(uid, 
+    {
+      user_name,
+      sex,
+      birthday,
+      email
+    },{
+      new: true
+    })
+    .exec()
+
+  if(userDoc) {
+    res.json(true)
+  } else {
+    res.json(false)
+  }
+}
+
+const get_user_account = async (req, res) => {
   const { uid } = req.body
   const accountDoc = await Account.findOne({user: uid}).lean().exec()
   const { updatedAt, createdAt, last_update } = accountDoc
@@ -68,8 +103,11 @@ const get_User_Account = async (req, res) => {
   }
 }
 
+
 router.route('/new').post(new_user);
 router.route('/login').post(user_login);
-router.route('/account').post(get_User_Account);
+router.route('/get').post(get_user_data);
+router.route('/update').post(update_user_data);
+router.route('/account').post(get_user_account);
 
 export default router;

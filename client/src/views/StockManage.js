@@ -209,6 +209,7 @@ export default function StockManage() {
                 data={userStock}
                 noContainer={true}
                 maxBodyHeight={'100%'}
+                noDataDisplay="沒有擁有的股票"
                 detailPanel={getPanel()}
                 actions={[
                   {
@@ -250,6 +251,7 @@ export default function StockManage() {
                 data={userTrack}
                 noContainer={true}
                 maxBodyHeight={'100%'}
+                noDataDisplay="沒有追蹤的股票"
                 actions={[
                   {
                     icon: () => <ClearRoundedIcon />,

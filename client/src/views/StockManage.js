@@ -180,7 +180,7 @@ export default function StockManage() {
   return (
     <Fragment>
       <GridContainer>
-        <GridItem xs={12} sm={12} md={6}>
+        <GridItem xs={12} sm={12} md={12}>
           <Card>
             <CardHeader color="warning">
               <Typography variant="subtitle1" className="ch_font">擁有的股票</Typography>
@@ -222,7 +222,7 @@ export default function StockManage() {
             </CardBody>
           </Card>
         </GridItem>
-        <GridItem xs={12} sm={12} md={6}>
+        <GridItem xs={12} sm={12} md={12}>
           <Card>
             <CardHeader color="primary">
               <Typography variant="subtitle1" className="ch_font">追蹤的股票</Typography>

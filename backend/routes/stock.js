@@ -131,9 +131,6 @@ const user_track_stock = async (req, res) => {
   }
 }
 
-
-
-
 router.route('/get/all').get(get_all_stock);
 router.route('/get/rank').post(get_stock_rank);
 router.route('/user/get').post(get_user_stock);

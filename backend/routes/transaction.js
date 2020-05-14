@@ -48,7 +48,43 @@ const get_user_txn = async (req, res) => {
   }
 }
 
+const get_class_txn_avg = async (req, res) => {
+  const { day } = req.body
+  const dayString = moment().format('YYYY-MM-DD'); //轉換為最小單位為天
+  const startDay = moment(dayString).subtract(day, 'days'); //取得instance
+  const countObj = {}
+  const avgObj = {}
+  
+  const txnDoc = await UserTxn
+    .find({
+        order_time: {
+          $gte: startDay.toDate()
+        }
+      })
+    .sort({
+        order_time: 1
+      })
+    .exec()
+
+  if(txnDoc) {
+    txnDoc.forEach(txn => {
+      let ds = moment(txn.order_time).format('YYYY-MM-DD');
+      let txnCount = countObj[ds] || 0
+      countObj[ds] = txnCount +　1 //計算交易次數
+    })
+
+    // //計算平均每位學生的交易次數
+    // for(let key in countObj) {
+    //   avgObj[key] = Math.round((countObj[key] / 30) * 10) / 10
+    // }
+
+  }
+
+  res.json(countObj)
+}
+
 router.route('/get/all').post(get_all_txn);
 router.route('/get/user/:type').post(get_user_txn);
+router.route('/get/class/avg').post(get_class_txn_avg);
 
 export default router; 

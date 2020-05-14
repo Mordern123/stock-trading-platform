@@ -55,7 +55,7 @@ const styles = theme => ({
     color: theme.palette.getContrastText(red[700]),
     backgroundColor: red[700],
     '&:hover': {
-      backgroundColor: red[700],
+      backgroundColor: red[900],
     },
   },
   submitButton: {

@@ -66,7 +66,6 @@ const get_user_data = async (req, res) => {
   }
 }
 
-
 const update_user_data = async (req, res) => {
   const { uid, user_name, sex, birthday, email } = req.body
   const userDoc = await User
@@ -96,8 +95,8 @@ const get_user_account = async (req, res) => {
     const newDoc = accountDoc
     newDoc.updatedAt = moment(updatedAt).startOf('hour').fromNow()
     newDoc.createdAt = moment(createdAt).calendar()
-    newDoc.last_update = moment(last_update).calendar()
-    res.json(newDoc)
+    newDoc.last_update = moment().calendar()
+    res.json(newDoc) 
   } else {
     res.json(false)
   }

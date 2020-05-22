@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 // @material-ui/core
 import Highcharts from 'highcharts'
 import HighchartsReact from 'highcharts-react-official'
+import moment from 'moment'
 import { apiTxn_get_class_avg } from '../../api'
 
 Highcharts.createElement('link', {
@@ -208,6 +209,7 @@ Highcharts.setOptions(Highcharts.theme);
 
 
 export default function Chart() {
+    const [timePoints, setTimePoints] = useState([])
     const [individual_data, setIndividual_data] = useState([])
     const [class_data, setClass_data] = useState([])
     const options = {
@@ -225,13 +227,14 @@ export default function Chart() {
         },
         xAxis: {
             allowDecimals: false,
-            labels: {
-                formatter: function () {
-                    return this.value; // clean, unformatted number for year
-                }
-            },
+            // labels: {
+            //     formatter: function () {
+            //         return this.value; // clean, unformatted number for year
+            //     }
+            // },
+            categories: timePoints,
             accessibility: {
-                rangeDescription: 'Range: 1940 to 2017.'
+                rangeDescription: 'Range: 10 days'
             }
         },
         yAxis: {
@@ -245,7 +248,7 @@ export default function Chart() {
             }
         },
         tooltip: {
-            pointFormat: '{series.name} <b>{point.y}</b><br/> {point.x}'
+            pointFormat: '{series.name} <b>{point.y}</b><br/>'
         },
         plotOptions: {
             area: {
@@ -272,11 +275,19 @@ export default function Chart() {
     }
 
     const loadData = async() => {
-        const res = await apiTxn_get_class_avg({
-            day: 10
-        })
+        const days_ago = 10
+        const _timePoints = new Array(days_ago)
+        const classData = new Array(days_ago)
+        const res = await apiTxn_get_class_avg({ day: days_ago })
 
-        setClass_data(Object.values(res.data))
+        for(let i = 0; i < days_ago; i++) {
+            let dayString = moment().subtract(i+1, 'days').format('YYYY-MM-DD'); //轉換為最小單位為天
+            _timePoints[i] = dayString
+            classData[i] = res.data[dayString] || 0
+        }
+
+        setTimePoints(_timePoints)
+        setClass_data(classData)
     }
 
     useEffect(() => {

@@ -93,7 +93,7 @@ const stock_columns = [
   },
   {
     field: "last_sell_volume",
-    title: "最後揭示賣價",
+    title: "最後揭示賣量",
     customSort: (a, b) => customSort(a, b, "last_sell_volume")
   },
   {

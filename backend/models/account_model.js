@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-
+import mongoose, { SchemaTypes } from 'mongoose';
+require('mongoose-long')(mongoose);
 const Schema = mongoose.Schema;
 
 const accountSchema = new Schema({
@@ -10,17 +10,17 @@ const accountSchema = new Schema({
     ref: 'User'
   },
   balance: {
-    type: Number,
+    type: Schema.Types.Long,
     required: true,
     default: 0
   },
   stock_number: {
-    type: Number,
+    type: Schema.Types.Long,
     required: true,
     default: 0
   },
   stock_value: {
-    type: Number,
+    type: Schema.Types.Long,
     required: true,
     default: 0
   },

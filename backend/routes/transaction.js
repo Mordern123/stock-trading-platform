@@ -3,6 +3,7 @@ import Stock from '../models/stock_model'
 import UserStock from '../models/user_stock_model'
 import UserTrack from '../models/user_track_model'
 import UserTxn from '../models/user_txn_model'
+import User from '../models/user_model'
 import moment from 'moment';
 
 moment.locale('zh-tw');
@@ -27,7 +28,15 @@ const get_user_txn = async (req, res) => {
     ? { user: uid }
     : { status: type }
 
-  const txnData = await UserTxn.find(conditions).populate('stock').lean().exec()
+  const txnData = await UserTxn
+    .find(conditions)
+    .populate('stock')
+    .sort({
+      createdAt: -1,
+    })
+    .lean()
+    .exec()
+
   if(txnData) {
     const newTxnData = txnData.map(item => {
       let newDoc = item
@@ -54,6 +63,8 @@ const get_class_txn_avg = async (req, res) => {
   const startDay = moment(dayString).subtract(day, 'days'); //取得instance
   const countObj = {}
   const avgObj = {}
+
+  const userCount = await User.countDocuments()
   
   const txnDoc = await UserTxn
     .find({
@@ -73,14 +84,13 @@ const get_class_txn_avg = async (req, res) => {
       countObj[ds] = txnCount +　1 //計算交易次數
     })
 
-    // //計算平均每位學生的交易次數
-    // for(let key in countObj) {
-    //   avgObj[key] = Math.round((countObj[key] / 30) * 10) / 10
-    // }
-
+    //計算平均每位學生的交易次數
+    for(let key in countObj) {
+      avgObj[key] = Math.round((countObj[key] / userCount) * 10) / 10
+    }
   }
 
-  res.json(countObj)
+  res.json(avgObj)
 }
 
 router.route('/get/all').post(get_all_txn);

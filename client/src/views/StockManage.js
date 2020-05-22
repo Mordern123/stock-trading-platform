@@ -14,6 +14,7 @@ import { apiUserStock_get, apiUserStock_track_get, apiUserStock_track } from '..
 import ClearRoundedIcon from '@material-ui/icons/ClearRounded';
 import MonetizationOnRoundedIcon from '@material-ui/icons/MonetizationOnRounded';
 import SellDialog from 'components/StockManage/Dialog_Sell'
+import StockDetail from 'components/StockManage/Detail_Stock'
 
 
 const testUser = "5ea7c55655050f2b883173ce"
@@ -156,18 +157,7 @@ export default function StockManage() {
     {
       tooltip: '顯示詳細資訊',
       render: rowData => {
-        return (
-          <div
-            style={{
-              fontSize: 100,
-              textAlign: 'center',
-              color: 'white',
-              backgroundColor: '#43A047',
-            }}
-          >
-            {rowData.stock_id}
-          </div>
-        )
+        return <StockDetail stockData={rowData.stock}/>
       },
     },
   ])

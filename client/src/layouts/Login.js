@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useHistory } from 'react-router'
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -12,7 +13,8 @@ import Grid from '@material-ui/core/Grid';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import { apiUser_login } from '../api';
+import { apiUser_login, apiUser_login_key } from '../api';
+import crypto from 'crypto'
 
 function Copyright() {
   return (
@@ -60,26 +62,63 @@ const useStyles = makeStyles(theme => ({
 
 export default function SignInSide() {
   const classes = useStyles();
+  const history = useHistory();
   const [student_id, set_stu_id] = useState(null)
   const [password, set_psd] = useState(null);
+  const [remember, setRemember] = useState(false);
+  const [count, setCount] = useState(0);
+
+  const sha512 = (password, secret) => {
+    const value = crypto.createHmac('sha512', secret)
+      .update(password)
+      .digest('hex')
+    return value
+  }
+
+  const handleRemember = (e) => {
+    setRemember(!remember)
+  }
 
   const submit = async (e) => {
     e.preventDefault()
     if(student_id && password) {
-      const { data } = await apiUser_login({
-        student_id,
-        password
-      })
-      if(data.status) {
-        alert("登入成功")
-        console.log(data.payload)
+      const key_res = await apiUser_login_key({student_id})
+      if(key_res.data) {
+        const hashValue = sha512(password, key_res.data)
+        const user_res = await apiUser_login({student_id, hashValue})
+        const { status, payload } = user_res.data
+        
+        if(status) {
+          //本地儲存
+          localStorage.clear()
+          localStorage.setItem("user", payload._id)
+          localStorage.setItem("isAuthenticated", true)
+          if(remember) {
+            let userData = {student_id, password}
+            localStorage.setItem("remember", JSON.stringify(userData))
+          }
+          history.replace("/admin")
+        } else {
+          alert(payload)
+        }
       } else {
-        alert(data.payload)
+        alert("無此用戶!")
       }
     } else {
       alert("輸入不能為空!")
     }
   }
+
+  React.useEffect(() => {
+    const user_json = localStorage.getItem("remember")
+    if(user_json) {
+      const userData = JSON.parse(user_json)
+      set_stu_id(userData.student_id)
+      set_psd(userData.password)
+      setRemember(true)
+      setCount(count+1)
+    }
+  }, [])
   
   return (
     <Grid container component="main" className={classes.root}>
@@ -93,7 +132,7 @@ export default function SignInSide() {
           <Typography component="h1" variant="h5">
             登入
           </Typography>
-          <form className={classes.form} onSubmit={submit}>
+          <form key={count} className={classes.form} onSubmit={submit}>
             <TextField
               variant="outlined"
               margin="normal"
@@ -102,6 +141,7 @@ export default function SignInSide() {
               label="學號"
               autoFocus
               onChange={(e) => set_stu_id(e.target.value)}
+              defaultValue={student_id}
             />
             <TextField
               variant="outlined"
@@ -112,10 +152,19 @@ export default function SignInSide() {
               type="password"
               autoComplete="current-password"
               onChange={(e) => set_psd(e.target.value)}
+              defaultValue={password}
             />
             <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
+              control={
+                <Checkbox
+                  key={remember}
+                  checked={remember}
+                  onClick={handleRemember}
+                  value="remember"
+                  color="primary"
+                />
+              }
+              label="記住我"
             />
             <Button
               type="submit"

@@ -11,6 +11,7 @@ const txnReq = axios.create({ baseURL: `${baseURL}/txn`})
 
 // User
 export const apiUser_login = data => userReq.post('/login', data)
+export const apiUser_login_key = data => userReq.post('/loginKey', data)
 export const apiUser_new = data => userReq.post('/new', data)
 export const apiUser_get = data => userReq.post('/get', data)
 export const apiUser_update = data => userReq.post('/update', data)

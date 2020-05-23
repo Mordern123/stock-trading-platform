@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route, Redirect } from "react-router-dom";
+import { Switch, Route, Redirect, useHistory } from "react-router-dom";
 // creates a beautiful scrollbar
 import PerfectScrollbar from "perfect-scrollbar";
 import "perfect-scrollbar/css/perfect-scrollbar.css";
@@ -10,13 +10,11 @@ import Navbar from "components/Navbars/Navbar.js";
 import Footer from "components/Footer/Footer.js";
 import Sidebar from "components/Sidebar/Sidebar.js";
 import FixedPlugin from "components/FixedPlugin/FixedPlugin.js";
-
 import routes from "routes.js";
-
 import styles from "assets/jss/material-dashboard-react/layouts/adminStyle.js";
-
 import bgImage from "assets/img/sidebar-2.jpg";
 import logo from "assets/img/reactlogo.png";
+import { WindowScroller } from "react-virtualized";
 
 let ps;
 
@@ -43,6 +41,7 @@ const useStyles = makeStyles(styles);
 export default function Admin({ ...rest }) {
   // styles
   const classes = useStyles();
+  const history = useHistory()
   // ref to help us initialize PerfectScrollbar on windows devices
   const mainPanel = React.createRef();
   // states and functions
@@ -74,6 +73,13 @@ export default function Admin({ ...rest }) {
       setMobileOpen(false);
     }
   };
+  
+  const logout = () => {
+    localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("user")
+    history.replace("/login")
+  }
+
   // initialize and destroy the PerfectScrollbar plugin
   React.useEffect(() => {
     if (navigator.platform.indexOf("Win") > -1) {
@@ -92,6 +98,26 @@ export default function Admin({ ...rest }) {
       window.removeEventListener("resize", resizeFunction);
     };
   }, [mainPanel]);
+
+  React.useEffect(() => {
+    var timeout; 
+    var interval;
+    document.onmousemove = function(){
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        logout() //30分鐘沒移動登出
+      }, 1000 * 60 * 30);
+    }
+    interval = setInterval(() => {
+      const userData = localStorage.getItem('user')
+      if(!userData) logout()
+    }, 1000 * 60);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval)
+    }
+  }, [])
   return (
     <div className={classes.wrapper}>
       <Sidebar
@@ -119,14 +145,14 @@ export default function Admin({ ...rest }) {
           <div className={classes.map}>{switchRoutes}</div>
         )}
         {getRoute() ? <Footer /> : null}
-        <FixedPlugin
+        {/* <FixedPlugin
           handleImageClick={handleImageClick}
           handleColorClick={handleColorClick}
           bgColor={color}
           bgImage={image}
           handleFixedClick={handleFixedClick}
           fixedClasses={fixedClasses}
-        />
+        /> */}
       </div>
     </div>
   );

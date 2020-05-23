@@ -12,7 +12,7 @@ import Menu from "@material-ui/icons/Menu";
 // core components
 import AdminNavbarLinks from "./AdminNavbarLinks.js";
 import Button from "components/CustomButtons/Button.js";
-
+import NavbarButton from './NavbarButton'
 import styles from "assets/jss/material-dashboard-react/components/headerStyle.js";
 
 const useStyles = makeStyles(styles);
@@ -43,7 +43,8 @@ export default function Header(props) {
           </Button>
         </div>
         <Hidden smDown implementation="css">
-          <AdminNavbarLinks />
+          {/* <AdminNavbarLinks /> */}
+          <NavbarButton />
         </Hidden>
         <Hidden mdUp implementation="css">
           <IconButton

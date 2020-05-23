@@ -9,6 +9,8 @@ import stockRouter from './routes/stock'
 import txnRouter from './routes/transaction'
 require('dotenv').config()
 
+global.userKey = {} //使用者Token
+
 const app = express();
 const port = process.env.PORT || 5000;
 const server = Server(app);

@@ -105,10 +105,15 @@ export default function UserProfile() {
   };
 
   const loadData = async() => {
-    const res = await apiUser_get({
-      uid: testUser
-    })
-    setUserData(res.data) 
+    try {
+      const res = await apiUser_get({
+        uid: testUser
+      })
+      setUserData(res.data)
+      return true
+    } catch (error) {
+      return false
+    }
   }
 
   useEffect(() => {

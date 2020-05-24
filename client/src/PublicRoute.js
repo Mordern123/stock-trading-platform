@@ -13,6 +13,7 @@ function PublicRoute(props) {
     isAuthenticated
       ? <Redirect to='/admin' />
       : <Route
+          {...rest}
           path={path}
           render={(props) => (
             <Component {...props}/> 

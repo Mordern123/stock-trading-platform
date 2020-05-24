@@ -11,7 +11,6 @@ import "assets/css/material-dashboard-react.css?v=1.8.0";
 import "assets/css/global.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-
 const hist = createBrowserHistory();
 
 ReactDOM.render(

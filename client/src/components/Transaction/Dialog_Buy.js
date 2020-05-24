@@ -21,6 +21,10 @@ import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { apiUserStock_buy } from '../../api'
 import { green, red } from '@material-ui/core/colors';
+import { useSnackbar } from 'notistack';
+import MenuItem from '@material-ui/core/MenuItem';
+import MenuList from '@material-ui/core/MenuList';
+import Snack_Detail from './Snack_Detail'
 
 const testUser = "5ea7c55655050f2b883173ce"
 
@@ -76,6 +80,7 @@ const useStyles = makeStyles(styles);
 
 export default function BuyDialog(props) {
   const classes = useStyles();
+  const { enqueueSnackbar } = useSnackbar();
   const { open, handleClose, stockInfo } = props
   const { stock, userStock } = stockInfo
   const { stock_id, stock_name, trading_volume, txn_number, closing_price } = stock
@@ -103,16 +108,36 @@ export default function BuyDialog(props) {
           shares_number: stock_num * 1000, //一張1000股
           price: stock_price
         })
-        
         setLoading(false)
+        if(res.data) {
+          addSnack() //發出通知
+        }
         handleClose()
-        console.log(res.data)
       } else {
         alert('輸入值要大於0')
       }
     } else {
       alert('欄位不能為空')
     }
+  }
+
+  const addSnack = () => {
+    enqueueSnackbar(`下單成功【${stock_id} ${stock_name}】`,{
+      anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      content: (key, message) => (
+        <Snack_Detail
+          id={key}
+          message={message} 
+          data={{
+            stock_id,
+            stock_name,
+            stock_num,
+            stock_price
+          }}
+        />
+      ),
+      persist: true
+    })
   }
 
   return (

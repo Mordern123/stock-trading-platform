@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Fragment, useCallback } from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import { InputBase, IconButton, Divider, Paper } from '@material-ui/core';
+import { InputBase, IconButton, Divider, Paper, Button } from '@material-ui/core';
 import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from '@material-ui/icons';
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -11,6 +11,9 @@ import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
 import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
 import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
 import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserStock_get, apiUser_account } from '../api'
+import { useSnackbar } from 'notistack';
+import moment from 'moment';
+
 
 const testUser = "5ea7c55655050f2b883173ce"
 
@@ -131,9 +134,10 @@ const styles = theme => ({
 
 const useStyles = makeStyles(styles);
 
-export default function Transaction() {
+export default function Transaction(props) {
   const searchRef = useRef();
   const classes = useStyles();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [ searchText, setSearchText ] = useState("");
   const [ stock_data, setStock_data ] = useState([]);
   const [ track_data, setTrack_data ] = useState([]);
@@ -164,6 +168,7 @@ export default function Transaction() {
 
   const handleTrack = async(event, row) => {
     setLoading(true)
+    const status = track_data.includes(row.stock_id) //追蹤狀態
     const res = await apiUserStock_track({
       uid: testUser,
       stock_id: row.stock_id
@@ -175,7 +180,14 @@ export default function Transaction() {
       let onlyTrackId_data = track_res.data.map(item => item.stock_id)
       setTrack_data(onlyTrackId_data)
     }
-    setTimeout(() => { setLoading(false) }, 1000);
+    setTimeout(() => {
+      setLoading(false)
+      if(status) {
+        addSnack(`已取消 ${row.stock_id}【${row.stock_name}】的追蹤`, "success")
+      } else {
+        addSnack(`已將 ${row.stock_id}【${row.stock_name}】加入追蹤`, "success")
+      }
+    }, 1000);
   }
 
   //取得帳戶相關資料
@@ -227,9 +239,32 @@ export default function Transaction() {
     }
   ]), [track_data])
 
+  const addSnack = (msg, color) => {
+    enqueueSnackbar(msg, {
+      variant : color,
+      anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      action: (key) => (
+        <Button
+          style={{ color: 'white' }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      ),
+      persist: true
+    })
+  }
+
+  const addTimeSnack = (msg, color) => {
+    enqueueSnackbar(msg, {
+      variant : color,
+      anchorOrigin: { horizontal: 'center', vertical: 'top' },
+    })
+  }
 
   useEffect(() => {
     loadData()
+    addTimeSnack(`股票更新時間：${moment().calendar()}`, 'info')
   }, [])
   
   return (
@@ -284,7 +319,7 @@ export default function Transaction() {
             useSearch={false}
             useExport={true}
             actions={getActions()}
-            maxBodyHeight={1000}
+            maxBodyHeight={700}
             handleOpenStockBuy={handleOpenStockBuy}
             noDataDisplay="沒有符合的股票"
           />

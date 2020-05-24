@@ -5,6 +5,8 @@ import { makeStyles } from "@material-ui/core/styles";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Announcement from "../components/Home/Announcement";
+import { useSnackbar } from 'notistack';
+
 // @material-ui/core
 import {
   Card,
@@ -22,16 +24,28 @@ const useStyles = makeStyles(styles);
 
 const getAnnounceData = async(setData) => {
   const { data } = await apiClass_announceList()
-  console.log(data)
   setData(data)
 }
 
 export default function Home() {
   const classes = useStyles();
+  const { enqueueSnackbar } = useSnackbar();
   const [announceData, setAnnounceData] = useState([])
+
   useEffect(() => {
     getAnnounceData(setAnnounceData)
+    setTimeout(() => {
+      addSnack()
+    }, 500)
   }, [])
+  
+  const addSnack = () => {
+    enqueueSnackbar("記得看課程公告喔", {
+      variant :'info',
+      anchorOrigin: { horizontal: 'right', vertical: 'top' },
+    })
+  }
+
   return (
     <Fragment>
       <GridContainer>

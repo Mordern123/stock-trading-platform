@@ -7,7 +7,7 @@ import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
 import Typography from '@material-ui/core/Typography';
-import { TextField, InputAdornment, Input } from '@material-ui/core';
+import { TextField, InputAdornment, Button } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
 import Material_Table from 'components/Table/Material_Table';
 import { apiUserStock_get, apiUserStock_track_get, apiUserStock_track } from '../api'
@@ -15,7 +15,7 @@ import ClearRoundedIcon from '@material-ui/icons/ClearRounded';
 import MonetizationOnRoundedIcon from '@material-ui/icons/MonetizationOnRounded';
 import SellDialog from 'components/StockManage/Dialog_Sell'
 import StockDetail from 'components/StockManage/Detail_Stock'
-
+import { useSnackbar } from 'notistack';
 
 const testUser = "5ea7c55655050f2b883173ce"
 
@@ -104,6 +104,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function StockManage() {
   const classes = useStyles();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [searchStock, setSearchStock] = useState("");
   const [searchTrack, setSearchTrack] = useState("");
   const [stock_loading, setStock_loading] = useState(false);
@@ -125,7 +126,10 @@ export default function StockManage() {
       })
       setUserTrack(userTrack_res.data)
     }
-    setTimeout(() => { setTrack_loading(false) }, 1000);
+    setTimeout(() => {
+      setTrack_loading(false)
+      addSnack(`已取消追蹤【${row.stock_id} ${row.stock.stock_name}】`, 'success')
+    }, 1000);
   }
 
   const handleCloseStockSold = () => {
@@ -133,7 +137,6 @@ export default function StockManage() {
   }
 
   const handleOpenStockSell = (event, row) => {
-    console.log(row)
     setStockInfo(row)
     set_showSellDialog(true)
   }
@@ -161,6 +164,22 @@ export default function StockManage() {
       },
     },
   ])
+
+  const addSnack = (msg, color) => {
+    enqueueSnackbar(msg, {
+      variant : color,
+      anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      action: (key) => (
+        <Button
+          style={{ color: 'white' }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button>
+      ),
+      persist: true
+    })
+  }
 
   //初始執行一次
   useEffect(() => {

@@ -93,6 +93,7 @@ export default function SignInSide() {
           localStorage.clear()
           localStorage.setItem("user", payload._id)
           localStorage.setItem("isAuthenticated", true)
+          localStorage.setItem("comeBack", true)
           if(remember) {
             let userData = {student_id, password}
             localStorage.setItem("remember", JSON.stringify(userData))

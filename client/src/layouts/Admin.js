@@ -15,33 +15,16 @@ import styles from "assets/jss/material-dashboard-react/layouts/adminStyle.js";
 import bgImage from "assets/img/sidebar-2.jpg";
 import logo from "assets/img/reactlogo.png";
 import { WindowScroller } from "react-virtualized";
+import { useSnackbar } from 'notistack';
 
 let ps;
 
-const switchRoutes = (
-  <Switch>
-    {routes.map((prop, key) => {
-      if (prop.layout === "/admin") {
-        return (
-          <Route
-            path={prop.layout + prop.path}
-            component={prop.component}
-            key={key}
-          />
-        );
-      }
-      return null;
-    })}
-    <Redirect from="/admin" to="/admin/home" />
-  </Switch>
-);
-
 const useStyles = makeStyles(styles);
 
-export default function Admin({ ...rest }) {
-  // styles
+function Admin({ ...rest }) {
   const classes = useStyles();
-  const history = useHistory()
+  const history = useHistory();
+  const { enqueueSnackbar } = useSnackbar();
   // ref to help us initialize PerfectScrollbar on windows devices
   const mainPanel = React.createRef();
   // states and functions
@@ -49,6 +32,28 @@ export default function Admin({ ...rest }) {
   const [color, setColor] = React.useState("blue");
   const [fixedClasses, setFixedClasses] = React.useState("dropdown show");
   const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  const switchRoutes = (
+    <Switch>
+      {routes.map((prop, key) => {
+        if (prop.layout === "/admin") {
+          const Component = prop.component
+          return (
+            <Route
+              path={prop.layout + prop.path}
+              render={(props) => (
+                <Component {...props} /> 
+              )}
+              key={key}
+            />
+          );
+        }
+        return null;
+      })}
+      <Redirect from="/admin" to="/admin/home" />
+    </Switch>
+  );
+
   const handleImageClick = image => {
     setImage(image);
   };
@@ -99,6 +104,7 @@ export default function Admin({ ...rest }) {
     };
   }, [mainPanel]);
 
+  //初始執行
   React.useEffect(() => {
     var timeout; 
     var interval;
@@ -113,11 +119,25 @@ export default function Admin({ ...rest }) {
       if(!userData) logout()
     }, 1000 * 60);
 
+    const comeBack = localStorage.getItem("comeBack")
+    if(JSON.parse(comeBack)) {
+      addSnack()
+      localStorage.setItem("comeBack", false)
+    }
+
     return () => {
       clearTimeout(timeout);
       clearInterval(interval)
     }
   }, [])
+
+  const addSnack = () => {
+    enqueueSnackbar("歡迎回來股票交易", {
+      variant :'success',
+      anchorOrigin: { horizontal: 'center', vertical: 'top' },
+    })
+  }
+
   return (
     <div className={classes.wrapper}>
       <Sidebar
@@ -157,3 +177,5 @@ export default function Admin({ ...rest }) {
     </div>
   );
 }
+
+export default Admin

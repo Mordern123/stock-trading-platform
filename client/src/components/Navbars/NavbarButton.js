@@ -15,7 +15,7 @@ function NavbarButton(props) {
   return (
     <div className="mr-3">
       <Button
-        color="info"
+        color="danger"
         size="sm"
         onClick={logout}
       >

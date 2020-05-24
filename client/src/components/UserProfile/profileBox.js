@@ -8,6 +8,7 @@ import GridContainer from "components/Grid/GridContainer.js";
 import Button from "components/CustomButtons/Button.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
 import { apiUser_update } from "../../api"
+import { useSnackbar } from 'notistack';
 
 const styles = theme => ({
   inputLabel: {
@@ -32,6 +33,7 @@ const useStyles = makeStyles(styles)
 
 export default function ProfileBox(props) {
   const classes = useStyles();
+  const { enqueueSnackbar } = useSnackbar();
   const { open, handleClose, userData, loadData } = props
   const { _id, student_id, sex, birthday, user_name, email } = userData
   const [ _user_name, setUserName ] = useState(user_name)
@@ -47,9 +49,22 @@ export default function ProfileBox(props) {
       sex: _sex,
       birthday: _birthday
     })
-    await loadData()
+    const status = await loadData()
+    if(status) {
+      addSnack("已成功更新個人資料", "success")
+    } else {
+      addSnack("個人資料更新失敗", "error")
+    }
     handleClose()
   }
+
+  const addSnack = (msg, color) => {
+    enqueueSnackbar(msg, {
+      variant : color,
+      anchorOrigin: { horizontal: 'right', vertical: 'top' },
+    })
+  }
+
   
   return (
     <Dialog

@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, Fragment } from "react";
 import clsx from 'clsx';
+import { useHistory } from 'react-router'
 import { makeStyles } from "@material-ui/core/styles";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -16,9 +17,7 @@ import MonetizationOnRoundedIcon from '@material-ui/icons/MonetizationOnRounded'
 import SellDialog from 'components/StockManage/Dialog_Sell'
 import StockDetail from 'components/StockManage/Detail_Stock'
 import { useSnackbar } from 'notistack';
-
-const testUser = "5ea7c55655050f2b883173ce"
-
+import { check_status } from '../tools'
 
 const userStock_columns = [
   {
@@ -113,17 +112,15 @@ export default function StockManage() {
   const [userTrack, setUserTrack] = useState([]);
   const [stockInfo, setStockInfo] = useState(null);
   const [showSellDialog, set_showSellDialog] = useState(false)
+  const history = useHistory()
 
   const handleTrack = async(event, row) => {
     setTrack_loading(true)
     const res = await apiUserStock_track({
-      uid: testUser,
       stock_id: row.stock_id
     })
     if(res.data) {
-      const userTrack_res = await apiUserStock_track_get({
-        uid: testUser
-      })
+      const userTrack_res = await apiUserStock_track_get()
       setUserTrack(userTrack_res.data)
     }
     setTimeout(() => {
@@ -144,14 +141,17 @@ export default function StockManage() {
   const loadData = async() => {
     setStock_loading(true)
     setTrack_loading(true)
-    const userStock_res = await apiUserStock_get({
-      uid: testUser
-    })
-    const userTrack_res = await apiUserStock_track_get({
-      uid: testUser
-    })
-    setUserStock(userStock_res.data)
-    setUserTrack(userTrack_res.data)
+    const userStock_res = await check_status(apiUserStock_get)
+    const userTrack_res = await check_status(apiUserStock_track_get)
+    if(userStock_res && userTrack_res) {
+      setUserStock(userStock_res.data)
+      setUserTrack(userTrack_res.data)
+    } else {
+      alert(userStock_res.msg)
+      if(userStock_res.need_login || userTrack_res.need_login) {
+        history.replace("/login")
+      }
+    }
     setStock_loading(false)
     setTrack_loading(false)
   }

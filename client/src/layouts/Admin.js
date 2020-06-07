@@ -16,6 +16,8 @@ import bgImage from "assets/img/sidebar-2.jpg";
 import logo from "assets/img/reactlogo.png";
 import { WindowScroller } from "react-virtualized";
 import { useSnackbar } from 'notistack';
+import { check_cookie } from '../tools'
+import { apiUser_logout } from '../api'
 
 let ps;
 
@@ -79,9 +81,8 @@ function Admin({ ...rest }) {
     }
   };
   
-  const logout = () => {
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("user")
+  const logout = async() => {
+    await apiUser_logout()
     history.replace("/login")
   }
 
@@ -108,6 +109,7 @@ function Admin({ ...rest }) {
   React.useEffect(() => {
     var timeout; 
     var interval;
+
     document.onmousemove = function(){
       clearTimeout(timeout);
       timeout = setTimeout(() => {
@@ -115,9 +117,9 @@ function Admin({ ...rest }) {
       }, 1000 * 60 * 30);
     }
     interval = setInterval(() => {
-      const userData = localStorage.getItem('user')
-      if(!userData) logout()
-    }, 1000 * 60);
+      const user_token = check_cookie('user_token')
+      if(!user_token) logout()
+    }, 1000 * 60 * 5);
 
     const comeBack = localStorage.getItem("comeBack")
     if(JSON.parse(comeBack)) {

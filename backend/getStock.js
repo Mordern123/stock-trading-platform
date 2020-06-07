@@ -4,7 +4,6 @@ import Stock from './models/stock_model'
 import mongoose from 'mongoose'
 require('dotenv').config()
 
-
 const init = () => {
   const connection = mongoose.connection;
   connection.once('open', () => {

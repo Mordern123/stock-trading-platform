@@ -5,12 +5,21 @@ import UserTrack from '../models/user_track_model'
 import UserTxn from '../models/user_txn_model'
 import Account from '../models/account_model'
 import moment from 'moment';
+import { check_permission } from '../common/auth'
 
 moment.locale('zh-tw');
 
 const router = Router()
 
 const get_all_stock = async (req, res) => {
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
   const date = new Date('2020-04-16')
   const result = await Stock.find({data_time: date}).exec()
   res.json(result)
@@ -18,6 +27,14 @@ const get_all_stock = async (req, res) => {
 
 
 const get_stock_rank = async (req, res) => {
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
   let accountDocs = await Account
     .aggregate([
       {
@@ -43,9 +60,16 @@ const get_stock_rank = async (req, res) => {
 }
 
 const get_user_stock = async (req, res) => {
-  const { uid } = req.body
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
   const userStockDoc = await UserStock
-    .find({user: uid})
+    .find({user: user._id})
     .populate(['stock'])
     .lean()
     .exec()
@@ -61,14 +85,22 @@ const get_user_stock = async (req, res) => {
 
 const user_place_order = async (req, res) => {
   try {
+    const { user, code } = await check_permission(req)
+
+    if(!user) {
+      res.clearCookie('user_token')
+      res.status(code).send()
+      return
+    }
+
     if(req.params.type != 'buy' && req.params.type != 'sell') throw false
-    const { uid, stock_id, shares_number, price } = req.body
+    const { stock_id, shares_number, price } = req.body
     const time = Date(Date.now())
 
     const stockDoc = await Stock.findOne({stock_id}).sort('-data_time').exec() //取的目前最新股票
 
     const userTxnDoc = await new UserTxn({
-      user: uid,
+      user: user._id,
       stock_id,
       stock: stockDoc._id,
       type: req.params.type,
@@ -80,15 +112,22 @@ const user_place_order = async (req, res) => {
     res.json(userTxnDoc)
 
   } catch (error) {
-    res.json(false)
+    throw error
   }
 }
 
 const get_user_track = async (req, res) => {
   try {
-    const { uid } = req.body
+    const { user, code } = await check_permission(req)
+
+    if(!user) {
+      res.clearCookie('user_token')
+      res.status(code).send()
+      return
+    }
+
     const userTrackDoc = await UserTrack
-      .find({user: uid})
+      .find({user: user._id})
       .lean()
       .exec()
     for(let i = 0; i < userTrackDoc.length; i++) {
@@ -100,7 +139,6 @@ const get_user_track = async (req, res) => {
       userTrackDoc[i].updatedAt = moment(updatedAt).startOf('hour').fromNow()
     }
     
-    console.log(userTrackDoc)
     res.json(userTrackDoc)
   } catch (error) {
     res.json(false)
@@ -110,13 +148,20 @@ const get_user_track = async (req, res) => {
 
 const user_track_stock = async (req, res) => {
   try {
-    const { uid, stock_id } = req.body
-    const hasStock = await UserTrack.exists({user: uid, stock_id})
+    const { user, code } = await check_permission(req)
+
+    if(!user) {
+      res.status(code).send()
+      return
+    }
+
+    const { stock_id } = req.body
+    const hasStock = await UserTrack.exists({user: user._id, stock_id})
     const track_time = Date(Date.now())
     let userTrackDoc;
 
     if(hasStock) {
-      userTrackDoc = await UserTrack.findOneAndDelete({user: uid, stock_id}).exec()
+      userTrackDoc = await UserTrack.findOneAndDelete({user: user._id, stock_id}).exec()
       res.json(userTrackDoc)
     } else {
       userTrackDoc = await new UserTrack({

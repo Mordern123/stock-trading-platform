@@ -14,9 +14,6 @@ import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserS
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 
-
-const testUser = "5ea7c55655050f2b883173ce"
-
 //bubble sort
 const customSort = (a, b, field) => {
   let pureS1 = a[field].replace(/,/g, "")
@@ -170,13 +167,10 @@ export default function Transaction(props) {
     setLoading(true)
     const status = track_data.includes(row.stock_id) //追蹤狀態
     const res = await apiUserStock_track({
-      uid: testUser,
       stock_id: row.stock_id
     })
     if(res.data) {
-      const track_res = await apiUserStock_track_get({
-        uid: testUser
-      })
+      const track_res = await apiUserStock_track_get()
       let onlyTrackId_data = track_res.data.map(item => item.stock_id)
       setTrack_data(onlyTrackId_data)
     }
@@ -192,8 +186,7 @@ export default function Transaction(props) {
 
   //取得帳戶相關資料
   const loadAccount = async() => {
-    const arg = { uid: testUser }
-    const account_res = await apiUser_account(arg)
+    const account_res = await apiUser_account()
 
     setAccount(account_res.data)
   }
@@ -202,10 +195,9 @@ export default function Transaction(props) {
   const loadData = async() => {
     setLoading(true)
     loadAccount()
-    const arg = { uid: testUser }
     const stock_res = await apiStock_list_all()
-    const userStock_res = await apiUserStock_get(arg) 
-    const track_res = await apiUserStock_track_get(arg)
+    const userStock_res = await apiUserStock_get() 
+    const track_res = await apiUserStock_track_get()
     const onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
 
     setUserStock_data(userStock_res.data)

@@ -23,8 +23,6 @@ import { createMuiTheme } from '@material-ui/core/styles';
 import SwipeableViews from 'react-swipeable-views';
 import { apiUser_get } from '../api'
 
-const testUser = "5ea7c55655050f2b883173ce"
-
 const barTheme = createMuiTheme({
   palette: {
     primary: {
@@ -106,9 +104,7 @@ export default function UserProfile() {
 
   const loadData = async() => {
     try {
-      const res = await apiUser_get({
-        uid: testUser
-      })
+      const res = await apiUser_get()
       setUserData(res.data)
       return true
     } catch (error) {

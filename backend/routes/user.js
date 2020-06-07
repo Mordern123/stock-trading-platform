@@ -1,17 +1,19 @@
 import { Router } from 'express'
 import User from '../models/user_model'
 import Account from '../models/account_model'
+import UserSession from '../models/user_session_model'
 import moment from 'moment'
 import crypto from 'crypto'
+import { check_permission } from '../common/auth'
 
 const router = Router()
 
 const new_user = async (req, res) => {
   try {
     const userData = req.body
-    let result = await User.find({student_id: userData.student_id}).exec()
+    let isExist = await User.isExist({student_id: userData.student_id})
 
-    if(result.length > 0) {
+    if(isExist) {
       res.json({status: false, payload: "學號已有人使用"});
       return
     }
@@ -47,16 +49,39 @@ const user_login = async (req, res) => {
         .update(userDoc.password)
         .digest('hex')
 
-      if(value == hashValue) {
+      //隨機Token
+      crypto.randomBytes(16, async(err, buffer) => {
+        if(err) throw err
+        var token = buffer.toString('hex'); //token值
+        if(value === hashValue) {
+          let options = {
+            maxAge: 1000 * 60 * 60 * 24 * 7, // would expire after 7 days
+            // httpOnly: true, // The cookie only accessible by the web server
+            signed: true // Indicates if the cookie should be signed
+          }
+          let isExist = await UserSession.exists(({user: userDoc._id}))
+          if(isExist) {
+            await UserSession
+              .updateOne({user: userDoc._id}, {cookie: token})
+              .exec()
+          } else {
+            await new UserSession({
+              user: userDoc._id,
+              cookie: token
+            }).save()
+          }
+          res.cookie("user_token", token, options)
         res.json({status: true, payload: userDoc})
       } else {
         res.json({status: false, payload: "密碼錯誤"})
       }
+      });
+
     } else {
       res.json({status: false, payload: "沒有此使用者"})
     }
   } catch (e) {
-    res.json({status: false, payload: e.toString()})
+    throw(e)
   }
 }
 
@@ -82,9 +107,30 @@ const get_login_key = async (req, res) => {
   }
 }
 
+const user_logout = async (req, res) => {
+  try {
+    const { user_token } = req.signedCookies
+    await UserSession.updateOne({ cookie: user_token }, { cookie: ""})
+    // res.cookies.set('user_token', {expires: Date.now()}) //清空cookie
+    res.clearCookie('user_token')
+    res.status(200).send()
+
+  } catch(e) {
+    throw e
+  }
+}
+
 const get_user_data = async (req, res) => {
-  const { uid } = req.body
-  const userDoc = await User.findById(uid).lean().exec()
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    // res.cookies.set('user_token', {expires: Date.now()}) //清空cookie
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
+  const userDoc = await User.findById(user._id).lean().exec()
   if(userDoc) {
     const newDoc = userDoc
     newDoc.updatedAt = moment(userDoc.updatedAt).startOf('hour').fromNow()
@@ -96,9 +142,17 @@ const get_user_data = async (req, res) => {
 }
 
 const update_user_data = async (req, res) => {
-  const { uid, user_name, sex, birthday, email } = req.body
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
+  const { user_name, sex, birthday, email } = req.body
   const userDoc = await User
-    .findByIdAndUpdate(uid, 
+    .findByIdAndUpdate(user._id, 
     {
       user_name,
       sex,
@@ -117,9 +171,16 @@ const update_user_data = async (req, res) => {
 }
 
 const get_user_account = async (req, res) => {
-  const { uid } = req.body
-  const accountDoc = await Account.findOne({user: uid}).lean().exec()
-  const { updatedAt, createdAt, last_update } = accountDoc
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
+  const accountDoc = await Account.findOne({user: user._id}).lean().exec()
+  const { updatedAt, createdAt } = accountDoc
   if(accountDoc) {
     const newDoc = accountDoc
     newDoc.updatedAt = moment(updatedAt).startOf('hour').fromNow()
@@ -131,9 +192,9 @@ const get_user_account = async (req, res) => {
   }
 }
 
-
 router.route('/new').post(new_user);
 router.route('/login').post(user_login);
+router.route('/logout').post(user_logout);
 router.route('/loginKey').post(get_login_key);
 router.route('/get').post(get_user_data);
 router.route('/update').post(update_user_data);

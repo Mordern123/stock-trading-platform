@@ -1,13 +1,10 @@
 import React, { useState, useEffect, Fragment } from "react";
-// @material-ui/core
 import { makeStyles } from "@material-ui/core/styles";
-// core components
+import { useHistory } from 'react-router'
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Announcement from "../components/Home/Announcement";
 import { useSnackbar } from 'notistack';
-
-// @material-ui/core
 import {
   Card,
   CardActions,
@@ -19,25 +16,38 @@ import {
 } from '@material-ui/core';
 import styles from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import { apiClass_announceList } from '../api'
+import { check_status } from '../tools'
 
 const useStyles = makeStyles(styles);
-
-const getAnnounceData = async(setData) => {
-  const { data } = await apiClass_announceList()
-  setData(data)
-}
 
 export default function Home() {
   const classes = useStyles();
   const { enqueueSnackbar } = useSnackbar();
   const [announceData, setAnnounceData] = useState([])
+  const history = useHistory()
 
   useEffect(() => {
-    getAnnounceData(setAnnounceData)
-    setTimeout(() => {
+    getAnnounceData()
+    const timeout= setTimeout(() => {
       addSnack()
     }, 500)
+
+    return () => {
+      clearTimeout(timeout)
+    }
   }, [])
+
+  const getAnnounceData = async() => {
+    const { res, need_login, msg } = await check_status(apiClass_announceList)
+    if(res) {
+      setAnnounceData(res.data)
+    } else {
+      alert(msg)
+      if(need_login) {
+        history.replace("/login")
+      }
+    }
+  }
   
   const addSnack = () => {
     enqueueSnackbar("記得看課程公告喔", {

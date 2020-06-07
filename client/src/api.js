@@ -3,11 +3,11 @@ import axios from 'axios'
 export const serverAddress = "localhost:5000";
 export const baseURL = `http://${serverAddress}`;
 
-const userReq = axios.create({ baseURL: `${baseURL}/user`})
-const classReq = axios.create({ baseURL: `${baseURL}/class`})
-const stockReq = axios.create({ baseURL: `${baseURL}/stock`})
-const userStockReq = axios.create({ baseURL: `${baseURL}/stock/user`})
-const txnReq = axios.create({ baseURL: `${baseURL}/txn`})
+const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true})
+const classReq = axios.create({ baseURL: `${baseURL}/class`, withCredentials: true})
+const stockReq = axios.create({ baseURL: `${baseURL}/stock`,  withCredentials: true})
+const userStockReq = axios.create({ baseURL: `${baseURL}/stock/user`,  withCredentials: true})
+const txnReq = axios.create({ baseURL: `${baseURL}/txn`,  withCredentials: true})
 
 // User
 export const apiUser_login = data => userReq.post('/login', data)
@@ -16,6 +16,7 @@ export const apiUser_new = data => userReq.post('/new', data)
 export const apiUser_get = data => userReq.post('/get', data)
 export const apiUser_update = data => userReq.post('/update', data)
 export const apiUser_account = data => userReq.post('/account', data)
+export const apiUser_logout = () => userReq.post('/logout')
 
 // Class
 export const apiClass_announceList = () => classReq.get('/list')

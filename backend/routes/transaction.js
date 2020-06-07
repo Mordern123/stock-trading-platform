@@ -5,27 +5,42 @@ import UserTrack from '../models/user_track_model'
 import UserTxn from '../models/user_txn_model'
 import User from '../models/user_model'
 import moment from 'moment';
+import { check_permission } from '../common/auth'
 
 moment.locale('zh-tw');
 
 const router = Router()
 
 const get_all_txn = async (req, res) => {
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
   const txnDoc = await UserTxn.find().exec()
   res.json(txnDoc)
 }
 
 const get_user_txn = async (req, res) => {
-  const { uid } = req.body
   const { type } = req.params
+  const { user, code } = await check_permission(req)
 
   if(!['all', 'success', 'fail', 'waiting', 'error'].includes(type)) {
     res.json(false)
     return
   }
 
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
   const conditions = (type == 'all')
-    ? { user: uid }
+    ? { user: user._id }
     : { status: type }
 
   const txnData = await UserTxn
@@ -58,6 +73,14 @@ const get_user_txn = async (req, res) => {
 }
 
 const get_class_txn_avg = async (req, res) => {
+  const { user, code } = await check_permission(req)
+
+  if(!user) {
+    res.clearCookie('user_token')
+    res.status(code).send()
+    return
+  }
+
   const { day } = req.body
   const dayString = moment().format('YYYY-MM-DD'); //轉換為最小單位為天
   const startDay = moment(dayString).subtract(day, 'days'); //取得instance

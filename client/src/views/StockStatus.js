@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import clsx from 'clsx';
+import { useHistory } from 'react-router'
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -7,8 +8,7 @@ import { Paper, Tabs, Tab, Typography, Box } from "@material-ui/core";
 import SwipeableViews from 'react-swipeable-views';
 import Material_Table from "components/Table/Material_Table";
 import { apiTxn_get_success, apiTxn_get_fail, apiTxn_get_waiting } from "../api"
-
-const testUser = "5ea7c55655050f2b883173ce"
+import { check_status } from '../tools'
 
 const columns = [
   {
@@ -102,7 +102,8 @@ export default function StockStatus() {
   const [successData, set_successData] = useState([])
   const [waitingData, set_waitingData] = useState([])
   const [failData, set_failData] = useState([])
-  const [ loading, setLoading ] = useState(false);
+  const [ loading, setLoading ] = useState(false)
+  const history = useHistory()
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -122,10 +123,19 @@ export default function StockStatus() {
 
   const loadData = async() => {
     setLoading(true)
-    const arg = { uid: testUser }
-    const success_res = await apiTxn_get_success(arg)
-    const waiting_res = await apiTxn_get_waiting(arg)
-    const fail_res = await apiTxn_get_fail(arg)
+
+    const success_res = await check_status(apiTxn_get_success)
+    const waiting_res = await check_status(apiTxn_get_waiting)
+    const fail_res = await check_status(apiTxn_get_fail)
+
+    if(success_res.res && waiting_res.res && fail_res.res) {
+      
+    } else {
+      alert(success_res.msg)
+      if(success_res.need_login || waiting_res.need_login || fail_res.need_login) {
+        history.replace("/login")
+      }
+    }
 
     set_successData(success_res.data)
     set_waitingData(waiting_res.data)

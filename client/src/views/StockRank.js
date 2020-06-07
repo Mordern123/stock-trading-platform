@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+import { useHistory } from 'react-router'
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Table from "components/Table/Table.js";
@@ -7,6 +8,7 @@ import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
 import { apiRank_list_all } from '../api'
+import { check_status } from '../tools'
 import clsx from 'clsx'
 
 const column = [
@@ -54,23 +56,30 @@ const StockRank = () => {
   const [rankData, setRankData] = useState([]);
   const [updateTime, setUpdateTime] = useState(null);
   const [loading, setLoading] = useState(false);
+  const history = useHistory()
 
   const loadData = async() => {
     setLoading(true)
-    const res = await apiRank_list_all();
-
-    //製作Table資料
-    const rowData = res.data.accountDocs.map((item, index) => {
-      return [
-        index+1,
-        item.user.student_id,
-        item.totalValue,
-        item.stock_number
-      ]
-    })
-    setRankData(rowData)
-    setUpdateTime(res.data.updateTime)
-    setLoading(false)
+    const { res, need_login, msg } = await check_status(apiRank_list_all)
+    if(res) {
+      //製作Table資料
+      const rowData = res.data.accountDocs.map((item, index) => {
+        return [
+          index+1,
+          item.user.student_id,
+          item.totalValue,
+          item.stock_number
+        ]
+      })
+      setRankData(rowData)
+      setUpdateTime(res.data.updateTime)
+      setLoading(false)
+    } else {
+      alert(msg)
+      if(need_login) {
+        history.replace("/login")
+      }
+    }
   }
 
   // 初始執行

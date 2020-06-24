@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
+import { useHistory } from 'react-router'
 import InputLabel from "@material-ui/core/InputLabel";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
@@ -22,6 +23,7 @@ import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme } from '@material-ui/core/styles';
 import SwipeableViews from 'react-swipeable-views';
 import { apiUser_get } from '../api'
+import { check_status } from '../tools'
 
 const barTheme = createMuiTheme({
   palette: {
@@ -88,6 +90,7 @@ export default function UserProfile() {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(0); //控制Panel轉換
   const [userData, setUserData] = useState(null);
+  const history = useHistory()
 
   const handleOpen = () => {
     setOpen(true)
@@ -106,9 +109,15 @@ export default function UserProfile() {
     try {
       const res = await apiUser_get()
       setUserData(res.data)
-      return true
+
+      return true //提供更新個人資料狀態
+
     } catch (error) {
-      return false
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
+      }
     }
   }
 

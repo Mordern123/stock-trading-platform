@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 // @material-ui/core
 import { makeStyles } from "@material-ui/core/styles";
+import { useHistory } from 'react-router'
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Slide, InputLabel, Typography } from '@material-ui/core'
 import { Close } from '@material-ui/icons'
 import GridItem from "components/Grid/GridItem.js";
@@ -9,6 +10,7 @@ import Button from "components/CustomButtons/Button.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
 import { apiUser_update } from "../../api"
 import { useSnackbar } from 'notistack';
+import { check_status } from '../../tools'
 
 const styles = theme => ({
   inputLabel: {
@@ -40,22 +42,33 @@ export default function ProfileBox(props) {
   const [ _email, setEmail ] = useState(email)
   const [ _sex, setSex ] = useState(sex)
   const [ _birthday, setBirthday ] = useState(birthday)
+  const history = useHistory()
 
   const handelSubmit = async() => {
-    const res = await apiUser_update({
-      uid: _id,
-      user_name: _user_name,
-      email: _email,
-      sex: _sex,
-      birthday: _birthday
-    })
-    const status = await loadData()
-    if(status) {
-      addSnack("已成功更新個人資料", "success")
-    } else {
-      addSnack("個人資料更新失敗", "error")
+
+    try {
+      const res = await apiUser_update({
+        uid: _id,
+        user_name: _user_name,
+        email: _email,
+        sex: _sex,
+        birthday: _birthday
+      })
+      const status = await loadData()
+      if(status) {
+        addSnack("已成功更新個人資料", "success")
+      } else {
+        addSnack("個人資料更新失敗", "error")
+      }
+      handleClose()
+      
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
+      }
     }
-    handleClose()
   }
 
   const addSnack = (msg, color) => {

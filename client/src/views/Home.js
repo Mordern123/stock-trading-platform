@@ -38,13 +38,15 @@ export default function Home() {
   }, [])
 
   const getAnnounceData = async() => {
-    const { res, need_login, msg } = await check_status(apiClass_announceList)
-    if(res) {
+    try {
+      const res = await apiClass_announceList()
       setAnnounceData(res.data)
-    } else {
+
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
       alert(msg)
       if(need_login) {
-        history.replace("/login")
+        history.replace("/login", { need_login })
       }
     }
   }
@@ -53,6 +55,7 @@ export default function Home() {
     enqueueSnackbar("記得看課程公告喔", {
       variant :'info',
       anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      autoHideDuration: 2000
     })
   }
 

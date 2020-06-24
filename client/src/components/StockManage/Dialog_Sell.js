@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from "prop-types";
 import clsx from "clsx"
 import { makeStyles } from "@material-ui/core/styles";
+import { useHistory } from 'react-router'
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
@@ -23,6 +24,7 @@ import { apiUserStock_sell } from '../../api'
 import { green, red } from '@material-ui/core/colors';
 import Snack_Detail from './Snack_Detail'
 import { useSnackbar } from 'notistack';
+import { check_status } from '../../tools';
 
 
 const testUser = "5ea7c55655050f2b883173ce" 
@@ -86,6 +88,7 @@ export default function SellDialog(props) {
   const [ stock_price, setStock_price ] = useState(null)
   const [ stock_num, setStock_num ] = useState(null)
   const [ loading, setLoading ] = useState(false)
+  const history = useHistory()
 
   const handlePriceChange = (e) => {
     let n = parseInt(e.target.value)
@@ -100,19 +103,28 @@ export default function SellDialog(props) {
     if(stock_num && stock_price) {
       if(stock_num > 0 && stock_price > 0) {
         setLoading(true)
-        const res = await apiUserStock_sell({
-          uid: testUser,
-          stock_id: stock.stock_id,
-          shares_number: stock_num * 1000, //一張1000股
-          price: stock_price
-        })
-        setTimeout(() => {
-          setLoading(false)
-          handleClose()
-          if(res.data) {
-            addSnack() //發出通知
+        try {
+          const res = await apiUserStock_sell({
+            uid: testUser,
+            stock_id: stock.stock_id,
+            shares_number: stock_num * 1000, //一張1000股
+            price: stock_price
+          })
+          setTimeout(() => {
+            setLoading(false)
+            handleClose()
+            if(res.data) {
+              addSnack() //發出通知
+            }
+          }, 1000)
+          
+        } catch (error) {
+          const { need_login, msg } = check_status(error.response.status)
+          alert(msg)
+          if(need_login) {
+            history.replace("/login", { need_login })
           }
-        }, 1000)
+        }
       } else {
         alert('輸入值要大於0')
       }

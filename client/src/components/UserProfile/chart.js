@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react";
 import Highcharts from 'highcharts'
 import HighchartsReact from 'highcharts-react-official'
 import moment from 'moment'
+import { useHistory } from 'react-router'
 import { apiTxn_get_class_avg } from '../../api'
+import { check_status } from "../../tools"
 
 Highcharts.createElement('link', {
     href: 'https://fonts.googleapis.com/css?family=Unica+One',
@@ -212,6 +214,7 @@ export default function Chart() {
     const [timePoints, setTimePoints] = useState([])
     const [individual_data, setIndividual_data] = useState([])
     const [class_data, setClass_data] = useState([])
+    const history = useHistory()
     const options = {
         chart: {
             type: 'area'
@@ -278,16 +281,26 @@ export default function Chart() {
         const days_ago = 10
         const _timePoints = new Array(days_ago)
         const classData = new Array(days_ago)
-        const res = await apiTxn_get_class_avg({ day: days_ago })
 
-        for(let i = 0; i < days_ago; i++) {
-            let dayString = moment().subtract(i+1, 'days').format('YYYY-MM-DD'); //轉換為最小單位為天
-            _timePoints[i] = dayString
-            classData[i] = res.data[dayString] || 0
+        try {
+            const res = await apiTxn_get_class_avg({ day: days_ago })
+    
+            for(let i = 0; i < days_ago; i++) {
+                let dayString = moment().subtract(i+1, 'days').format('YYYY-MM-DD'); //轉換為最小單位為天
+                _timePoints[i] = dayString
+                classData[i] = res.data[dayString] || 0
+            }
+    
+            setTimePoints(_timePoints)
+            setClass_data(classData)
+            
+        } catch (error) {
+            const { need_login, msg } = check_status(error.response.status)
+            alert(msg)
+            if(need_login) {
+                history.replace("/login", { need_login })
+            }
         }
-
-        setTimePoints(_timePoints)
-        setClass_data(classData)
     }
 
     useEffect(() => {

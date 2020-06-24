@@ -124,22 +124,24 @@ export default function StockStatus() {
   const loadData = async() => {
     setLoading(true)
 
-    const success_res = await check_status(apiTxn_get_success)
-    const waiting_res = await check_status(apiTxn_get_waiting)
-    const fail_res = await check_status(apiTxn_get_fail)
+    try {
+      const success_res = await apiTxn_get_success()
+      const waiting_res = await apiTxn_get_waiting()
+      const fail_res = await apiTxn_get_fail()
 
-    if(success_res.res && waiting_res.res && fail_res.res) {
+      set_successData(success_res.data)
+      set_waitingData(waiting_res.data)
+      set_failData(fail_res.data) 
+  
       
-    } else {
-      alert(success_res.msg)
-      if(success_res.need_login || waiting_res.need_login || fail_res.need_login) {
-        history.replace("/login")
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
       }
     }
 
-    set_successData(success_res.data)
-    set_waitingData(waiting_res.data)
-    set_failData(fail_res.data)
     setLoading(false)
   }
   

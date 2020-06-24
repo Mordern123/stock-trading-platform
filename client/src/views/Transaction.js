@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, Fragment, useCallback } from "react";
 import { makeStyles } from "@material-ui/core/styles";
+import { useHistory } from 'react-router'
 import { InputBase, IconButton, Divider, Paper, Button } from '@material-ui/core';
 import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from '@material-ui/icons';
 import GridItem from "components/Grid/GridItem.js";
@@ -13,6 +14,7 @@ import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
 import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserStock_get, apiUser_account } from '../api'
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
+import { check_status } from '../tools'
 
 //bubble sort
 const customSort = (a, b, field) => {
@@ -143,6 +145,7 @@ export default function Transaction(props) {
   const [ showBuyDialog, set_showBuyDialog] = useState(false);
   const [ stockInfo, setStockInfo] = useState(null);
   const [ account, setAccount ] = useState(null);
+  const history = useHistory()
 
   const handleCloseStockBuy = () => {
     set_showBuyDialog(false)
@@ -165,44 +168,57 @@ export default function Transaction(props) {
 
   const handleTrack = async(event, row) => {
     setLoading(true)
-    const status = track_data.includes(row.stock_id) //追蹤狀態
-    const res = await apiUserStock_track({
-      stock_id: row.stock_id
-    })
-    if(res.data) {
-      const track_res = await apiUserStock_track_get()
-      let onlyTrackId_data = track_res.data.map(item => item.stock_id)
-      setTrack_data(onlyTrackId_data)
-    }
-    setTimeout(() => {
-      setLoading(false)
-      if(status) {
-        addSnack(`已取消 ${row.stock_id}【${row.stock_name}】的追蹤`, "success")
-      } else {
-        addSnack(`已將 ${row.stock_id}【${row.stock_name}】加入追蹤`, "success")
+    try {
+      const status = track_data.includes(row.stock_id) //追蹤狀態
+      const res = await apiUserStock_track({
+        stock_id: row.stock_id
+      })
+      if(res.data) {
+        const track_res = await apiUserStock_track_get()
+        let onlyTrackId_data = track_res.data.map(item => item.stock_id)
+        setTrack_data(onlyTrackId_data)
       }
-    }, 1000);
-  }
+      setTimeout(() => {
+        setLoading(false)
+        if(status) {
+          addSnack(`已取消 ${row.stock_id}【${row.stock_name}】的追蹤`, "success")
+        } else {
+          addSnack(`已將 ${row.stock_id}【${row.stock_name}】加入追蹤`, "success")
+        }
+      }, 1000);
 
-  //取得帳戶相關資料
-  const loadAccount = async() => {
-    const account_res = await apiUser_account()
-
-    setAccount(account_res.data)
+    } catch(error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
+      }
+    }
   }
 
   //取得股票相關資料
   const loadData = async() => {
     setLoading(true)
-    loadAccount()
-    const stock_res = await apiStock_list_all()
-    const userStock_res = await apiUserStock_get() 
-    const track_res = await apiUserStock_track_get()
-    const onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
 
-    setUserStock_data(userStock_res.data)
-    setTrack_data(onlyTrackId_data)
-    setStock_data(stock_res.data)
+    try {
+      const account_res = await apiUser_account()
+      const stock_res = await apiStock_list_all()
+      const userStock_res = await apiUserStock_get() 
+      const track_res = await apiUserStock_track_get()
+      const onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
+      setAccount(account_res.data)
+      setUserStock_data(userStock_res.data)
+      setTrack_data(onlyTrackId_data)
+      setStock_data(stock_res.data)
+      
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
+      }
+    }
+
     setLoading(false)
   }
 

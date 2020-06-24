@@ -60,8 +60,8 @@ const StockRank = () => {
 
   const loadData = async() => {
     setLoading(true)
-    const { res, need_login, msg } = await check_status(apiRank_list_all)
-    if(res) {
+    try {
+      const res = await apiRank_list_all()
       //製作Table資料
       const rowData = res.data.accountDocs.map((item, index) => {
         return [
@@ -74,10 +74,12 @@ const StockRank = () => {
       setRankData(rowData)
       setUpdateTime(res.data.updateTime)
       setLoading(false)
-    } else {
+      
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
       alert(msg)
       if(need_login) {
-        history.replace("/login")
+        history.replace("/login", { need_login })
       }
     }
   }

@@ -116,17 +116,25 @@ export default function StockManage() {
 
   const handleTrack = async(event, row) => {
     setTrack_loading(true)
-    const res = await apiUserStock_track({
-      stock_id: row.stock_id
-    })
-    if(res.data) {
+
+    try {
+      const res = await apiUserStock_track({
+        stock_id: row.stock_id
+      })
       const userTrack_res = await apiUserStock_track_get()
       setUserTrack(userTrack_res.data)
+      setTimeout(() => {
+        setTrack_loading(false)
+        addSnack(`已取消追蹤【${row.stock_id} ${row.stock.stock_name}】`, 'success')
+      }, 1000);
+      
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
+      }
     }
-    setTimeout(() => {
-      setTrack_loading(false)
-      addSnack(`已取消追蹤【${row.stock_id} ${row.stock.stock_name}】`, 'success')
-    }, 1000);
   }
 
   const handleCloseStockSold = () => {
@@ -141,15 +149,17 @@ export default function StockManage() {
   const loadData = async() => {
     setStock_loading(true)
     setTrack_loading(true)
-    const userStock_res = await check_status(apiUserStock_get)
-    const userTrack_res = await check_status(apiUserStock_track_get)
-    if(userStock_res && userTrack_res) {
+    try {
+      const userStock_res = await apiUserStock_get()
+      const userTrack_res = await apiUserStock_track_get()
       setUserStock(userStock_res.data)
       setUserTrack(userTrack_res.data)
-    } else {
-      alert(userStock_res.msg)
-      if(userStock_res.need_login || userTrack_res.need_login) {
-        history.replace("/login")
+      
+    } catch (error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
       }
     }
     setStock_loading(false)

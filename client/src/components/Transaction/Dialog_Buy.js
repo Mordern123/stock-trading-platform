@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import PropTypes from "prop-types";
 import clsx from "clsx"
 import { makeStyles } from "@material-ui/core/styles";
+import { useHistory } from 'react-router'
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Dialog from '@material-ui/core/Dialog';
@@ -25,8 +26,7 @@ import { useSnackbar } from 'notistack';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Snack_Detail from './Snack_Detail'
-
-const testUser = "5ea7c55655050f2b883173ce"
+import { check_status } from '../../tools'
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
@@ -88,6 +88,7 @@ export default function BuyDialog(props) {
   const [stock_price, setStock_price] = useState(null)
   const [stock_num, setStock_num] = useState(null)
   const [loading, setLoading] = useState(false)
+  const history = useHistory()
 
   const handlePriceChange = (e) => {
     let n = parseInt(e.target.value)
@@ -102,17 +103,27 @@ export default function BuyDialog(props) {
     if(stock_num && stock_price) {
       if(stock_num > 0 && stock_price > 0) {
         setLoading(true)
-        const res = await apiUserStock_buy({
-          uid: testUser,
-          stock_id: stock_id,
-          shares_number: stock_num * 1000, //一張1000股
-          price: stock_price
-        })
-        setLoading(false)
-        if(res.data) {
-          addSnack() //發出通知
+
+        try {
+          const res = await apiUserStock_buy({
+            stock_id: stock_id,
+            shares_number: stock_num * 1000, //一張1000股
+            price: stock_price
+          })
+          setLoading(false)
+          if(res.data) {
+            addSnack() //發出通知
+          }
+          handleClose()
+          
+        } catch (error) {
+          const { need_login, msg } = check_status(error.response.status)
+          alert(msg)
+          if(need_login) {
+            history.replace("/login", { need_login })
+          }
         }
-        handleClose()
+        
       } else {
         alert('輸入值要大於0')
       }

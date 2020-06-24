@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import { useHistory } from 'react-router'
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -9,8 +10,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import { apiTxn_get_all } from '../../api'
-
-const testUser = "5ea7c55655050f2b883173ce"
+import { check_status } from '../../tools'
 
 const columns = [
   { field: 'stock_id', label: '證券代號' },
@@ -37,6 +37,7 @@ export default function StickyHeadTable() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [txnData, setTxnData] = useState([]);
+  const history = useHistory()
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -48,10 +49,17 @@ export default function StickyHeadTable() {
   };
 
   const loadData = async() => {
-    const res = await apiTxn_get_all({
-      uid: testUser
-    })
-    setTxnData(res.data) 
+    try {
+      const res = await apiTxn_get_all()
+      setTxnData(res.data) 
+
+    } catch(error) {
+      const { need_login, msg } = check_status(error.response.status)
+      alert(msg)
+      if(need_login) {
+        history.replace("/login", { need_login })
+      }
+    }
   }
 
   useEffect(() => {

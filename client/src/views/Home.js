@@ -16,11 +16,11 @@ import {
 } from '@material-ui/core';
 import styles from "assets/jss/material-dashboard-react/views/dashboardStyle.js";
 import { apiClass_announceList } from '../api'
-import { check_status } from '../tools'
+import { handle_error } from '../tools'
 
 const useStyles = makeStyles(styles);
 
-export default function Home() {
+export const Home = function() {
   const classes = useStyles();
   const { enqueueSnackbar } = useSnackbar();
   const [announceData, setAnnounceData] = useState([])
@@ -43,11 +43,7 @@ export default function Home() {
       setAnnounceData(res.data)
 
     } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
   }
   

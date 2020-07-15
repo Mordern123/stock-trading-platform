@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, Fragment, useCallback } from "react
 import { makeStyles } from "@material-ui/core/styles";
 import { useHistory } from 'react-router'
 import { InputBase, IconButton, Divider, Paper, Button } from '@material-ui/core';
-import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from '@material-ui/icons';
+import { Search, ShowChart } from '@material-ui/icons';
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Material_Table from 'components/Table/Material_Table';
@@ -11,10 +11,10 @@ import CardStat from 'components/Transaction/Card_Stat';
 import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
 import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
 import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
-import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiUserStock_get, apiUser_account } from '../api'
+import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, } from '../api'
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
-import { check_status } from '../tools'
+import { handle_error } from '../tools'
 
 //bubble sort
 const customSort = (a, b, field) => {
@@ -133,37 +133,20 @@ const styles = theme => ({
 
 const useStyles = makeStyles(styles);
 
-export default function Transaction(props) {
+export const StockYesterday = function(props) {
   const searchRef = useRef();
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const [ searchText, setSearchText ] = useState("");
   const [ stock_data, setStock_data ] = useState([]);
   const [ track_data, setTrack_data ] = useState([]);
-  const [ userStock_data, setUserStock_data ] = useState([]);
   const [ loading, setLoading ] = useState(false);
-  const [ showBuyDialog, set_showBuyDialog] = useState(false);
-  const [ stockInfo, setStockInfo] = useState(null);
-  const [ account, setAccount ] = useState(null);
   const history = useHistory()
-
-  const handleCloseStockBuy = () => {
-    set_showBuyDialog(false)
-  }
 
   const handleSearch = () => {
     setLoading(true)
     setSearchText(searchRef.current.childNodes[0].value) //拿InputBase裡面的Input
     setTimeout(() => { setLoading(false) }, 2000); 
-  }
-
-  const handleOpenStockBuy = (event, row) => {
-    const matchStock = userStock_data.find(stock => stock.stock_id == row.stock_id) || {}
-    setStockInfo({
-      stock: row,
-      userStock: matchStock
-    })
-    set_showBuyDialog(true)
   }
 
   const handleTrack = async(event, row) => {
@@ -188,11 +171,7 @@ export default function Transaction(props) {
       }, 1000);
 
     } catch(error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
   }
 
@@ -201,22 +180,14 @@ export default function Transaction(props) {
     setLoading(true)
 
     try {
-      const account_res = await apiUser_account()
       const stock_res = await apiStock_list_all()
-      const userStock_res = await apiUserStock_get() 
       const track_res = await apiUserStock_track_get()
       const onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
-      setAccount(account_res.data)
-      setUserStock_data(userStock_res.data)
       setTrack_data(onlyTrackId_data)
       setStock_data(stock_res.data)
       
     } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
 
     setLoading(false)
@@ -228,11 +199,6 @@ export default function Transaction(props) {
       tooltip: 'Refresh Data',
       isFreeAction: true,
       onClick: () => {},
-    },
-    {
-      icon: () => <ShoppingCartOutlinedIcon />,
-      tooltip: 'Buy Stock',
-      onClick: handleOpenStockBuy
     },
     rowData => {
       let inCollect = track_data.includes(rowData.stock_id) //判斷此股票使用者有沒有收藏
@@ -278,26 +244,6 @@ export default function Transaction(props) {
   return (
     <Fragment>
       <GridContainer>
-        <GridItem xs={12} sm={6} md={6}>
-          <CardStat
-            title="目前總資產"
-            updateTime={account ? `${account.last_update} 更新` : '更新中...'}
-            value={account ? account.balance : 0}
-            color="success"
-            icon={<AccountBalanceRounded />}
-          />
-        </GridItem>
-        <GridItem xs={12} sm={6} md={6}>
-          <CardStat
-            title="股票總價值"
-            updateTime={account ? `${account.last_update} 更新` : '更新中...'}
-            value={account ? account.stock_value : 0}
-            color="warning"
-            icon={<LocalAtmRounded />}
-          />
-        </GridItem>
-      </GridContainer>
-      <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
           <Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
             <IconButton color="primary" className="p-3" >
@@ -318,7 +264,7 @@ export default function Transaction(props) {
             </IconButton>
           </Paper>
           <Material_Table
-            title="今日所有股票"
+            title="台股收盤資訊"
             columns={stock_columns}
             data={stock_data}
             searchText={searchText}
@@ -328,20 +274,10 @@ export default function Transaction(props) {
             useExport={true}
             actions={getActions()}
             maxBodyHeight={700}
-            handleOpenStockBuy={handleOpenStockBuy}
             noDataDisplay="沒有符合的股票"
           />
         </GridItem>
       </GridContainer>
-      {
-        stockInfo ? (
-          <BuyDialog
-            open={showBuyDialog}
-            handleClose={handleCloseStockBuy}
-            stockInfo={stockInfo}
-          />
-        ) : null
-      }
     </Fragment>
   )
 }

@@ -7,7 +7,8 @@ import User from './models/user_model'
 import moment from 'moment'
 require('dotenv').config()
 
-const handleStock = () => {
+//獨立執行起點
+export const runTxn = () => {
   const connection = mongoose.connection;
   connection.once('open', () => {
     console.log("MongoDB database connection established successfully");
@@ -18,65 +19,70 @@ const handleStock = () => {
   mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
 }
 
-const runEveryTxn = async () => {
-  const userTxnDocs = await UserTxn.find({status: "waiting"}).exec() //取得所有等待交易資料
-  console.log(userTxnDocs)
+//伺服器運行執行起點
+export const runEveryTxn = async () => {
+  const userTxnDocs = await UserTxn.find({status: "waiting"}).sort({date: 'asc'}).exec() //取得所有等待交易資料(由小到大)
 
   //處理每筆訂單
-  if(userTxnDocs) {
-    for(let i = 0; i < userTxnDocs.length; i++) {
-      console.log(`正在處理第${i+1}筆...`)
-      let { type } = userTxnDocs[i]
-      if(type == "buy") {
-        await runBuy(userTxnDocs[i])
-      } else if(type == "sell") {
-        await runSell(userTxnDocs[i])
-      }
+  const promises1 = []
+
+  for(let i = 0; i < userTxnDocs.length; i++) {
+    console.log(`正在處理第${i+1}筆...`)
+    let { type } = userTxnDocs[i]
+    if(type == "buy") {
+      await runBuy(userTxnDocs[i]) //處理買股
+    } else if(type == "sell") {
+      await runSell(userTxnDocs[i]) //處理賣股
     }
   }
+
+  await Promise.all(promises1) //等待訂單處理結束
 
   //更新所有用戶帳戶資訊
   const userAllDocs = await User.find().exec()
-  console.log(userAllDocs)
+  const promises2 = []
 
-  if(userAllDocs) {
-    for(let i = 0; i < userAllDocs.length; i++) {
-      let { _id } = userAllDocs[i]
-      await updateStockValue(_id)
-    }
+  for(let i = 0; i < userAllDocs.length; i++) {
+    let { _id } = userAllDocs[i]
+    promises2.push(updateStockValue(_id))
   }
+
+  await Promise.all(promises2) //等待用戶資料更新結束
+
   console.log(`帳戶更新完成`)
   console.log(`處理結束，共${userTxnDocs.length}筆`)
-  process.exit()
+
 }
 
 const runBuy = async (userTxnDoc) => {
-  const { _id, user, stock_id, bid_price, shares_number } = userTxnDoc
+
   try {
-    const stockDoc = await getStock(stock_id) //取得要購買股票
-    console.log(stockDoc)
+    const { _id, user, stock_id, shares_number, stockInfo } = userTxnDoc
+    const stock_price = parseFloat(stockInfo.z) //下單成交價
+
+    let stock_exists = await Stock.exists({stock_id})
 
     //未存在此股票
-    if(stockDoc == null) {
+    if(!stock_exists) {
       await updateTxn(_id, 'fail', 0)
       return
     }
 
     //出價小於收盤價(無法購買)
-    if(bid_price < stockDoc.closing_price) {
-      await updateTxn(_id, 'fail', 1)
-      return
-    }
+    // if(bid_price < stock_price) {
+    //   await updateTxn(_id, 'fail', 1)
+    //   return
+    // }
 
     //餘額無法購買股票
-    const txn_value = await checkBalance(user, stockDoc, shares_number)
+    const txn_value = await checkBalance(user, stock_price, shares_number)
     if(txn_value == null) {
       await updateTxn(_id, 'fail', 5)
       return
     }
 
     //交易可執行
-    const userHasStock = await UserStock.exists({user, stock_id}) //確認有無擁有此股票
+    const userHasStock = await UserStock.exists({user, stock_id}) //確認用戶是否擁有此股票
     if(userHasStock) {
       //更新擁有股數
       let userStockDoc = await UserStock
@@ -84,7 +90,7 @@ const runBuy = async (userTxnDoc) => {
           user,
           stock_id
         }, {
-          stock: stockDoc._id,
+          stockInfo,
           $inc: {shares_number}, //增加股數
           last_update: moment()
         },{
@@ -96,7 +102,7 @@ const runBuy = async (userTxnDoc) => {
       let newUserStockDoc = await new UserStock({
         user,
         stock_id,
-        stock: stockDoc._id,
+        stockInfo,
         shares_number,
         last_update: moment()
       }).save()
@@ -114,11 +120,13 @@ const runBuy = async (userTxnDoc) => {
 const runSell = async (userTxnDoc) => {
 
   try {
-    const { _id, user, stock_id, bid_price, shares_number } = userTxnDoc
-    const stockDoc = await getStock(stock_id) //取得要購買股票
+    const { _id, user, stock_id, shares_number, stockInfo } = userTxnDoc
+    const stock_price = parseFloat(stockInfo.z) //下單成交價
+
+    let stock_exists = await Stock.exists({stock_id})
 
     //未存在此股票
-    if(stockDoc == null) {
+    if(!stock_exists) {
       updateTxn(_id, 'fail', 0)
       return
     }
@@ -131,10 +139,10 @@ const runSell = async (userTxnDoc) => {
     }
 
     //出價大於收盤價(無法賣出)
-    if(bid_price > stockDoc.closing_price) {
-      updateTxn(_id, 'fail', 2)
-      return
-    }
+    // if(bid_price > stock_price) {
+    //   updateTxn(_id, 'fail', 2)
+    //   return
+    // }
 
     //賣出股數超過擁有股數(無法賣出)
     let userStockDoc = await UserStock.findOne({user, stock_id}).exec()
@@ -144,13 +152,13 @@ const runSell = async (userTxnDoc) => {
     }
 
     //可正常交易
-    const txn_value = stockDoc.closing_price * shares_number
+    const txn_value = stock_price * shares_number
     userStockDoc = await UserStock
       .findOneAndUpdate({
         user,
         stock_id
       }, {
-        stock: stockDoc._id,
+        stockInfo,
         $inc: {shares_number: -shares_number}, //減少股數
         last_update: moment()
       },{
@@ -178,9 +186,8 @@ const getStock = async (stock_id) => {
   }
 }
 
-const checkBalance = async (user, stockDoc, n) => {
-  const { closing_price } = stockDoc
-  const value = closing_price * n //收盤價*購買張數
+const checkBalance = async (user, stock_price, n) => {
+  const value = stock_price * n //成交價 * 購買股數
   const accountDoc = await Account.findOne({user}).exec()
 
   return accountDoc.balance >= value ? value : null
@@ -238,18 +245,17 @@ const updateStockValue = async (user) => {
   let userAllStocks = await UserStock.find({user}).exec()
 
   for(let i = 0; i < userAllStocks.length; i++) {
-    const { stock_id, shares_number } = userAllStocks[i]
+    const { stock_id, shares_number, stockInfo } = userAllStocks[i]
+    const stock_price = parseFloat(stockInfo.z) //最新下單成交價
+
     //刪除已賣空的股票
     if(shares_number == 0) {
       await UserStock.findOneAndDelete({user, stock_id}).exec()
       continue
     }
     //取得最新股票並計算價值
-    const stockDoc = await getStock(stock_id) 
-    if(stockDoc) {
-      const stock_value = stockDoc.closing_price * shares_number //計算目前最新收盤價*擁有股數
-      total_value += stock_value
-    }
+    const stock_value = stock_price * shares_number //計算最新成交價*擁有股數
+    total_value += stock_value
   }
 
   //更新帳戶資料
@@ -266,5 +272,6 @@ const updateStockValue = async (user) => {
 
 }
 
-// start...
-handleStock()
+// txn()
+
+

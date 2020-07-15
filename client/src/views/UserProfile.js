@@ -23,7 +23,7 @@ import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme } from '@material-ui/core/styles';
 import SwipeableViews from 'react-swipeable-views';
 import { apiUser_get } from '../api'
-import { check_status } from '../tools'
+import { handle_error } from '../tools'
 
 const barTheme = createMuiTheme({
   palette: {
@@ -84,7 +84,7 @@ const styles = theme => ({
 });
 const useStyles = makeStyles(styles);
 
-export default function UserProfile() {
+export const UserProfile = function() {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = useState(false);
@@ -113,11 +113,7 @@ export default function UserProfile() {
       return true //提供更新個人資料狀態
 
     } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
   }
 

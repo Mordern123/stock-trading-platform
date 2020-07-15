@@ -10,7 +10,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import { apiTxn_get_all } from '../../api'
-import { check_status } from '../../tools'
+import { handle_error } from '../../tools'
 
 const columns = [
   { field: 'stock_id', label: '證券代號' },
@@ -54,11 +54,7 @@ export default function StickyHeadTable() {
       setTxnData(res.data) 
 
     } catch(error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
   }
 

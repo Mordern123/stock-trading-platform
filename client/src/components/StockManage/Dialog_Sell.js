@@ -24,10 +24,8 @@ import { apiUserStock_sell } from '../../api'
 import { green, red } from '@material-ui/core/colors';
 import Snack_Detail from './Snack_Detail'
 import { useSnackbar } from 'notistack';
-import { check_status } from '../../tools';
-
-
-const testUser = "5ea7c55655050f2b883173ce" 
+import { handle_error } from '../../tools';
+import delay from 'delay'
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
@@ -82,48 +80,43 @@ const useStyles = makeStyles(styles);
 export default function SellDialog(props) {
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { open, handleClose, stockInfo } = props
-  const { shares_number, stock } = stockInfo
-  const { stock_id, stock_name, txn_number, closing_price } = stock
-  const [ stock_price, setStock_price ] = useState(null)
-  const [ stock_num, setStock_num ] = useState(null)
+  const { open, handleClose, stockData } = props
+  const { stockInfo, userStock } = stockData
+  const { stock_id, stock_name } = stockInfo
+  const [ stock_num, set_stock_num ] = useState(null)
   const [ loading, setLoading ] = useState(false)
+  const [reserve_time, set_reserve_time] = useState(180) //價格保留時間
   const history = useHistory()
 
-  const handlePriceChange = (e) => {
+  const onChange = (e) => {
     let n = parseInt(e.target.value)
-    setStock_price(n)
-  }
-  const handleNumberChange = (e) => {
-    let n = parseInt(e.target.value)
-    setStock_num(n)
+    set_stock_num(n)
   }
 
   const handleSellStock = async () => {
-    if(stock_num && stock_price) {
-      if(stock_num > 0 && stock_price > 0) {
+    if(loading) return
+    if(stock_num) {
+      if(stock_num > 0) {
         setLoading(true)
         try {
           const res = await apiUserStock_sell({
-            uid: testUser,
-            stock_id: stock.stock_id,
+            stock_id: stockInfo.stock_id,
             shares_number: stock_num * 1000, //一張1000股
-            price: stock_price
+            stockInfo: stockInfo
           })
-          setTimeout(() => {
-            setLoading(false)
-            handleClose()
-            if(res.data) {
-              addSnack() //發出通知
-            }
-          }, 1000)
+          await delay(1000)
+
+          if(res.status === 200) {
+            addSnack() //發出通知
+          } else {
+            alert("交易失敗，請稍後嘗試")
+          }
+          setLoading(false)
+          handleClose()
           
         } catch (error) {
-          const { need_login, msg } = check_status(error.response.status)
-          alert(msg)
-          if(need_login) {
-            history.replace("/login", { need_login })
-          }
+          handle_error(error, history)
+          handleClose()
         }
       } else {
         alert('輸入值要大於0')
@@ -144,13 +137,26 @@ export default function SellDialog(props) {
             stock_id,
             stock_name,
             stock_num,
-            stock_price
+            stock_price: stockInfo.z
           }}
         />
       ),
       persist: true
     })
   }
+
+  //設定關閉機制
+  React.useEffect(() => {
+    let interval = setInterval(() => {
+      if(reserve_time > 0) {
+        set_reserve_time(reserve_time-1)
+      } else {
+        handleClose()
+      }
+    }, 1000);
+
+    return () => clearInterval(interval)
+  }, [reserve_time])
 
   return (
     <Dialog
@@ -159,56 +165,68 @@ export default function SellDialog(props) {
       fullWidth={true}
       maxWidth='sm'
     >
-      <DialogTitle className={classes.dialogTitle}>售出資訊</DialogTitle>
+      <DialogTitle className={classes.dialogTitle}>
+        <div className="d-flex align-items-center justify-content-between">
+          <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+          <div style={{color: '#e57373', fontSize: '1rem'}}>
+            {`價格保留時間: ${reserve_time} 秒`}
+          </div>
+        </div>
+      </DialogTitle>
       <DialogContent className={clsx(classes.dialogContent, classes.text)}>
-        <DialogContentText className={classes.text}>請確認售出股票內容</DialogContentText>
+        <DialogContentText className={classes.text}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
         <List component="nav">
           <ListItem button>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stock_id}`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stockInfo.stock_id}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券名稱： ${stock_name}`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`即時成交價： ${stockInfo.z}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`成交股數： ${txn_number} 股`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`漲跌： ${stockInfo.ud}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`收盤價： ${closing_price} NT/股`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`累積成交量： ${stockInfo.v}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`目前擁有股數： ${shares_number} 股 (${parseInt(shares_number/1000)}張)`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`開盤： ${stockInfo.o}`}</Typography>} />
           </ListItem>
           <Divider />
-          
+          <ListItem button className={classes.text}>
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`每日最高： ${stockInfo.h}`}</Typography>} />
+          </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`每日最低： ${stockInfo.l}`}</Typography>} />
+          </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`昨收： ${stockInfo.y}`}</Typography>} />
+          </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`近期買入價： ${userStock.stockInfo.z}`}</Typography>} />
+          </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText
+              primary={
+                <Typography variant="subtitle1" className={classes.text}>
+                  {`目前擁有股數： ${userStock ? userStock.shares_number : 0} 股 (${userStock ? parseInt(userStock.shares_number/1000) : 0}張)`}
+                </Typography>
+              } 
+            />
+          </ListItem>
+          <Divider />
         </List>
         <div className="row d-flex justify-content-end align-items-center mt-3">
           <div className="col-5">
             <TextField
-              label="每股售出價格"
-              type="number"
-              variant="outlined"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment
-                    position="end"
-                    children={<Typography>NT$</Typography>}
-                  />
-                ),
-              }}
-              inputProps={{
-                min: 0
-              }}
-              className={clsx("w-100 mr-3",classes.stockInput)}
-              onChange={handlePriceChange}
-            />
-          </div>
-          <div className="col-4">
-            <TextField
-              label="股票售出數量"
+              label="股票賣出數量"
               type="number"
               variant="outlined"
               InputProps={{
@@ -222,11 +240,10 @@ export default function SellDialog(props) {
               inputProps={{
                 min: 0
               }}
-              className={clsx("w-15",classes.stockInput)}
-              onChange={handleNumberChange}
+              className={clsx("w-100",classes.stockInput)}
+              onChange={onChange}
             />
           </div>
-          
         </div>
         <Backdrop className={classes.backdrop} open={loading}>
           <CircularProgress color="primary" />

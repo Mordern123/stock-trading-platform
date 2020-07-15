@@ -10,7 +10,7 @@ import Button from "components/CustomButtons/Button.js";
 import CustomInput from "components/CustomInput/CustomInput.js";
 import { apiUser_update } from "../../api"
 import { useSnackbar } from 'notistack';
-import { check_status } from '../../tools'
+import { handle_error } from '../../tools'
 
 const styles = theme => ({
   inputLabel: {
@@ -63,11 +63,7 @@ export default function ProfileBox(props) {
       handleClose()
       
     } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
   }
 

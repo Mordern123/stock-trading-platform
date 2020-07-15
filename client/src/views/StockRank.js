@@ -7,8 +7,9 @@ import Table from "components/Table/Table.js";
 import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
-import { apiRank_list_all } from '../api'
-import { check_status } from '../tools'
+import Chart from '../components/StockRank/chart'
+import { apiRank_list_all, apiTxn_list_all } from '../api'
+import { handle_error } from '../tools'
 import clsx from 'clsx'
 
 const column = [
@@ -51,42 +52,54 @@ const styles = {
 
 const useStyles = makeStyles(styles);
 
-const StockRank = () => {
+export const StockRank = function(){
   const classes = useStyles();
-  const [rankData, setRankData] = useState([]);
+  const [rankData, set_rankData] = useState([]);
+  const [txnData, set_txnData] = useState(null);
   const [updateTime, setUpdateTime] = useState(null);
   const [loading, setLoading] = useState(false);
   const history = useHistory()
 
-  const loadData = async() => {
-    setLoading(true)
-    try {
-      const res = await apiRank_list_all()
-      //製作Table資料
-      const rowData = res.data.accountDocs.map((item, index) => {
-        return [
-          index+1,
-          item.user.student_id,
-          item.totalValue,
-          item.stock_number
-        ]
-      })
-      setRankData(rowData)
-      setUpdateTime(res.data.updateTime)
-      setLoading(false)
-      
-    } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
+  //載入帳戶
+  React.useEffect(() => {
+    const loadData = async() => {
+      setLoading(true)
+      try {
+        const res = await apiRank_list_all()
+        //製作Table資料
+        const rowData = res.data.accountDocs.map((item, index) => {
+          return [
+            index+1,
+            item.user.student_id,
+            item.totalValue,
+            item.stock_number
+          ]
+        })
+
+        set_rankData(rowData)
+        setUpdateTime(res.data.updateTime)
+
+        setLoading(false)
+        
+      } catch (error) {
+        handle_error(error, history)
       }
     }
-  }
+    loadData()
+  }, [])
 
-  // 初始執行
-  useEffect(() => {
-    loadData() 
+  //載入交易資料
+  React.useEffect(() => {
+    const loadData = async() => {
+      try {
+        let res = await apiTxn_list_all({ day: 10 })
+        set_txnData(res.data)
+  
+      } catch (error) {
+        handle_error(error, history)
+      }
+    }
+    loadData()
   }, [])
 
   return (
@@ -102,6 +115,7 @@ const StockRank = () => {
             </p>
           </CardHeader>
           <CardBody>
+            { txnData ? <Chart data={txnData}/> : null}
             <Table
               tableHeaderColor="warning"
               tableHead={column}
@@ -114,5 +128,3 @@ const StockRank = () => {
    
   )
 }
-
-export default StockRank;

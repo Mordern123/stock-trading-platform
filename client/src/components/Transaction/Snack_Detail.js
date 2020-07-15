@@ -127,7 +127,7 @@ const SnackMessage = React.forwardRef((props, ref) => {
                     <Divider />
                     <MenuItem className={classes.text}>
                       <CheckRoundedIcon className={classes.checkIcon}/>
-                      <Typography variant="body1" className={classes.text}>{`下單價格： ${stock_price} 元/股`}</Typography>
+                      <Typography variant="body1" className={classes.text}>{`成交價格： ${stock_price} 元/股`}</Typography>
                     </MenuItem>
                   </MenuList>
                 </Paper>

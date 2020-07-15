@@ -1,9 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { makeStyles } from "@material-ui/core/styles";
+import { makeStyles, createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
 import MaterialTable, { MTableToolbar } from 'material-table';
 import Card from '@material-ui/core/Card';
 
+const tableTheme = createMuiTheme({
+  overrides: {
+      MuiTableRow: {
+          hover: {
+            "&:hover": {
+              cursor: 'default !important'
+            }
+          }
+      }
+  }
+});
 
 const styles = theme => ({
   emptyDataSourceMessage: {
@@ -53,7 +64,10 @@ export default function Custom_MaterialTable(props) {
     pageSize: pageSize,
     pageSizeOptions: pageSizeOptions || [50, 100, 200],
     maxBodyHeight: maxBodyHeight || 600,
-    actionsColumnIndex: actionsColumnIndex == null ? 0 : actionsColumnIndex
+    actionsColumnIndex: actionsColumnIndex == null ? 0 : actionsColumnIndex,
+    rowStyle: {
+      cursor: 'help'
+    }
   }
 
   // 更改key變數才會吃到搜尋字串
@@ -61,7 +75,7 @@ export default function Custom_MaterialTable(props) {
     setCount(count+1)
   }, [searchText, pageSize])
 
-  useEffect(() => {
+  useEffect(() => {  
     let result_count = tableRef.current.state.data.length
     result_count = result_count < 10 ? 10 : result_count
     if(result_count < 50) {
@@ -73,35 +87,38 @@ export default function Custom_MaterialTable(props) {
   }, [isLoading == false])
 
   return (
-    <MaterialTable
-      tableRef={tableRef}
-      key={count}
-      isLoading={isLoading}
-      title={(<div className="ch_font">{title}</div>)}
-      columns={columns}
-      data={data}
-      options={options}
-      components={{
-        Container: props => noContainer ? (
-          <div {...props}></div>
-        ) : <Card raised {...props}></Card>
-      }}
-      localization={{
-        header: {
-          actions: ''
-        },
-        body: {
-          emptyDataSourceMessage: <div className={classes.text}>{noDataDisplay}</div>
-        },
-        pagination: {
-          labelDisplayedRows: "第 {from}-{to} 共 {count} 筆",
-          labelRowsSelect: "筆"
-        }
-      }}
-      onRowClick={(event, rowData) => console.log(event, rowData)}
-      actions={actions}
-      detailPanel={detailPanel}
-    />
+    <ThemeProvider theme={tableTheme}>
+      <MaterialTable
+        className={classes.row}
+        tableRef={tableRef}
+        key={count}
+        isLoading={isLoading}
+        title={(<div className="ch_font">{title}</div>)}
+        columns={columns}
+        data={data}
+        options={options}
+        components={{
+          Container: props => noContainer ? (
+            <div {...props}></div>
+          ) : <Card raised {...props}></Card>
+        }}
+        localization={{
+          header: {
+            actions: ''
+          },
+          body: {
+            emptyDataSourceMessage: <div className={classes.text}>{noDataDisplay}</div>
+          },
+          pagination: {
+            labelDisplayedRows: "第 {from}-{to} 共 {count} 筆",
+            labelRowsSelect: "筆"
+          }
+        }}
+        onRowClick={(event, rowData) => console.log(event, rowData)}
+        actions={actions}
+        detailPanel={detailPanel}
+      />     
+    </ThemeProvider>
   );
 }
 

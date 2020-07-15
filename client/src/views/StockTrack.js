@@ -11,36 +11,10 @@ import Typography from '@material-ui/core/Typography';
 import { TextField, InputAdornment, Button } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
 import Material_Table from 'components/Table/Material_Table';
-import { apiUserStock_get, apiUserStock_track_get, apiUserStock_track } from '../api'
+import { apiUserStock_track_get, apiUserStock_track } from '../api'
 import ClearRoundedIcon from '@material-ui/icons/ClearRounded';
-import MonetizationOnRoundedIcon from '@material-ui/icons/MonetizationOnRounded';
-import SellDialog from 'components/StockManage/Dialog_Sell'
-import StockDetail from 'components/StockManage/Detail_Stock'
 import { useSnackbar } from 'notistack';
-import { check_status } from '../tools'
-
-const userStock_columns = [
-  {
-    field: "stock_id",
-    title: "證券代號",
-  },
-  {
-    field: "stock.stock_name",
-    title: "證券名稱",
-  },
-  {
-    field: "shares_number",
-    title: "擁有股數"
-  },
-  {
-    field: "last_update",
-    title: "交易更新時間",
-  },
-  {
-    field: "createdAt",
-    title: "擁有時間"
-  }
-]
+import { handle_error } from '../tools'
 
 const userTrack_columns = [
   {
@@ -53,7 +27,7 @@ const userTrack_columns = [
   },
   {
     field: "stock.closing_price",
-    title: "目前每股價格",
+    title: "近期收盤價",
   },
   {
     field: "track_time",
@@ -101,22 +75,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function StockManage() {
+export const StockTrack = function() {
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const [searchStock, setSearchStock] = useState("");
   const [searchTrack, setSearchTrack] = useState("");
-  const [stock_loading, setStock_loading] = useState(false);
   const [track_loading, setTrack_loading] = useState(false);
-  const [userStock, setUserStock] = useState([]);
   const [userTrack, setUserTrack] = useState([]);
-  const [stockInfo, setStockInfo] = useState(null);
   const [showSellDialog, set_showSellDialog] = useState(false)
   const history = useHistory()
 
   const handleTrack = async(event, row) => {
     setTrack_loading(true)
-
     try {
       const res = await apiUserStock_track({
         stock_id: row.stock_id
@@ -129,51 +98,9 @@ export default function StockManage() {
       }, 1000);
       
     } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
   }
-
-  const handleCloseStockSold = () => {
-    set_showSellDialog(false)
-  }
-
-  const handleOpenStockSell = (event, row) => {
-    setStockInfo(row)
-    set_showSellDialog(true)
-  }
-
-  const loadData = async() => {
-    setStock_loading(true)
-    setTrack_loading(true)
-    try {
-      const userStock_res = await apiUserStock_get()
-      const userTrack_res = await apiUserStock_track_get()
-      setUserStock(userStock_res.data)
-      setUserTrack(userTrack_res.data)
-      
-    } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
-    }
-    setStock_loading(false)
-    setTrack_loading(false)
-  }
-
-  const getPanel = useCallback(() => [
-    {
-      tooltip: '顯示詳細資訊',
-      render: rowData => {
-        return <StockDetail stockData={rowData.stock}/>
-      },
-    },
-  ])
 
   const addSnack = (msg, color) => {
     enqueueSnackbar(msg, {
@@ -191,56 +118,25 @@ export default function StockManage() {
     })
   }
 
-  //初始執行一次
+  //載入用戶追蹤股票
   useEffect(() => {
+    const loadData = async() => {
+      setTrack_loading(true)
+      try {
+        const userTrack_res = await apiUserStock_track_get()
+        setUserTrack(userTrack_res.data)
+        
+      } catch (error) {
+        handle_error(error, history)
+      }
+      setTrack_loading(false)
+    }
     loadData()
   }, [])
 
   return (
     <Fragment>
       <GridContainer>
-        <GridItem xs={12} sm={12} md={12}>
-          <Card>
-            <CardHeader color="warning">
-              <Typography variant="subtitle1" className="ch_font">擁有的股票</Typography>
-            </CardHeader>
-            <CardBody>
-              <TextField
-                label="搜尋擁有股票"
-                placeholder="輸入任何關鍵字"
-                className={classes.searchInput1}
-                margin="dense"
-                variant="outlined"
-                onChange={e => setSearchStock(e.target.value)}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <Material_Table
-                searchText={searchStock}
-                showToolBar={false}
-                isLoading={stock_loading}
-                columns={userStock_columns}
-                data={userStock}
-                noContainer={true}
-                maxBodyHeight={'100%'}
-                noDataDisplay="沒有擁有的股票"
-                detailPanel={getPanel()}
-                actions={[
-                  {
-                    icon: () => <MonetizationOnRoundedIcon />,
-                    tooltip: '售出股票',
-                    onClick: handleOpenStockSell
-                  },
-                ]}
-              />
-            </CardBody>
-          </Card>
-        </GridItem>
         <GridItem xs={12} sm={12} md={12}>
           <Card>
             <CardHeader color="primary">
@@ -284,15 +180,6 @@ export default function StockManage() {
           </Card>
         </GridItem>
       </GridContainer>
-      {
-        stockInfo ? (
-          <SellDialog
-            open={showSellDialog}
-            handleClose={handleCloseStockSold}
-            stockInfo={stockInfo}
-          />
-        ) : null
-      }
     </Fragment>
   )
 }

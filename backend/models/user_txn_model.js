@@ -12,20 +12,15 @@ const userTxnSchema = new Schema({
     type: String,
     required: true,
   },
-  stock: {
-    type: Schema.Types.ObjectId,
+  stockInfo: {
+    type: Object,
     required: true,
-    ref: 'Stock'
   },
   type: {
     type: String,
     required: true,
   },
   shares_number: {
-    type: Number,
-    required: true,
-  },
-  bid_price: {
     type: Number,
     required: true,
   },

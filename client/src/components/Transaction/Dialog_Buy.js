@@ -20,13 +20,14 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import Typography from '@material-ui/core/Typography';
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import { apiUserStock_buy } from '../../api'
+import IconButton from '@material-ui/core/IconButton';
+import { apiUserStock_buy, apiUserStock_track } from '../../api'
 import { green, red } from '@material-ui/core/colors';
 import { useSnackbar } from 'notistack';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
 import Snack_Detail from './Snack_Detail'
-import { check_status } from '../../tools'
+import { handle_error } from '../../tools'
+import CheckCircleOutlineRoundedIcon from '@material-ui/icons/CheckCircleOutlineRounded';
+import delay from 'delay'
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="left" ref={ref} {...props} />;
@@ -47,7 +48,7 @@ const styles = theme => ({
   dialogTitle: {
     "& h2": {
       fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
-    }
+    },
   },
   backdrop: {
     position: 'absolute',
@@ -80,48 +81,44 @@ const useStyles = makeStyles(styles);
 
 export default function BuyDialog(props) {
   const classes = useStyles();
-  const { enqueueSnackbar } = useSnackbar();
-  const { open, handleClose, stockInfo } = props
-  const { stock, userStock } = stockInfo
-  const { stock_id, stock_name, trading_volume, txn_number, closing_price } = stock
-  const { shares_number } = userStock
-  const [stock_price, setStock_price] = useState(null)
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const { open, handleClose, stockInfo, userStock, userTrack } = props
   const [stock_num, setStock_num] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [trackStatus, set_trackStatus] = useState(false)
+  const [reserve_time, set_reserve_time] = useState(180) //價格保留時間
   const history = useHistory()
 
-  const handlePriceChange = (e) => {
-    let n = parseInt(e.target.value)
-    setStock_price(n)
-  }
   const handleNumberChange = (e) => {
     let n = parseInt(e.target.value)
     setStock_num(n)
   }
 
+  //購買股票
   const handleBuyStock = async () => {
-    if(stock_num && stock_price) {
-      if(stock_num > 0 && stock_price > 0) {
+    if(loading) return
+    if(stock_num) {
+      if(stock_num > 0) {
         setLoading(true)
 
         try {
           const res = await apiUserStock_buy({
-            stock_id: stock_id,
+            stock_id: stockInfo.stock_id,
+            stockInfo: stockInfo,
             shares_number: stock_num * 1000, //一張1000股
-            price: stock_price
           })
-          setLoading(false)
-          if(res.data) {
+          await delay(1000)
+
+          if(res.status === 200) {
             addSnack() //發出通知
+          } else {
+            alert("交易失敗，請稍後嘗試")
           }
+          setLoading(false)
           handleClose()
           
         } catch (error) {
-          const { need_login, msg } = check_status(error.response.status)
-          alert(msg)
-          if(need_login) {
-            history.replace("/login", { need_login })
-          }
+          handle_error(error, history)
         }
         
       } else {
@@ -132,24 +129,81 @@ export default function BuyDialog(props) {
     }
   }
 
+  //追蹤股票
+  const handleTrack = async() => {
+    try {
+      const res = await apiUserStock_track({
+        stock_id: stockInfo.stock_id
+      })
+      if(res.status === 200) {
+        if(trackStatus) {
+          addTrackSnack(`已取消 ${stockInfo.stock_id}【${stockInfo.stock_name}】的追蹤`, "success")
+        } else {
+          addTrackSnack(`已將 ${stockInfo.stock_id}【${stockInfo.stock_name}】加入追蹤`, "success")
+        }
+        set_trackStatus(!trackStatus)
+      }
+
+    } catch(error) {
+      handle_error(error, history)
+    }
+  }
+
+  //發出成功交易通知
   const addSnack = () => {
-    enqueueSnackbar(`下單成功【${stock_id} ${stock_name}】`,{
+    enqueueSnackbar(`下單成功【${stockInfo.stock_id} ${stockInfo.stock_name}】`,{
       anchorOrigin: { horizontal: 'right', vertical: 'top' },
       content: (key, message) => (
         <Snack_Detail
           id={key}
           message={message} 
           data={{
-            stock_id,
-            stock_name,
+            stock_id: stockInfo.stock_id,
+            stock_name: stockInfo.stock_name,
             stock_num,
-            stock_price
+            stock_price: stockInfo.z
           }}
         />
       ),
       persist: true
     })
   }
+
+  //發出追蹤交易通知
+  const addTrackSnack = (msg, color) => {
+    enqueueSnackbar(msg, {
+      variant : color,
+      anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      action: (key) => (
+        <Button
+          style={{ color: 'white' }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      ),
+      persist: true
+    })
+  }
+
+  //追蹤狀態
+  React.useEffect(() => {
+    set_trackStatus(Boolean(userTrack)) 
+  }, [])
+
+  //設定關閉機制
+  React.useEffect(() => {
+    let interval = setInterval(() => {
+      if(reserve_time > 0) {
+        set_reserve_time(reserve_time-1)
+      } else {
+        handleClose()
+      }
+    }, 1000);
+
+    return () => clearInterval(interval)
+  }, [reserve_time])
+
 
   return (
     <Dialog
@@ -158,56 +212,68 @@ export default function BuyDialog(props) {
       fullWidth={true}
       maxWidth='sm'
     >
-      <DialogTitle className={classes.dialogTitle}>買入資訊</DialogTitle>
+      <DialogTitle className={classes.dialogTitle}>
+        <div className="d-flex align-items-center justify-content-between">
+          <div className="d-flex align-items-center">
+            <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+            <IconButton style={trackStatus ? {color: 'green'} : {}} onClick={handleTrack}>
+              <CheckCircleOutlineRoundedIcon fontSize="large"/>
+            </IconButton>
+            <span style={{fontSize: '10px', color: 'rgba(0, 0, 0, 0.54)', marginLeft: '-10px'}}>{trackStatus ? "點擊取消追蹤" : "點擊追蹤"}</span>
+          </div>
+          <div style={{color: '#e57373', fontSize: '1rem'}}>
+            {`價格保留時間: ${reserve_time} 秒`}
+          </div>
+        </div>
+      </DialogTitle>
       <DialogContent className={clsx(classes.dialogContent, classes.text)}>
-        <DialogContentText className={classes.text}>請確認股票買入內容</DialogContentText>
+        <DialogContentText className={classes.text}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
         <List component="nav">
           <ListItem button>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stock_id}`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stockInfo.stock_id}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券名稱： ${stock_name}`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`目前成交價： ${stockInfo.z}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`總成交股數： ${trading_volume} 股`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`漲跌： ${stockInfo.ud}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`總成交筆數： ${txn_number} 筆`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`累積成交量： ${stockInfo.v}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`收盤價： ${closing_price} NT/股`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`開盤： ${stockInfo.o}`}</Typography>} />
           </ListItem>
           <Divider />
           <ListItem button className={classes.text}>
-            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`目前擁有股數： ${shares_number || 0} 股 (${parseInt(shares_number/1000) || 0}張)`}</Typography>} />
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`每日最高： ${stockInfo.h}`}</Typography>} />
           </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`每日最低： ${stockInfo.l}`}</Typography>} />
+          </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`昨收： ${stockInfo.y}`}</Typography>} />
+          </ListItem>
+          <Divider />
+          <ListItem button className={classes.text}>
+            <ListItemText
+              primary={
+                <Typography variant="subtitle1" className={classes.text}>
+                  {`目前擁有張數： ${userStock ? parseInt(userStock.shares_number/1000) : 0}張 (${userStock ? userStock.shares_number : 0} 股)`}
+                </Typography>
+              } 
+            />
+          </ListItem>
+          <Divider />
         </List>
         <div className="row d-flex justify-content-end align-items-center mt-3">
           <div className="col-5">
-            <TextField
-              label="每股買入價格"
-              type="number"
-              variant="outlined"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment
-                    position="end"
-                    children={<Typography>NT$</Typography>}
-                  />
-                ),
-              }}
-              inputProps={{
-                min: 0
-              }}
-              className={clsx("w-100 mr-3",classes.stockInput)}
-              onChange={handlePriceChange}
-            />
-          </div>
-          <div className="col-4">
             <TextField
               label="股票買入數量"
               type="number"
@@ -223,11 +289,10 @@ export default function BuyDialog(props) {
               inputProps={{
                 min: 0
               }}
-              className={clsx("w-15",classes.stockInput)}
+              className={clsx("w-100",classes.stockInput)}
               onChange={handleNumberChange}
             />
           </div>
-          
         </div>
         <Backdrop className={classes.backdrop} open={loading}>
           <CircularProgress color="primary" />

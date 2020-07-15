@@ -13,6 +13,7 @@ const router = Router()
 
 const get_all_txn = async (req, res) => {
   const { user, code } = await check_permission(req)
+  const { day } = req.query
 
   if(!user) {
     res.clearCookie('user_token')
@@ -20,12 +21,27 @@ const get_all_txn = async (req, res) => {
     return
   }
 
-  const txnDoc = await UserTxn.find().exec()
-  res.json(txnDoc)
+  if(day) {
+    let s = moment().subtract(parseInt(day), 'days').format("YYYYMMDD") //起始時間
+    let e = moment().add(1, 'days').format("YYYYMMDD") //結束時間取明天
+    let txnDoc = await UserTxn.find({
+      order_time: {
+        $gte: moment(s),
+        $lt: moment(e)
+      }
+    }).exec()
+    
+    res.json(txnDoc)
+
+  } else {
+    const txnDoc = await UserTxn.find().exec()
+    res.json(txnDoc)
+  }
 }
 
 const get_user_txn = async (req, res) => {
   const { type } = req.params
+  const { pure } = req.query
   const { user, code } = await check_permission(req)
 
   if(!['all', 'success', 'fail', 'waiting', 'error'].includes(type)) {
@@ -53,20 +69,25 @@ const get_user_txn = async (req, res) => {
     .exec()
 
   if(txnData) {
-    const newTxnData = txnData.map(item => {
-      let newDoc = item
-      if(item.type == 'buy') {
-        newDoc.type = "買入"
-      } else if(item.type = 'sell') {
-        newDoc.type = "賣出"
-      }
-      newDoc.updatedAt = moment(item.updatedAt).startOf('hour').fromNow()
-      newDoc.createdAt = moment(item.createdAt).calendar()
-      newDoc.order_time = moment(item.order_time).calendar()
-      newDoc.txn_time = item.txn_time != null ? moment(item.txn_time).calendar() : "尚未處理交易"
-      return newDoc
-    })
-    res.json(newTxnData)
+    if(pure) { //純資料
+      res.json(txnData)
+
+    } else {
+      const newTxnData = txnData.map(item => {
+        let newDoc = item
+        if(item.type == 'buy') {
+          newDoc.type = "買入"
+        } else if(item.type = 'sell') {
+          newDoc.type = "賣出"
+        }
+        newDoc.updatedAt = moment(item.updatedAt).startOf('hour').fromNow()
+        newDoc.createdAt = moment(item.createdAt).calendar()
+        newDoc.order_time = moment(item.order_time).calendar()
+        newDoc.txn_time = item.txn_time != null ? moment(item.txn_time).calendar() : "尚未處理交易"
+        return newDoc
+      })
+      res.json(newTxnData)
+    }
   } else {
     res.json(false)
   }
@@ -116,8 +137,8 @@ const get_class_txn_avg = async (req, res) => {
   res.json(avgObj)
 }
 
-router.route('/get/all').post(get_all_txn);
-router.route('/get/user/:type').post(get_user_txn);
-router.route('/get/class/avg').post(get_class_txn_avg);
+router.route('/get/all').get(get_all_txn);
+router.route('/get/user/:type').get(get_user_txn);
+router.route('/get/class/avg').get(get_class_txn_avg);
 
 export default router; 

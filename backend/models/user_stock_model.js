@@ -12,10 +12,9 @@ const userStockSchema = new Schema({
     type: String,
     required: true,
   },
-  stock: {
-    type: Schema.Types.ObjectId, 
+  stockInfo: {
+    type: Object,
     required: true,
-    ref: 'Stock'
   },
   shares_number: {
     type: Number,

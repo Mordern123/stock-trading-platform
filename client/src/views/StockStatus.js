@@ -8,7 +8,7 @@ import { Paper, Tabs, Tab, Typography, Box } from "@material-ui/core";
 import SwipeableViews from 'react-swipeable-views';
 import Material_Table from "components/Table/Material_Table";
 import { apiTxn_get_success, apiTxn_get_fail, apiTxn_get_waiting } from "../api"
-import { check_status } from '../tools'
+import { handle_error } from '../tools'
 
 const columns = [
   {
@@ -16,7 +16,7 @@ const columns = [
     title: "證券代號",
   },
   {
-    field: "stock.stock_name",
+    field: "stockInfo.stock_name",
     title: "證券名稱",
   },
   {
@@ -24,16 +24,12 @@ const columns = [
     title: "交易類型",
   },
   {
+    field: "stockInfo.z",
+    title: "成交價格",
+  },
+  {
     field: "shares_number",
     title: "交易股數",
-  },
-  {
-    field: "bid_price",
-    title: "每股出價",
-  },
-  {
-    field: "stock.closing_price",
-    title: "每股成交價格",
   },
   {
     field: "order_time",
@@ -95,7 +91,7 @@ const styles = theme => ({
 
 const useStyles = makeStyles(styles);
 
-export default function StockStatus() {
+export const StockStatus = function() {
   const classes = useStyles();
   const theme = useTheme();
   const [value, setValue] = useState(0); //控制導覽列
@@ -106,6 +102,7 @@ export default function StockStatus() {
   const history = useHistory()
 
   const handleChange = (event, newValue) => {
+    localStorage.setItem("status_page", newValue)
     setValue(newValue);
   };
 
@@ -135,11 +132,7 @@ export default function StockStatus() {
   
       
     } catch (error) {
-      const { need_login, msg } = check_status(error.response.status)
-      alert(msg)
-      if(need_login) {
-        history.replace("/login", { need_login })
-      }
+      handle_error(error, history)
     }
 
     setLoading(false)
@@ -147,6 +140,16 @@ export default function StockStatus() {
   
   useEffect(() => {
     loadData()
+  }, [])
+
+  React.useEffect(() => {
+    let p = localStorage.getItem("status_page")
+    if(p) {
+      setValue(parseInt(p))
+    } else {
+      localStorage.setItem("status_page", 0)
+      setValue(0)
+    }
   }, [])
 
   return (

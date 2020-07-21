@@ -114,6 +114,8 @@ export default function SignUp() {
             //本地儲存
             localStorage.clear()
             localStorage.setItem("comeBack", true)
+
+            alert("登入成功! 自動導向主畫面...")
             history.replace("/admin")
 
           } else {

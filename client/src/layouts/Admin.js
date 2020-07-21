@@ -137,6 +137,7 @@ function Admin({ ...rest }) {
     enqueueSnackbar("歡迎回來股票交易", {
       variant :'success',
       anchorOrigin: { horizontal: 'center', vertical: 'top' },
+      autoHideDuration: 2000,
       ContentProps: {
         style: {
           backgroundColor: "#4caf50",

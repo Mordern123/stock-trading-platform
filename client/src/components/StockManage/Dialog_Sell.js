@@ -73,6 +73,10 @@ const styles = theme => ({
     "&:focus": {
       outline: 'none',
     }
+  },
+  price_text: {
+    fontSize: '30px',
+    fontWeight: '500'
   }
 })
 
@@ -175,7 +179,7 @@ export default function SellDialog(props) {
       <DialogTitle className={clsx("pb-0", classes.dialogTitle)}>
         <Hidden only={['xs','sm']} implementation="css">
           <div className="d-flex align-items-center justify-content-between">
-            <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+            <span className={clsx("mr-1", classes.price_text)} >{stockInfo.stock_name}</span>
             <div style={{color: '#e57373', fontSize: '1rem'}}>
               {`價格保留時間: ${reserve_time} 秒`}
             </div>

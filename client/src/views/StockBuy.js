@@ -181,6 +181,9 @@ export const StockBuy = function() {
         }
       } else if(res1.status === 204) {
         alert("查無此股票")
+        
+      } else if(res1.status === 205) {
+        alert("收盤中不可交易")
       }
       
     } catch (error) {

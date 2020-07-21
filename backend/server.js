@@ -4,18 +4,15 @@ import mongoose from 'mongoose'
 import { Server } from 'http'
 import logger from 'morgan'
 import PQueue from 'p-queue'
-import schedule from 'node-schedule'
 import cookieParser from 'cookie-parser'
 import userRouter from './routes/user'
 import classRouter from './routes/class'
 import stockRouter from './routes/stock'
 import txnRouter from './routes/transaction'
-import { runEveryTxn } from './txn'
-import { getStock } from './getStock'
-import moment from 'moment'
-require('dotenv').config()
+import Global from './models/global_model'
+import { start_txn_schedule, start_get_closingStock_schedule, start_closing_schedule, start_opening_schedule } from './schedule'
 
-global.userKey = {} //使用者Token
+require('dotenv').config()
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -26,30 +23,12 @@ export const queue = new PQueue({ concurrency: 3, interval: 1000, intervalCap: 3
 connection.once('open', () => {
   console.log("MongoDB database connection established successfully");
   console.log("The database is " + connection.name)
-
-  //處理股票交易排程
-  var rule1 = new schedule.RecurrenceRule();
-  rule1.minute = new schedule.Range(0, 59, 10) //每十分鐘一次
-  rule1.dayOfWeek = new schedule.Range(1, 5) //每個禮拜一到五
-
-  schedule.scheduleJob(rule1, function(fireDate){
-    console.log(`交易開始處理時間: ${fireDate}`)
-    runEveryTxn()
-  });
-
-  //處理收盤資料排程
-  var rule2 = new schedule.RecurrenceRule();
-  //每天16:10
-  rule2.minute = 10
-  rule2.hour = 16
-  rule2.dayOfWeek = new schedule.Range(1, 5) //每個禮拜一到五
-
-  schedule.scheduleJob(rule2, function(fireDate){
-    console.log(`收盤資料抓取時間: ${fireDate}`)
-    let today_str = moment().format('YYYY-MM-DD')
-    let today = moment(today_str).toDate()
-    getStock(today)
-  });
+  
+  //啟動排程
+  start_txn_schedule()
+  start_get_closingStock_schedule()
+  start_closing_schedule()
+  start_opening_schedule()
 })
 
 mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
@@ -83,8 +62,8 @@ app.use('/stock', stockRouter)
 app.use('/txn', txnRouter)
 
 app.get('test', async(req, res) => {
-  const result = await Announcement.find().populate('publisher', 'user_name').exec()
-  res.json(result)
+  const doc = await Global.findOne({ tag: "hongwei"}).exec()
+  res.json(doc)
 })
 
 server.listen(port, () => {

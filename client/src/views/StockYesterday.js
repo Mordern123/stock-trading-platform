@@ -9,7 +9,7 @@ import Material_Table from 'components/Table/Material_Table';
 import LaunchRoundedIcon from '@material-ui/icons/LaunchRounded';
 import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
 import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
-import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, } from '../api'
+import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiStock_get_updateTime } from '../api'
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import { handle_error } from '../tools'
@@ -276,12 +276,12 @@ export const StockYesterday = function(props) {
   }
 
   //取得sever資料
-  const load_stock_remote = async() => {
+  const load_stock_remote = async(date) => {
     let stock_res = await apiStock_list_all()
     let track_res = await apiUserStock_track_get()
     let onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
     await localforage.setItem("stocks", stock_res.data) //儲存進indexDB
-    await localforage.setItem("updateTime", moment().format('YYYY-MM-DD')) //新的更新
+    await localforage.setItem("updateTime", date) //新的更新
 
     setTrack_data(onlyTrackId_data)
     setStock_data(stock_res.data)
@@ -300,28 +300,21 @@ export const StockYesterday = function(props) {
     const loadData = async() => {
       setLoading(true)
       try {
-        let _stocks = await localforage.getItem('stocks')
+        let _stocks = await localforage.getItem('stocks') //股票暫存
+        let res = await apiStock_get_updateTime() 
+        let remote_updateTime = res.data //遠端更新日期
+        let local_updateTime = await localforage.getItem("updateTime") //本地更新日期
         let stocks = _stocks ? _stocks.length > 0 ? _stocks : null : _stocks
-        let today_four = moment().hours(16).minutes(10) //設定下午4點10分
-        let is_after_four = moment().isAfter(today_four)
         
         if(stocks) { //股票暫存是否存在
-          if(is_after_four) { //超過下午4點10分
-            let updateTime = await localforage.getItem("updateTime")
-            let today = moment(moment().format('YYYY-MM-DD')) //今日最小單位
-
-            if(moment(updateTime).isBefore(today)) { //今日尚未更新
-              await load_stock_remote()
-
-            } else { //今日已更新
-              await load_stock_local(stocks)
-            }
-
-          } else { //未超過4點10分拿暫存
+          if(local_updateTime !== remote_updateTime) { //有更新拿遠端
+            await load_stock_remote(remote_updateTime)
+            
+          } else { //沒更新拿暫存
             await load_stock_local(stocks)
           }
-        } else { //未有股票拿最新
-          await load_stock_remote()
+        } else { //未有股票資料拿遠端
+          await load_stock_remote(remote_updateTime)
         }
 
         addTimeSnack(`股票收盤資訊更新時間：${moment().calendar(null, { lastWeek: 'dddd HH:mm' })} 進行更新`, 'info')

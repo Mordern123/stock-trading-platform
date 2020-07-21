@@ -5,6 +5,7 @@ import UserTrack from '../models/user_track_model'
 import UserTxn from '../models/user_txn_model'
 import UserSearch from '../models/user_search_model'
 import Account from '../models/account_model'
+import Global from '../models/global_model'
 import moment from 'moment';
 import { check_permission } from '../common/auth'
 import { queue } from '../server'
@@ -18,30 +19,42 @@ const router = Router()
 
 //取得收盤資料
 const get_all_stock = async (req, res) => {
-  const { user, code } = await check_permission(req)
-
-  if(!user) {
-    res.clearCookie('user_token')
-    res.status(code).send()
-    return
+  try {
+    const { user, code } = await check_permission(req)
+    if(!user) {
+      res.clearCookie('user_token')
+      res.status(code).send()
+      return
+    }
+  
+    //取得收盤股票時間
+    let global = await Global.findOne({tag: "hongwei"}).exec()
+    let date = moment(global.stock_update).toDate()
+    let result = await Stock.find({data_time: date}).exec()
+    res.json(result)
+    
+  } catch (error) {
+    handle_error(error, res)
   }
+}
 
-  //判斷取得股票時間
-  var date;
-  let today_four = moment().hours(16).minutes(10) //設定下午4點10分
-  let is_after_four = moment().isAfter(today_four)
-
-  if(is_after_four) { //是否過了今日下午4點(防呆前端也有做)
-    let today = moment().format('YYYY-MM-DD') //今日最小單位
-    date = moment(today).toDate()
-
-  } else {
-    let yesterday = moment().subtract(1, 'days').format('YYYY-MM-DD') //昨日最小單位
-    date = moment(yesterday).toDate()
+//取得收盤更新時間
+const get_stock_updateTime = async (req, res) => {
+  try {
+    const { user, code } = await check_permission(req)
+    if(!user) {
+      res.clearCookie('user_token')
+      res.status(code).send()
+      return
+    }
+  
+    //取得收盤股票時間
+    let global = await Global.findOne({tag: "hongwei"}).exec()
+    res.json(global.stock_update)
+    
+  } catch (error) {
+    handle_error(error, res)
   }
-
-  const result = await Stock.find({data_time: date}).exec()
-  res.json(result)
 }
 
 //取得全部股票排名
@@ -202,22 +215,29 @@ const user_track_stock = async (req, res) => {
 const get_realTime_stock = async (req, res) => {
 
   const { user, code } = await check_permission(req)
-
   if(!user) {
     res.status(code).send()
     return
   }
 
-  let stock_id = req.params.stock_id
-  let exists = await Stock.exists({stock_id})
-  let day = moment().day()
-  let isWeekend = (day === 6) || (day === 0) //判斷假日
-  let s = moment().hours(16).minutes(30) //今日下午4點30分
-  let e = moment().add(1, 'days').hours(9) //隔日早上9點
-  let is_between_close = moment().isBetween(s, e)
+  //檢查是否收盤
+  let global = await Global.findOne({ tag: "hongwei" }).exec()
+  if(global.stock_closing) {
+    res.status(205).send() //收盤中不可交易
+    return
+  }
 
-  if(exists) {
-    if(is_between_close || isWeekend) { //在收盤期間
+  let stock_id = req.params.stock_id
+  let stockData = await Stock.findOne({stock_id}).lean().exec()
+  console.log(stockData)
+  // let day = moment().day()
+  // let isWeekend = (day === 6) || (day === 0) //判斷假日
+  // let s = moment().hours(16).minutes(30) //今日下午4點30分
+  // let e = moment().add(1, 'days').hours(9) //隔日早上9點
+  // let is_between_close = moment().isBetween(s, e)
+
+  if(stockData) {
+    if(false) { //在收盤期間
       try {
         let today_str = moment().format('YYYY-MM-DD') //今日最小單位
         let today = moment(today_str).toDate()
@@ -245,11 +265,11 @@ const get_realTime_stock = async (req, res) => {
       }
     } else {
       //取得最新資料
-      await queue.add(() => task(user, stock.stock_id, stock.stock_name, res)); //加入排程
+      await queue.add(() => task(user, stockData.stock_id, stockData.stock_name, res)); //加入排程
     }
 
   } else {
-    res.status(204).send()
+    res.status(204).send() //找不到股票
   }
 }
 
@@ -272,8 +292,8 @@ const get_user_search = async(req, res) => {
   res.json(result)
 }
 
-
 router.route('/get/all').get(get_all_stock);
+router.route('/get/updateTime').get(get_stock_updateTime);
 router.route('/get/:stock_id').get(get_realTime_stock);
 router.route('/get/rank').post(get_stock_rank);
 router.route('/user/get').post(get_user_stock);

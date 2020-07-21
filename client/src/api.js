@@ -1,8 +1,8 @@
 import axios from 'axios'
 
-// export const test_serverAddress = "localhost:5000";
+export const test_serverAddress = "localhost:5000";
 export const serverAddress = "35.229.149.140:5000";
-export const baseURL = `http://${serverAddress}`;
+export const baseURL = `http://${test_serverAddress}`;
 
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true})
 const classReq = axios.create({ baseURL: `${baseURL}/class`, withCredentials: true})
@@ -27,9 +27,10 @@ export const apiClass_get_post = (data) => classReq.get('/post', { params: data 
 export const apiClass_add_post = data => classReq.post('/post', data)
 
 // Stock
-export const apiStock_list_all = () => stockReq.get('/get/all')
+export const apiStock_list_all = () => stockReq.get('get/all')
 export const apiRank_list_all = () => stockReq.post('get/rank')
-export const apiStock_realTime = stock_id => stockReq.get('/get/' + stock_id)
+export const apiStock_realTime = stock_id => stockReq.get('get/' + stock_id)
+export const apiStock_get_updateTime = () => stockReq.get('get/updateTime')
 
 // User's Stock
 export const apiUserStock_get = () => userStockReq.post('/get')

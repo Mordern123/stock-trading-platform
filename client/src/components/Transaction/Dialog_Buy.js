@@ -76,6 +76,10 @@ const styles = theme => ({
     "&:focus": {
       outline: 'none',
     }
+  },
+  price_text: {
+    fontSize: '30px',
+    fontWeight: '500'
   }
 })
 
@@ -231,7 +235,7 @@ export default function BuyDialog(props) {
         <Hidden only={['xs','sm']} implementation="css">
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center">
-              <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+              <span className={clsx("mr-1", classes.price_text)} >{stockInfo.stock_name}</span>
               <IconButton style={trackStatus ? {color: '#e57373'} : {}} onClick={handleTrack}>
                 {trackStatus ? <FavoriteRoundedIcon fontSize="large"/> : <FavoriteBorderRoundedIcon fontSize="large"/>}
               </IconButton>

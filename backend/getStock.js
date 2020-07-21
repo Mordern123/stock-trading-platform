@@ -1,6 +1,7 @@
 import fs from 'fs'
 import axios from 'axios'
 import Stock from './models/stock_model'
+import Global from './models/global_model'
 import mongoose from 'mongoose'
 import moment from 'moment'
 require('dotenv').config()
@@ -62,8 +63,12 @@ export const getStock = async(time) => {
     // 資料匯入mongoDB
     if(stock_array.length > 0) {
       Stock.collection.insertMany(stock_array, () => {
+        const update = async() => {
+          let update_date = moment(time).format('YYYY-MM-DD')
+          await Global.findOneAndUpdate({tag: "hongwei"}, {stock_update: update_date}).exec()
+        }
+        update() //更新收盤資料日期
         console.log(`收盤股票新增完成，完成時間:【${moment().toLocaleString()}】`)
-        // process.exit()
       })
       
     }

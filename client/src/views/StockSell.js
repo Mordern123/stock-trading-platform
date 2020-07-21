@@ -156,6 +156,11 @@ export const StockSell = function() {
           userStock: row
         })
         set_showSellDialog(true)
+      } else if(res.status === 204) {
+        alert("查無此股票")
+
+      } else if(res.status === 205) {
+        alert("收盤中不可交易")
       }
       
     } catch (error) {

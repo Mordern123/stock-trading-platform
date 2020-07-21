@@ -33,7 +33,10 @@ export const handle_error = (error, history) => {
   //自定義錯誤
   switch(error.message) {
     case "204":
-      alert("請求資料不存在")
+      alert("不存在此股票")
+      return
+    case "205":
+      alert("收盤期間不可交易")
       return
     default: //未知錯誤
       console.log(error.message)

@@ -152,12 +152,13 @@ export const Discussion = function() {
       await delay(2000)
       set_data(res.data)
       set_random_colors(c)
+      set_loading(false)
 
     } catch (error) {
       handle_error(error, history)
+      set_loading(false)
     }
 
-    set_loading(false)
   }
 
   const onClick = (msg) => {

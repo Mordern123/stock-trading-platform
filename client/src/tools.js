@@ -42,3 +42,38 @@ export const handle_error = (error, history) => {
 
 }
 
+//轉換交易失敗訊息
+export const transfer_fail_msg = (msg) => {
+  let result = ""
+  switch(msg) {
+    case "STOCK_NOT_FOUND": 
+      result = "不存在此股票"
+      break
+    case "BUY_PRICE_TOO_LOW":
+      result = "出價太低"
+      break
+    case "SOLD_PRICE_TOO_HIGH":
+      result = "售價太高"
+      break
+    case "STOCK_NOT_OWNED":
+      result = "未擁有此股票"
+      break
+    case "SOLD_SHARES_EXCEED":
+      result = "交易超過持有股數"
+      break
+    case "INSUFFICIENT_BALANCE":
+      result = "餘額不足"
+      break
+    case "TXN_SUCCESS":
+      result = "交易成功"
+      break
+    case "OCCUR_ERROR":
+      result = "交易發生錯誤"
+      break
+    default:
+      result = "交易發生錯誤"
+      break
+  }
+
+  return result
+}

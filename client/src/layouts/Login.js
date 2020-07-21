@@ -10,21 +10,21 @@ import Link from '@material-ui/core/Link';
 import Paper from '@material-ui/core/Paper';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { apiUser_login, apiUser_login_key } from '../api';
+import FaceRoundedIcon from '@material-ui/icons/FaceRounded';
 import crypto from 'crypto'
+import clsx from 'clsx'
+import '../assets/css/global.css'
 
 function Copyright() {
   return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://material-ui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
+    <Typography className="ch_font" variant="body2" color="textSecondary" align="center">
+      {'iamhongwei0417@gmail.com'}<br />
+      <Link color="inherit" href="https://github.com/hongwei0417">
+        &copy; Hongwei 製作
+      </Link>
     </Typography>
   );
 }
@@ -91,7 +91,6 @@ export default function SignInSide() {
         if(status) {
           //本地儲存
           localStorage.clear()
-          localStorage.setItem("uid", payload._id)
           localStorage.setItem("comeBack", true)
           if(remember) {
             let userData = {student_id, password}
@@ -127,13 +126,14 @@ export default function SignInSide() {
       <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
         <div className={classes.paper}>
           <Avatar className={classes.avatar}>
-            <LockOutlinedIcon />
+            <FaceRoundedIcon />
           </Avatar>
-          <Typography component="h1" variant="h5">
+          <Typography className="ch_font" component="h1" variant="h5">
             登入
           </Typography>
           <form key={count} className={classes.form} onSubmit={submit}>
             <TextField
+              className="ch_font"
               variant="outlined"
               margin="normal"
               required
@@ -142,6 +142,12 @@ export default function SignInSide() {
               autoFocus
               onChange={(e) => set_stu_id(e.target.value)}
               defaultValue={student_id}
+              inputProps={{
+                className: "ch_font"
+              }}
+              InputLabelProps={{
+                className: "ch_font"
+              }}
             />
             <TextField
               variant="outlined"
@@ -153,6 +159,12 @@ export default function SignInSide() {
               autoComplete="current-password"
               onChange={(e) => set_psd(e.target.value)}
               defaultValue={password}
+              inputProps={{
+                className: "ch_font"
+              }}
+              InputLabelProps={{
+                className: "ch_font"
+              }}
             />
             <FormControlLabel
               control={
@@ -164,25 +176,25 @@ export default function SignInSide() {
                   color="primary"
                 />
               }
-              label="記住我"
+              label={<div className="ch_font">記住我</div>}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               color="primary"
-              className={classes.submit}
+              className={clsx(classes.submit, "ch_font")}
             >
               登入
             </Button>
             <Grid container>
-              <Grid item xs>
+              {/* <Grid item xs>
                 <Link href="#" variant="body2">
                   忘記密碼?
                 </Link>
-              </Grid>
+              </Grid> */}
               <Grid item>
-                <Link href="/signup" variant="body2">
+                <Link className="ch_font" href="/signup" variant="body2">
                   {"還沒有帳號? 創建一個吧"}
                 </Link>
               </Grid>

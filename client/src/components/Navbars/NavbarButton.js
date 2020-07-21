@@ -18,6 +18,7 @@ function NavbarButton(props) {
         color="danger"
         size="sm"
         onClick={logout}
+        className="ch_font"
       >
         登出
       </Button>

@@ -11,14 +11,14 @@ import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import { apiTxn_get_all } from '../../api'
 import { handle_error } from '../../tools'
+import '../../assets/css/global.css'
 
 const columns = [
   { field: 'stock_id', label: '證券代號' },
-  { field: 'stock.stock_name', label: '證券名稱' },
+  { field: 'stockInfo.stock_name', label: '證券名稱' },
   { field: 'type', label: '交易類型'},
   { field: 'shares_number', label: '交易股數' },
-  { field: 'bid_price', label: '每股出價' },
-  { field: 'stock.closing_price', label: '每股成交價格' },
+  { field: 'stockInfo.z', label: '每股成交價格' },
   { field: 'order_time', label: '下單時間' },
   { field: 'txn_time', label: '交易處理時間' },
 ];
@@ -72,6 +72,7 @@ export default function StickyHeadTable() {
                 <TableCell
                   key={i}
                   align='center'
+                  className="ch_font"
                 >
                   {column.label}
                 </TableCell>
@@ -86,7 +87,7 @@ export default function StickyHeadTable() {
                     const f = column.field.split(".")
                     const value = f.length == 1 ? row[f[0]] : row[f[0]][f[1]];
                     return (
-                      <TableCell key={j} align='center'>
+                      <TableCell key={j} align='center' className="ch_font">
                         {value}
                       </TableCell>
                     );

@@ -19,6 +19,7 @@ import Divider from '@material-ui/core/Divider';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Typography from '@material-ui/core/Typography';
 import Backdrop from '@material-ui/core/Backdrop';
+import Hidden from "@material-ui/core/Hidden";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { apiUserStock_sell } from '../../api'
 import { green, red } from '@material-ui/core/colors';
@@ -36,7 +37,7 @@ const styles = theme => ({
     fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
   },
   dialogContent: {
-    overflow: 'hidden'
+    overflow: 'auto'
   },
   stockInput: {
     "& label": {
@@ -80,7 +81,7 @@ const useStyles = makeStyles(styles);
 export default function SellDialog(props) {
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { open, handleClose, stockData } = props
+  const { open, handleClose, stockData, onExited } = props
   const { stockInfo, userStock } = stockData
   const { stock_id, stock_name } = stockInfo
   const [ stock_num, set_stock_num ] = useState(null)
@@ -94,24 +95,28 @@ export default function SellDialog(props) {
   }
 
   const handleSellStock = async () => {
-    if(loading) return
+    //防呆
+    if(loading) {
+      return
+    } else {
+      setLoading(true)
+    }
+
     if(stock_num) {
       if(stock_num > 0) {
-        setLoading(true)
         try {
           const res = await apiUserStock_sell({
             stock_id: stockInfo.stock_id,
             shares_number: stock_num * 1000, //一張1000股
             stockInfo: stockInfo
           })
-          await delay(1000)
+          await delay(2000)
 
           if(res.status === 200) {
             addSnack() //發出通知
           } else {
             alert("交易失敗，請稍後嘗試")
           }
-          setLoading(false)
           handleClose()
           
         } catch (error) {
@@ -124,6 +129,7 @@ export default function SellDialog(props) {
     } else {
       alert('欄位不能為空')
     }
+    setLoading(false)
   }
 
   const addSnack = () => {
@@ -164,17 +170,41 @@ export default function SellDialog(props) {
       TransitionComponent={Transition}
       fullWidth={true}
       maxWidth='sm'
+      onExited={onExited}
     >
-      <DialogTitle className={classes.dialogTitle}>
-        <div className="d-flex align-items-center justify-content-between">
-          <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
-          <div style={{color: '#e57373', fontSize: '1rem'}}>
-            {`價格保留時間: ${reserve_time} 秒`}
+      <DialogTitle className={clsx("pb-0", classes.dialogTitle)}>
+        <Hidden only={['xs','sm']} implementation="css">
+          <div className="d-flex align-items-center justify-content-between">
+            <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+            <div style={{color: '#e57373', fontSize: '1rem'}}>
+              {`價格保留時間: ${reserve_time} 秒`}
+            </div>
           </div>
-        </div>
+          <div className="d-flex align-items-end justify-content-between">
+            <h3 className="mb-0" style={{fontSize: '3.5rem', color: '#1976d2'}}>{stockInfo.z}</h3>
+            <DialogContentText className={clsx("mb-2", classes.text)}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+          </div>
+        </Hidden>
+        <Hidden only={['md','lg','xl']} implementation="css">
+          <div className="row">
+            <div className="col d-flex align-items-center">
+              <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+            </div>
+          </div>
+          <div className="row">
+            <h3 className="col mb-0" style={{fontSize: '3.5rem', color: '#1976d2'}}>{stockInfo.z}</h3>
+          </div>
+          <div className="row">
+            <div className="col" style={{color: '#e57373', fontSize: '1rem'}}>
+              {`價格保留時間: ${reserve_time} 秒`}
+            </div>
+          </div>
+          <div className="row">
+            <DialogContentText className={clsx("col mb-2", classes.text)}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+          </div>
+        </Hidden>
       </DialogTitle>
-      <DialogContent className={clsx(classes.dialogContent, classes.text)}>
-        <DialogContentText className={classes.text}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+      <DialogContent className={clsx("pt-0", classes.dialogContent, classes.text)}>
         <List component="nav">
           <ListItem button>
             <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stockInfo.stock_id}`}</Typography>} />
@@ -216,7 +246,7 @@ export default function SellDialog(props) {
             <ListItemText
               primary={
                 <Typography variant="subtitle1" className={classes.text}>
-                  {`目前擁有股數： ${userStock ? userStock.shares_number : 0} 股 (${userStock ? parseInt(userStock.shares_number/1000) : 0}張)`}
+                  {`目前擁有張數： ${userStock ? parseInt(userStock.shares_number/1000) : 0}張 (${userStock ? userStock.shares_number : 0} 股)`}
                 </Typography>
               } 
             />
@@ -224,7 +254,7 @@ export default function SellDialog(props) {
           <Divider />
         </List>
         <div className="row d-flex justify-content-end align-items-center mt-3">
-          <div className="col-5">
+          <div className="col-12 col-md-5 overflow-hidden pt-2">
             <TextField
               label="股票賣出數量"
               type="number"

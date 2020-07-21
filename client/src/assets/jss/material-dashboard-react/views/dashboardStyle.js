@@ -78,9 +78,6 @@ const dashboardStyle = {
       lineHeight: "1"
     }
   },
-  media: {
-    height: 140,
-  },
 };
 
 export default dashboardStyle;

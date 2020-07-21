@@ -7,7 +7,7 @@ import Login from "layouts/Login.js";
 import SignUp from "layouts/SignUp.js";
 import PublicRoute from "./PublicRoute"
 import PrivateRoute from "./PrivateRoute";
-import './loadChart'
+import './globalChart'
 import "assets/css/material-dashboard-react.css?v=1.8.0";
 import "assets/css/global.css";
 import 'bootstrap/dist/css/bootstrap.min.css';

@@ -11,6 +11,8 @@ import classRouter from './routes/class'
 import stockRouter from './routes/stock'
 import txnRouter from './routes/transaction'
 import { runEveryTxn } from './txn'
+import { getStock } from './getStock'
+import moment from 'moment'
 require('dotenv').config()
 
 global.userKey = {} //使用者Token
@@ -25,34 +27,49 @@ connection.once('open', () => {
   console.log("MongoDB database connection established successfully");
   console.log("The database is " + connection.name)
 
-  //排程
-  var rule = new schedule.RecurrenceRule();
-  rule.minute = new schedule.Range(0, 59, 10) //每十分鐘一次
-  rule.dayOfWeek = new schedule.Range(1, 5) //每個禮拜一到五
+  //處理股票交易排程
+  var rule1 = new schedule.RecurrenceRule();
+  rule1.minute = new schedule.Range(0, 59, 10) //每十分鐘一次
+  rule1.dayOfWeek = new schedule.Range(1, 5) //每個禮拜一到五
 
-  schedule.scheduleJob(rule, function(fireDate){
+  schedule.scheduleJob(rule1, function(fireDate){
     console.log(`交易開始處理時間: ${fireDate}`)
     runEveryTxn()
+  });
+
+  //處理收盤資料排程
+  var rule2 = new schedule.RecurrenceRule();
+  //每天16:10
+  rule2.minute = 10
+  rule2.hour = 16
+  rule2.dayOfWeek = new schedule.Range(1, 5) //每個禮拜一到五
+
+  schedule.scheduleJob(rule2, function(fireDate){
+    console.log(`收盤資料抓取時間: ${fireDate}`)
+    let today_str = moment().format('YYYY-MM-DD')
+    let today = moment(today_str).toDate()
+    getStock(today)
   });
 })
 
 mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
 mongoose.set('useFindAndModify', false);
 
-//允許要求網址
-var allowedOrigins = ['http://localhost:3000','http://localhost:8080','http://127.0.0.1:8080','http://192.168.0.6:8080'];
+//允許cors要求網址
+var allowedOrigins = ['http://localhost:3000', 'http://127.0.0.1:3000','http://localhost:8080','http://127.0.0.1:8080','http://192.168.0.6:8080','http://35.229.149.140:80'];
 app.use(cors({
-  origin: function(origin, callback){
-    // allow requests with no origin 
-    // (like mobile apps or curl requests)
-    if(!origin) return callback(null, true);
-    if(allowedOrigins.indexOf(origin) === -1){
-      var msg = 'The CORS policy for this site does not ' +
-                'allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: (origin, callback) => { return callback(null, true) },
+  // origin: function(origin, callback){
+  //   // allow requests with no origin 
+  //   // (like mobile apps or curl requests)
+  //   if(!origin) return callback(null, true);
+  //   if(allowedOrigins.indexOf(origin) === -1){
+  //     var msg = 'The CORS policy for this site does not ' +
+  //               'allow access from the specified Origin.';
+  //     return callback(new Error(msg), false);
+  //   }
+  //   return callback(null, true);
+  // },
   credentials: true
 }));
 
@@ -65,20 +82,10 @@ app.use('/class', classRouter)
 app.use('/stock', stockRouter)
 app.use('/txn', txnRouter)
 
-app.use(function (req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
-
-app.use(function (err, req, res, next) {
-  console.log(123)
-  res.status(err.status || 500);
-  res.render('error', {
-      message: err.message,
-      error: err
-  });
-});
+app.get('test', async(req, res) => {
+  const result = await Announcement.find().populate('publisher', 'user_name').exec()
+  res.json(result)
+})
 
 server.listen(port, () => {
   console.log(`Server is running on port: ${port}`);

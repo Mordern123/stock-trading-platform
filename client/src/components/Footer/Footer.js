@@ -5,6 +5,8 @@ import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import ListItem from "@material-ui/core/ListItem";
 import List from "@material-ui/core/List";
+import '../../assets/css/global.css'
+import clsx from 'clsx'
 // core components
 import styles from "assets/jss/material-dashboard-react/components/footerStyle.js";
 
@@ -14,9 +16,13 @@ export default function Footer(props) {
   const classes = useStyles();
   return (
     <footer className={classes.footer}>
-      <div className={classes.container}>
+      <div className={clsx('ch_font mb-5', classes.container)}>
         <div className={classes.left}>
-          <List className={classes.list}>
+          <b>iamhongwei0417@gmail.com</b>
+          <p>
+            有任何問題歡迎聯絡✌
+          </p>
+          {/* <List className={classes.list}>
             <ListItem className={classes.inlineBlock}>
               <a href="#home" className={classes.block}>
                 Home
@@ -37,19 +43,17 @@ export default function Footer(props) {
                 Blog
               </a>
             </ListItem>
-          </List>
+          </List> */}
         </div>
         <p className={classes.right}>
           <span>
-            &copy; {1900 + new Date().getYear()}{" "}
             <a
-              href="https://www.creative-tim.com?ref=mdr-footer"
+              href="https://github.com/hongwei0417"
               target="_blank"
               className={classes.a}
             >
-              Creative Tim
+              &copy;Hongwei 製作
             </a>
-            , made with love for a better web
           </span>
         </p>
       </div>

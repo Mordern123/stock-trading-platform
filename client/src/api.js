@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const test_serverAddress = "localhost:5000";
-export const serverAddress = "192.168.0.6:5000";
+// export const serverAddress = "35.229.149.140:5000";
 export const baseURL = `http://${test_serverAddress}`;
 
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true})
@@ -22,6 +22,9 @@ export const apiUser_logout = () => userReq.post('/logout')
 // Class
 export const apiClass_announceList = () => classReq.get('/list')
 export const apiClass_addAnnounce = data => classReq.post('/add_Announce', data)
+export const apiClass_get_post_all = () => classReq.get('/post')
+export const apiClass_get_post = (data) => classReq.get('/post', { params: data })
+export const apiClass_add_post = data => classReq.post('/post', data)
 
 // Stock
 export const apiStock_list_all = () => stockReq.get('/get/all')

@@ -11,6 +11,9 @@ const userSessionSchema = new Schema({
   cookie: {
     type: String,
   },
+  user_key: {
+    type: String,
+  }
 }, {
   timestamps: true,
 });

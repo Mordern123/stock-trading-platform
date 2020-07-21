@@ -15,7 +15,7 @@ Highcharts.theme = {
       style: {
         fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
       },
-      plotBorderColor: '#606063'
+      plotBorderColor: '#606063',  
   },
   title: {
       style: {

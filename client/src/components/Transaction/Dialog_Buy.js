@@ -21,12 +21,14 @@ import Typography from '@material-ui/core/Typography';
 import Backdrop from '@material-ui/core/Backdrop';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import IconButton from '@material-ui/core/IconButton';
+import Hidden from "@material-ui/core/Hidden";
 import { apiUserStock_buy, apiUserStock_track } from '../../api'
 import { green, red } from '@material-ui/core/colors';
 import { useSnackbar } from 'notistack';
 import Snack_Detail from './Snack_Detail'
 import { handle_error } from '../../tools'
-import CheckCircleOutlineRoundedIcon from '@material-ui/icons/CheckCircleOutlineRounded';
+import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
+import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
 import delay from 'delay'
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -38,7 +40,7 @@ const styles = theme => ({
     fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
   },
   dialogContent: {
-    overflow: 'hidden'
+    overflow: 'auto'
   },
   stockInput: {
     "& label": {
@@ -82,7 +84,7 @@ const useStyles = makeStyles(styles);
 export default function BuyDialog(props) {
   const classes = useStyles();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { open, handleClose, stockInfo, userStock, userTrack } = props
+  const { open, handleClose, stockInfo, userStock, userTrack, onExited } = props
   const [stock_num, setStock_num] = useState(null)
   const [loading, setLoading] = useState(false)
   const [trackStatus, set_trackStatus] = useState(false)
@@ -96,25 +98,28 @@ export default function BuyDialog(props) {
 
   //購買股票
   const handleBuyStock = async () => {
-    if(loading) return
+    //防呆
+    if(loading) {
+      return
+    } else {
+      setLoading(true)
+    }
+
     if(stock_num) {
       if(stock_num > 0) {
-        setLoading(true)
-
         try {
           const res = await apiUserStock_buy({
             stock_id: stockInfo.stock_id,
             stockInfo: stockInfo,
             shares_number: stock_num * 1000, //一張1000股
           })
-          await delay(1000)
+          await delay(2000)
 
           if(res.status === 200) {
             addSnack() //發出通知
           } else {
             alert("交易失敗，請稍後嘗試")
           }
-          setLoading(false)
           handleClose()
           
         } catch (error) {
@@ -127,6 +132,8 @@ export default function BuyDialog(props) {
     } else {
       alert('欄位不能為空')
     }
+
+    setLoading(false)
   }
 
   //追蹤股票
@@ -174,6 +181,14 @@ export default function BuyDialog(props) {
     enqueueSnackbar(msg, {
       variant : color,
       anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      autoHideDuration: 3000,
+      ContentProps: {
+        style: {
+          backgroundColor: "#9c27b0",
+          color: "white"
+        },
+        className: classes.text
+      },
       action: (key) => (
         <Button
           style={{ color: 'white' }}
@@ -182,7 +197,6 @@ export default function BuyDialog(props) {
           OK
         </Button> 
       ),
-      persist: true
     })
   }
 
@@ -211,23 +225,50 @@ export default function BuyDialog(props) {
       TransitionComponent={Transition}
       fullWidth={true}
       maxWidth='sm'
+      onExited={onExited}
     >
-      <DialogTitle className={classes.dialogTitle}>
-        <div className="d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center">
-            <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
-            <IconButton style={trackStatus ? {color: 'green'} : {}} onClick={handleTrack}>
-              <CheckCircleOutlineRoundedIcon fontSize="large"/>
-            </IconButton>
-            <span style={{fontSize: '10px', color: 'rgba(0, 0, 0, 0.54)', marginLeft: '-10px'}}>{trackStatus ? "點擊取消追蹤" : "點擊追蹤"}</span>
+      <DialogTitle className={clsx("pb-0", classes.dialogTitle)}>
+        <Hidden only={['xs','sm']} implementation="css">
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center">
+              <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+              <IconButton style={trackStatus ? {color: '#e57373'} : {}} onClick={handleTrack}>
+                {trackStatus ? <FavoriteRoundedIcon fontSize="large"/> : <FavoriteBorderRoundedIcon fontSize="large"/>}
+              </IconButton>
+              {/* <span style={{fontSize: '10px', color: 'rgba(0, 0, 0, 0.54)', marginLeft: '-10px'}}>{trackStatus ? "點擊取消追蹤" : "點擊追蹤"}</span> */}
+            </div>
+            <div style={{color: '#e57373', fontSize: '1rem'}}>
+              {`價格保留時間: ${reserve_time} 秒`}
+            </div>
           </div>
-          <div style={{color: '#e57373', fontSize: '1rem'}}>
-            {`價格保留時間: ${reserve_time} 秒`}
+          <div className="d-flex align-items-end justify-content-between">
+            <h3 className="mb-0" style={{fontSize: '3.5rem', color: '#1976d2'}}>{stockInfo.z}</h3>
+            <DialogContentText className={clsx("mb-2", classes.text)}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
           </div>
-        </div>
+        </Hidden>
+        <Hidden only={['md','lg','xl']} implementation="css">
+          <div className="row">
+            <div className="col d-flex align-items-center">
+              <span className="mr-1" style={{fontSize: '30px', fontWeight: 'bold'}}>{stockInfo.stock_name}</span>
+              <IconButton style={trackStatus ? {color: '#e57373'} : {}} onClick={handleTrack}>
+                {trackStatus ? <FavoriteRoundedIcon fontSize="large"/> : <FavoriteBorderRoundedIcon fontSize="large"/>}
+              </IconButton>
+            </div>
+          </div>
+          <div className="row">
+            <h3 className="col mb-0" style={{fontSize: '3.5rem', color: '#1976d2'}}>{stockInfo.z}</h3>
+          </div>
+          <div className="row">
+            <div className="col" style={{color: '#e57373', fontSize: '1rem'}}>
+              {`價格保留時間: ${reserve_time} 秒`}
+            </div>
+          </div>
+          <div className="row">
+            <DialogContentText className={clsx("col mb-2", classes.text)}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+          </div>
+        </Hidden>
       </DialogTitle>
-      <DialogContent className={clsx(classes.dialogContent, classes.text)}>
-        <DialogContentText className={classes.text}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+      <DialogContent className={clsx("pt-0", classes.dialogContent, classes.text)}>
         <List component="nav">
           <ListItem button>
             <ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stockInfo.stock_id}`}</Typography>} />
@@ -273,7 +314,7 @@ export default function BuyDialog(props) {
           <Divider />
         </List>
         <div className="row d-flex justify-content-end align-items-center mt-3">
-          <div className="col-5">
+          <div className="col-12 col-md-5 overflow-hidden pt-2">
             <TextField
               label="股票買入數量"
               type="number"

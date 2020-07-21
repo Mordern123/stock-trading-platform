@@ -6,14 +6,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js --exec babel-node --inspect=10000",
-    "getStock": "babel-node --inspect getStock.js --inspect=20000",
+    "stock": "babel-node --inspect getStock_manual.js --inspect=20000",
     "txn": "babel-node --inspect txn.js --inspect=30000"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.2",
-    "babel-cli": "^6.26.0",
     "body-parser": "^1.19.0",
     "cheerio": "^1.0.0-rc.3",
     "cookie-parser": "^1.4.5",

@@ -7,39 +7,79 @@ import GridContainer from "components/Grid/GridContainer.js";
 import { Paper, Tabs, Tab, Typography, Box } from "@material-ui/core";
 import SwipeableViews from 'react-swipeable-views';
 import Material_Table from "components/Table/Material_Table";
-import { apiTxn_get_success, apiTxn_get_fail, apiTxn_get_waiting } from "../api"
-import { handle_error } from '../tools'
+import { apiTxn_get_all } from "../api"
+import { handle_error, transfer_fail_msg } from '../tools'
 
-const columns = [
-  {
-    field: "stock_id",
-    title: "證券代號",
-  },
-  {
-    field: "stockInfo.stock_name",
-    title: "證券名稱",
-  },
-  {
-    field: "type",
-    title: "交易類型",
-  },
-  {
-    field: "stockInfo.z",
-    title: "成交價格",
-  },
-  {
-    field: "shares_number",
-    title: "交易股數",
-  },
-  {
-    field: "order_time",
-    title: "下單時間",
-  },
-  {
-    field: "txn_time",
-    title: "交易處理時間",
-  },
-]
+const get_columns = (type) => {
+  if(type === 'fail') {
+    return  [
+      {
+        field: "stock_id",
+        title: "證券代號",
+      },
+      {
+        field: "stockInfo.stock_name",
+        title: "證券名稱",
+      },
+      {
+        field: "type",
+        title: "交易類型",
+      },
+      {
+        field: "stockInfo.z",
+        title: "交易價格",
+      },
+      {
+        field: "shares_number",
+        title: "交易股數",
+      },
+      {
+        field: "msg",
+        title: "失敗原因"
+      },
+      {
+        field: "order_time",
+        title: "下單時間",
+      },
+      {
+        field: "txn_time",
+        title: "交易處理時間",
+      },
+    ]
+    
+  } else {
+    return  [
+      {
+        field: "stock_id",
+        title: "證券代號",
+      },
+      {
+        field: "stockInfo.stock_name",
+        title: "證券名稱",
+      },
+      {
+        field: "type",
+        title: "交易類型",
+      },
+      {
+        field: "stockInfo.z",
+        title: "交易價格",
+      },
+      {
+        field: "shares_number",
+        title: "交易股數",
+      },
+      {
+        field: "order_time",
+        title: "下單時間",
+      },
+      {
+        field: "txn_time",
+        title: "交易處理時間",
+      },
+    ]
+  }
+}
 
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
@@ -60,7 +100,7 @@ const styles = theme => ({
     color: 'white',
     "&:focus": {
       outline: "none"
-    }
+    },
   },
   customTabs_success: {
     color: 'white',
@@ -102,7 +142,7 @@ export const StockStatus = function() {
   const history = useHistory()
 
   const handleChange = (event, newValue) => {
-    localStorage.setItem("status_page", newValue)
+    localStorage.setItem("status_tab", newValue)
     setValue(newValue);
   };
 
@@ -118,36 +158,37 @@ export const StockStatus = function() {
     else if(i==2 && current_i == i) return classes.tabRoot_fail
   }, [value])
 
-  const loadData = async() => {
-    setLoading(true)
-
-    try {
-      const success_res = await apiTxn_get_success()
-      const waiting_res = await apiTxn_get_waiting()
-      const fail_res = await apiTxn_get_fail()
-
-      set_successData(success_res.data)
-      set_waitingData(waiting_res.data)
-      set_failData(fail_res.data) 
   
-      
-    } catch (error) {
-      handle_error(error, history)
+  //載入交易
+  React.useEffect(() => {
+    const loadData = async() => {
+      try {
+        setLoading(true)
+        let res = await apiTxn_get_all()
+        let success = res.data.filter((item) => { return item.status === "success"})
+        let waiting = res.data.filter((item) => { return item.status === "waiting"})
+        let _fail = res.data.filter((item) => { return item.status === "fail"})
+        let fail = _fail.map((item) => { return { ...item, msg: transfer_fail_msg(item.msg)} }) //轉換錯誤訊息
+
+        set_successData(success)
+        set_waitingData(waiting)
+        set_failData(fail) 
+        setLoading(false)
+
+      } catch (error) {
+        handle_error(error, history)
+      }
     }
-
-    setLoading(false)
-  }
-  
-  useEffect(() => {
     loadData()
   }, [])
 
+  //初始設定Tab
   React.useEffect(() => {
-    let p = localStorage.getItem("status_page")
-    if(p) {
-      setValue(parseInt(p))
+    let tab = localStorage.getItem("status_tab")
+    if(tab) {
+      setValue(parseInt(tab))
     } else {
-      localStorage.setItem("status_page", 0)
+      localStorage.setItem("status_tab", 0)
       setValue(0)
     }
   }, [])
@@ -162,47 +203,54 @@ export const StockStatus = function() {
             classes={{indicator: classes.indicator}}
             className={getTabBarStyles(value)}
           >
-            <Tab label="成功交易" className={clsx(classes.customTab, getTabStyles(value, 0))} />
-            <Tab label="待處理交易" className={clsx(classes.customTab, getTabStyles(value, 1))} />
-            <Tab label="失敗交易" className={clsx(classes.customTab, getTabStyles(value, 2))} />
+            <Tab label="成功交易" className={clsx("col h-100", classes.customTab, getTabStyles(value, 0))} />
+            <Tab label="待處理交易" className={clsx("col h-100", classes.customTab, getTabStyles(value, 1))} />
+            <Tab label="失敗交易" className={clsx("col h-100", classes.customTab, getTabStyles(value, 2))} />
           </Tabs>
           <SwipeableViews
             axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
             index={value}
             onChangeIndex={handleChange}
             className="pl-3 pr-3 pb-3"
+            disabled={true}
           >
             <TabPanel value={value} index={0} dir={theme.direction}>
               <Material_Table
-                title="顯示所有交易紀錄"
+                title=""
                 showToolBar
                 search
-                columns={columns}
+                columns={get_columns("success")}
                 data={successData}
                 noContainer
                 noDataDisplay="沒有任何交易紀錄"
+                isLoading={loading}
+                headerStyle={{backgroundColor: '#e8f5e9'}}
               />
             </TabPanel>
             <TabPanel value={value} index={1} dir={theme.direction}>
               <Material_Table
-                title="顯示所有待處理交易紀錄"
+                title=""
                 showToolBar
                 search
-                columns={columns}
+                columns={get_columns("waiting")}
                 data={waitingData}
                 noContainer
                 noDataDisplay="沒有任何待處理交易紀錄"
+                isLoading={loading}
+                headerStyle={{backgroundColor: '#e1f5fe'}}
               />
             </TabPanel>
             <TabPanel value={value} index={2} dir={theme.direction}>
               <Material_Table
-                title="顯示所有失敗交易紀錄"
+                title=""
                 showToolBar
                 search
-                columns={columns}
+                columns={get_columns("fail")}
                 data={failData}
                 noContainer
                 noDataDisplay="沒有任何失敗交易紀錄"
+                isLoading={loading}
+                headerStyle={{backgroundColor: '#ffebee'}}
               />
             </TabPanel>
           </SwipeableViews>

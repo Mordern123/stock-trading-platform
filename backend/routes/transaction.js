@@ -41,27 +41,36 @@ const get_all_txn = async (req, res) => {
 
 const get_user_txn = async (req, res) => {
   const { type } = req.params
-  const { pure } = req.query
+  const { pure, day } = req.query
   const { user, code } = await check_permission(req)
-
-  if(!['all', 'success', 'fail', 'waiting', 'error'].includes(type)) {
-    res.json(false)
-    return
-  }
-
+  
   if(!user) {
     res.clearCookie('user_token')
     res.status(code).send()
     return
   }
 
-  const conditions = (type == 'all')
+  if(!['all', 'success', 'fail', 'waiting', 'error'].includes(type)) {
+    res.json(false)
+    return
+  }
+
+  const conditions = (type === 'all')
     ? { user: user._id }
-    : { status: type }
+    : { user: user._id, status: type }
+
+  //處理取得資料天數
+  if(day) {
+    let s = moment().subtract(parseInt(day), 'days').format("YYYYMMDD") //起始時間
+    let e = moment().add(1, 'days').format("YYYYMMDD") //結束時間取明天
+    conditions.order_time = {
+      $gte: moment(s),
+      $lt: moment(e)
+    }
+  }
 
   const txnData = await UserTxn
     .find(conditions)
-    .populate('stock')
     .sort({
       createdAt: -1,
     })
@@ -81,9 +90,9 @@ const get_user_txn = async (req, res) => {
           newDoc.type = "賣出"
         }
         newDoc.updatedAt = moment(item.updatedAt).startOf('hour').fromNow()
-        newDoc.createdAt = moment(item.createdAt).calendar()
-        newDoc.order_time = moment(item.order_time).calendar()
-        newDoc.txn_time = item.txn_time != null ? moment(item.txn_time).calendar() : "尚未處理交易"
+        newDoc.createdAt = moment(item.createdAt).calendar(null, { lastWeek: 'dddd HH:mm' }) //星期三 10:55
+        newDoc.order_time = moment(item.order_time).calendar(null, { lastWeek: 'dddd HH:mm' })
+        newDoc.txn_time = item.txn_time != null ? moment(item.txn_time).calendar(null, { lastWeek: 'dddd HH:mm' })  : "尚未處理交易"
         return newDoc
       })
       res.json(newTxnData)

@@ -5,36 +5,43 @@ import UserSession from '../models/user_session_model'
 import moment from 'moment'
 import crypto from 'crypto'
 import { check_permission } from '../common/auth'
+import { handle_error } from '../common/error'
 
 const router = Router()
 
 const new_user = async (req, res) => {
   try {
     const userData = req.body
-    let isExist = await User.isExist({student_id: userData.student_id})
+    let isExist = await User.exists({student_id: userData.student_id})
 
-    if(isExist) {
+    if(isExist) { 
       res.json({status: false, payload: "學號已有人使用"});
       return
     }
 
-    result = await User.find({email: userData.email}).exec()
+    let result = await User.find({email: userData.email}).exec()
     if(result.length > 0) {
       res.json({status: false, payload: "信箱已有人使用"});
       return
     }
 
+    //建立相關文件
     const newUser = await new User(req.body).save();
-    const newAccount = await new Account({
+
+    await new Account({
       user: newUser.id,
       balance: 1000000,
       last_update: moment()
     }).save();
 
-    res.json({status: true, payload: {newUser, newAccount}});
+    await new UserSession({
+      user: newUser.id,
+    }).save()
 
-  } catch(e) {
-    res.json({status: false, payload: e.toString()})
+    res.json({status: true, payload: newUser})
+
+  } catch(error) {
+    handle_error(error, res)
   }
 }
 
@@ -44,8 +51,9 @@ const user_login = async (req, res) => {
     let userDoc = await User.findOne({student_id: student_id}).exec()
     if(userDoc) {
       //加密計算
-      const key = userKey[student_id]
-      const value = crypto.createHmac('sha512', key)
+      const session = await UserSession.findOne({user: userDoc._id}) //取得session key
+      console.log(session)
+      const value = crypto.createHmac('sha512', session.user_key)
         .update(userDoc.password)
         .digest('hex')
 
@@ -53,6 +61,7 @@ const user_login = async (req, res) => {
       crypto.randomBytes(16, async(err, buffer) => {
         if(err) throw err
         var token = buffer.toString('hex'); //token值
+        console.log(value === hashValue)
         if(value === hashValue) {
           let options = {
             maxAge: 1000 * 60 * 60 * 24 * 7, // would expire after 7 days
@@ -61,41 +70,45 @@ const user_login = async (req, res) => {
           }
           let isExist = await UserSession.exists(({user: userDoc._id}))
           if(isExist) {
+            //更新cookie
             await UserSession
               .updateOne({user: userDoc._id}, {cookie: token})
               .exec()
           } else {
+            //新增session和cookie
             await new UserSession({
               user: userDoc._id,
               cookie: token
             }).save()
           }
+
+          console.log(123)
           res.cookie("user_token", token, options)
-        res.json({status: true, payload: userDoc})
-      } else {
-        res.json({status: false, payload: "密碼錯誤"})
-      }
+          res.json({status: true, payload: userDoc})
+        } else {
+          res.json({status: false, payload: "密碼錯誤"})
+        }
       });
 
     } else {
       res.json({status: false, payload: "沒有此使用者"})
     }
-  } catch (e) {
-    throw(e)
+  } catch (error) {
+    handle_error(error, res)
   }
 }
 
-const get_login_key = async (req, res) => {
+const get_login_key = async(req, res) => {
   try {
     const { student_id } = req.body
-    let isExist = await User.exists(({student_id: student_id}))
+    let user = await User.findOne(({student_id: student_id}))
 
-    if(isExist) {
+    if(user) {
       //隨機亂數Token
-      crypto.randomBytes(16, function(err, buffer) {
+      crypto.randomBytes(16, async function(err, buffer) {
         if(err) throw err
         var key = buffer.toString('hex');
-        userKey[student_id] = key
+        await UserSession.findOneAndUpdate({user: user._id}, {user_key: key})
         res.json(key)
       });
       
@@ -103,7 +116,7 @@ const get_login_key = async (req, res) => {
       res.json(false)
     }
   } catch (error) {
-    res.json({status: false, payload: error.toString()})
+    handle_error(error, res)
   }
 }
 
@@ -134,7 +147,7 @@ const get_user_data = async (req, res) => {
   if(userDoc) {
     const newDoc = userDoc
     newDoc.updatedAt = moment(userDoc.updatedAt).startOf('hour').fromNow()
-    newDoc.createdAt = moment(userDoc.createdAt).calendar()
+    newDoc.createdAt = moment(userDoc.createdAt).calendar(null, { lastWeek: 'dddd HH:mm' }) //星期三 10:55
     res.json(newDoc)
   } else {
     res.json(false)
@@ -184,8 +197,8 @@ const get_user_account = async (req, res) => {
   if(accountDoc) {
     const newDoc = accountDoc
     newDoc.updatedAt = moment(updatedAt).startOf('hour').fromNow()
-    newDoc.createdAt = moment(createdAt).calendar()
-    newDoc.last_update = moment().calendar()
+    newDoc.createdAt = moment(createdAt).calendar(null, { lastWeek: 'dddd HH:mm' }) //星期三 10:55
+    newDoc.last_update = moment().calendar(null, { lastWeek: 'dddd HH:mm' }) //星期三 10:55
     res.json(newDoc) 
   } else {
     res.json(false)

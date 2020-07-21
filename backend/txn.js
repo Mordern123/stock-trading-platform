@@ -220,6 +220,9 @@ const updateTxn = async (id, status, CODE) => {
     case 7:
       msg = "OCCUR_ERROR" //交易發生錯誤
       break
+    default:
+      msg = "OCCUR_ERROR" //交易發生錯誤
+      break
   }
   const userTxnDoc = await UserTxn
     .findByIdAndUpdate(id, {
@@ -229,6 +232,7 @@ const updateTxn = async (id, status, CODE) => {
     })
 }
 
+//更新用戶結餘
 const updateBalance = async (user, value) => {
   const accountDoc = await Account.findOneAndUpdate({
     user
@@ -240,10 +244,12 @@ const updateBalance = async (user, value) => {
   })
 }
 
+//更新用戶擁有股票
 const updateStockValue = async (user) => {
   let total_value = 0
   let userAllStocks = await UserStock.find({user}).exec()
 
+  //取得用戶擁有股票資訊
   for(let i = 0; i < userAllStocks.length; i++) {
     const { stock_id, shares_number, stockInfo } = userAllStocks[i]
     const stock_price = parseFloat(stockInfo.z) //最新下單成交價
@@ -258,6 +264,9 @@ const updateStockValue = async (user) => {
     total_value += stock_value
   }
 
+  //取得用戶交易數量
+  let txn_count = await UserTxn.countDocuments({user}).exec()
+
   //更新帳戶資料
   userAllStocks = await UserStock.find({user}).exec() //重新確認股票擁有數量
   await Account.findOneAndUpdate({
@@ -265,7 +274,8 @@ const updateStockValue = async (user) => {
   },{
     stock_number: userAllStocks.length,
     stock_value: total_value,
-    last_update: moment()
+    txn_count: txn_count,
+    last_update: moment(),    
   },{
     new: true
   })

@@ -13,17 +13,20 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import { apiUser_new } from '../api'
+import { apiUser_new, apiUser_login, apiUser_login_key } from '../api'
+import { handle_error } from '../tools'
+import clsx from 'clsx'
+import crypto from 'crypto'
+import '../assets/css/global.css'
+
 
 function Copyright() {
   return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
-      <Link color="inherit" href="https://material-ui.com/">
-        Your Website
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
+    <Typography className="ch_font" variant="body2" color="textSecondary" align="center">
+      {'iamhongwei0417@gmail.com'}<br />
+      <Link color="inherit" href="https://github.com/hongwei0417">
+        &copy; Hongwei 製作
+      </Link>
     </Typography>
   );
 }
@@ -55,36 +58,81 @@ export default function SignUp() {
   const [email, set_email] = useState(null);
   const [student_id, set_stu_id] = useState(null);
   const [password, set_psd] = useState(null);
+  const [blocking, set_blocking] = useState(false);
+
+  const sha512 = (password, secret) => {
+    const value = crypto.createHmac('sha512', secret)
+      .update(password)
+      .digest('hex')
+    return value
+  }
 
   const submit = async (e) => {
-    e.preventDefault();
-    const required_check = user_name && email
-    const stu_id_check = !isNaN(student_id) && student_id.length == 10
-    const password_check = password.match(/^(?=.*\d)(?=.*[a-z]).{6,30}$/)
-    if(!required_check) {
-      alert("請勿空白")
-      return
+    try {
+      if(blocking) return
+      set_blocking(true)
+
+      e.preventDefault()
+      const required_check = user_name && email
+      const stu_id_check = !isNaN(student_id) && student_id.length == 10
+      const password_check = password.match(/^(?=.*\d)(?=.*[a-z]).{6,30}$/)
+      if(!required_check) {
+        alert("請勿空白")
+        return
+      }
+      if(user_name.length > 20) {
+        alert("名稱不可超過20個字")
+        return
+      }
+      if(!stu_id_check) {
+        alert("學號格式錯誤")
+        return
+      }
+      if(!password_check) {
+        alert("密碼格式錯誤(英數混合6~30字元)")
+        return
+      }
+      //進行註冊
+      const res = await apiUser_new({
+        user_name,
+        email,
+        student_id,
+        password
+      })
+
+      console.log(res.data)
+
+      if(res.data.status) { //註冊成功
+        //進行登入工作
+        const key_res = await apiUser_login_key({student_id})
+        if(key_res.data) {
+          const hashValue = sha512(password, key_res.data)
+          const user_res = await apiUser_login({student_id, hashValue})
+          const { status, payload } = user_res.data
+          console.log(user_res.data)
+          if(status) {
+            //本地儲存
+            localStorage.clear()
+            localStorage.setItem("comeBack", true)
+            history.replace("/admin")
+
+          } else {
+            alert(payload)
+          }
+        } else {
+          alert("無此用戶!")
+        }
+
+      } else {
+        alert(res.data.payload)
+      }
+      set_blocking(false)
+      
+    } catch (error) {
+      handle_error(error)
+      set_blocking(false)
     }
-    if(!stu_id_check) {
-      alert("學號格式錯誤")
-      return
-    }
-    if(!password_check) {
-      alert("密碼格式錯誤(英數混合6~30字元)")
-      return
-    }
-    const { data } = await apiUser_new({
-      user_name,
-      email,
-      student_id,
-      password
-    })
-    if(data.status) {
-      alert("註冊成功! 將自動導向登入畫面...")
-      history.replace({pathname: '/login'})
-    } else {
-      alert(data.payload)
-    }
+ 
   }
 
   return (
@@ -94,7 +142,7 @@ export default function SignUp() {
         <Avatar className={classes.avatar}>
           <LockOutlinedIcon />
         </Avatar>
-        <Typography component="h1" variant="h5">
+        <Typography className="ch_font" component="h1" variant="h5">
           註冊
         </Typography>
         <form className={classes.form} onSubmit={submit}>
@@ -107,6 +155,12 @@ export default function SignUp() {
                 label="學生姓名"
                 autoComplete="name"
                 onChange={(e) => set_name(e.target.value)}
+                inputProps={{
+                  className: "ch_font"
+                }}
+                InputLabelProps={{
+                  className: "ch_font"
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -118,6 +172,12 @@ export default function SignUp() {
                 label="學號"
                 autoFocus
                 onChange={(e) => set_stu_id(e.target.value)}
+                inputProps={{
+                  className: "ch_font"
+                }}
+                InputLabelProps={{
+                  className: "ch_font"
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -128,6 +188,12 @@ export default function SignUp() {
                 label="電子信箱"
                 autoComplete="email"
                 onChange={(e) => set_email(e.target.value)}
+                inputProps={{
+                  className: "ch_font"
+                }}
+                InputLabelProps={{
+                  className: "ch_font"
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -139,27 +205,34 @@ export default function SignUp() {
                 type="password"
                 autoComplete="current-password"
                 onChange={(e) => set_psd(e.target.value)}
+                inputProps={{
+                  className: "ch_font"
+                }}
+                InputLabelProps={{
+                  className: "ch_font"
+                }}
               />
             </Grid>
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <FormControlLabel
                 control={<Checkbox value="allowExtraEmails" color="primary" />}
-                label="我同意使用這個網站規則"
+                label={<div className="ch_font">{"我同意使用這個網站規則"}</div>}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
           <Button
             type="submit"
             fullWidth
             variant="contained"
             color="primary"
-            className={classes.submit}
+            className={clsx(classes.submit,"ch_font")}
+            disabled={blocking}
           >
             註冊
           </Button>
           <Grid container justify="flex-end">
             <Grid item>
-              <Link href="/login" variant="body2">
+              <Link className="ch_font" href="/login" variant="body2">
                 已經有帳號了? 登入吧
               </Link>
             </Grid>

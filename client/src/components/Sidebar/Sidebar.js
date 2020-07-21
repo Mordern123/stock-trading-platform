@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import { NavLink } from "react-router-dom";
 // @material-ui/core components
 import { makeStyles } from "@material-ui/core/styles";
+import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import Drawer from "@material-ui/core/Drawer";
 import Hidden from "@material-ui/core/Hidden";
 import List from "@material-ui/core/List";
@@ -25,6 +26,13 @@ export default function Sidebar(props) {
     return window.location.href.indexOf(routeName) > -1 ? true : false;
   }
   const { color, logo, image, logoText, routes } = props;
+  const [drawerOpen, set_drawerOpen] = React.useState(false) //drawerOpen狀態
+
+  const closeDrawer = () => {
+    if(props.open) props.handleDrawerToggle()
+    if(drawerOpen) set_drawerOpen(false)
+  }
+
   var links = (
     <List className={classes.list}>
       {routes.map((prop, key) => {
@@ -45,6 +53,7 @@ export default function Sidebar(props) {
         });
         return (
           <NavLink
+            onClick={closeDrawer}
             to={prop.layout + prop.path}
             className={activePro + classes.item}
             activeClassName="active"
@@ -81,8 +90,7 @@ export default function Sidebar(props) {
   );
   var brand = (
     <div className={classes.logo}>
-      <a
-        href="https://www.creative-tim.com?ref=mdr-sidebar"
+      <div
         className={classNames(classes.logoLink, {
           [classes.logoLinkRTL]: props.rtlActive
         })}
@@ -92,29 +100,35 @@ export default function Sidebar(props) {
           <img src={logo} alt="logo" className={classes.img} />
         </div>
         {logoText}
-      </a>
+      </div>
     </div>
   );
+
+  React.useEffect(() => {
+    set_drawerOpen(props.open)
+  }, [props.open])
+
   return (
     <div>
       <Hidden mdUp implementation="css">
-        <Drawer
+        <SwipeableDrawer
           variant="temporary"
-          anchor={props.rtlActive ? "left" : "right"}
-          open={props.open}
+          anchor={props.rtlActive ? "left" : "left"}
+          open={drawerOpen}
+          onOpen={() => set_drawerOpen(true)}
+          onClose={closeDrawer}
           classes={{
             paper: classNames(classes.drawerPaper, {
               [classes.drawerPaperRTL]: props.rtlActive
             })
           }}
-          onClose={props.handleDrawerToggle}
           ModalProps={{
             keepMounted: true // Better open performance on mobile.
           }}
         >
           {brand}
           <div className={classes.sidebarWrapper}>
-            {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />}
+            {/* {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />} */}
             {links}
           </div>
           {image !== undefined ? (
@@ -123,7 +137,7 @@ export default function Sidebar(props) {
               style={{ backgroundImage: "url(" + image + ")" }}
             />
           ) : null}
-        </Drawer>
+        </SwipeableDrawer>
       </Hidden>
       <Hidden smDown implementation="css">
         <Drawer

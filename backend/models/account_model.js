@@ -24,6 +24,11 @@ const accountSchema = new Schema({
     required: true,
     default: 0
   },
+  txn_count: {
+    type: Schema.Types.Long,
+    required: true,
+    default: 0
+  },
   last_update: {
     type: Date,
     required: true,

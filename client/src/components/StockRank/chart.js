@@ -22,6 +22,23 @@ export default function Chart({ data }) {
             backgroundColor: null,
             borderColor: 'rgba(245, 245, 245, 0.7)',
             borderWidth: 2,
+            scrollablePlotArea: {
+                minWidth: 700,
+                scrollPositionX: 0,
+                opacity: 0
+            },
+        },
+        responsive: {
+            rules: [{
+                condition: {
+                    minWidth: 700
+                },
+                chartOptions: {
+                    chart: {
+                        scrollablePlotArea: null
+                    }
+                }
+            }]
         },
         title: {
             style: {
@@ -56,6 +73,9 @@ export default function Chart({ data }) {
             lineColor: null,
             minorGridLineColor: null,
             tickColor: null,
+            scrollbar: {
+                enable: true
+            }
         },
         yAxis: {
             allowDecimals: false,
@@ -77,6 +97,9 @@ export default function Chart({ data }) {
             lineColor: null,
             minorGridLineColor: null,
             tickColor: null,
+            scrollbar: {
+                enable: true
+            }
         },
         tooltip: {
             pointFormat: '{series.name} <b>{point.y}</b><br/>'
@@ -99,7 +122,7 @@ export default function Chart({ data }) {
         series: [{
             color: '#f44336',
             name: '失敗交易',
-            data: txnCount[1]
+            data: txnCount[1],
         },{
             color: '#4CAF50',
             name: '成功交易',
@@ -128,7 +151,7 @@ export default function Chart({ data }) {
         const loadData = async() => {
             const days_ago = 10 //顯示天數
             const x = [] //x軸
-            const y = [[],[]] //y軸
+            const y = [[],[]] //y軸(success,fail)
 
             try {    
                 for(let i = days_ago; i >= 0; i--) {

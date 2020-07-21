@@ -1,11 +1,18 @@
-// @material-ui/icons
+// icons
 import Dashboard from "@material-ui/icons/Dashboard";
 import Person from "@material-ui/icons/Person";
 import LibraryBooks from "@material-ui/icons/LibraryBooks";
 import BubbleChart from "@material-ui/icons/BubbleChart";
-import Notifications from "@material-ui/icons/Notifications";
-import Icons from "views/Icons/Icons.js";
-// core components/views for Admin layout
+import SearchRoundedIcon from '@material-ui/icons/SearchRounded';
+import HomeRoundedIcon from '@material-ui/icons/HomeRounded';
+import BarChartRoundedIcon from '@material-ui/icons/BarChartRounded';
+import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
+import StarRoundedIcon from '@material-ui/icons/StarRounded';
+import HistoryRoundedIcon from '@material-ui/icons/HistoryRounded';
+import SyncAltRoundedIcon from '@material-ui/icons/SyncAltRounded';
+import PeopleAltRoundedIcon from '@material-ui/icons/PeopleAltRounded';
+
+// views
 import { Home } from "views/Home";
 import { UserProfile } from "views/UserProfile";
 import { StockYesterday } from "views/StockYesterday";
@@ -14,12 +21,13 @@ import { StockSell } from "views/StockSell";
 import { StockStatus } from 'views/StockStatus';
 import { StockRank } from "views/StockRank";
 import { StockTrack } from "views/StockTrack";
+import { Discussion } from 'views/Discussion';
 
 const dashboardRoutes = [
   {
     path: "/home",
     name: "首頁",
-    icon: Dashboard,
+    icon: HomeRoundedIcon,
     component: Home,
     layout: "/admin"
   },
@@ -33,14 +41,14 @@ const dashboardRoutes = [
   {
     path: "/stockRealTime",
     name: "即時股價/買入",
-    icon: "content_paste",
+    icon: SearchRoundedIcon,
     component: StockBuy,
     layout: "/admin"
   },
   {
     path: "/stockSell",
     name: "擁有股票/賣出",
-    icon: "content_paste",
+    icon: StarRoundedIcon,
     component: StockSell,
     layout: "/admin"
   },
@@ -54,22 +62,29 @@ const dashboardRoutes = [
   {
     path: "/status",
     name: "交易狀態",
-    icon: "content_paste",
+    icon: SyncAltRoundedIcon,
     component: StockStatus,
     layout: "/admin"
   },
   {
     path: "/track",
     name: "股票追蹤管理",
-    icon: "content_paste",
+    icon: FavoriteRoundedIcon,
     component: StockTrack,
     layout: "/admin"
   },
   {
     path: "/rank",
     name: "股票排名",
-    icon: BubbleChart,
+    icon: BarChartRoundedIcon,
     component: StockRank,
+    layout: "/admin"
+  },
+  {
+    path: "/discussion",
+    name: "班級討論版",
+    icon: PeopleAltRoundedIcon,
+    component: Discussion,
     layout: "/admin"
   }, 
 ];

@@ -12,7 +12,7 @@ export default function StockDetail({ stock, data }) {
     const history = useHistory()
     const options = {
         chart: {
-            type: 'column'
+            type: 'column',
         },
         title: {
             text: `【${stock.stock_id} ${stock.stock_name}】 你的近期成交次數`
@@ -59,7 +59,7 @@ export default function StockDetail({ stock, data }) {
             }
         },
         legend: {
-          enabled: false
+            enabled: false
         },
         series: [{
             name: '交易次數',

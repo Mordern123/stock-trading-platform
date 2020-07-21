@@ -61,7 +61,9 @@ const styles = theme => ({
     },
   },
   searchInput1: {
-    margin: 8,
+    [theme.breakpoints.down("md")]: {
+      width: '100%'
+    },
     width: '50%',
     "& input, label": {
       fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
@@ -138,8 +140,12 @@ export const StockSell = function() {
   const handleOpenStockSell = async(event, row) => {
 
     try {
-      if(blocking) return
-      set_blocking(true)
+      //防呆
+      if(blocking) {
+        return
+      } else {
+        set_blocking(true)
+      }
 
       let res = await apiStock_realTime(row.stock_id)
       await delay(2000)
@@ -151,18 +157,32 @@ export const StockSell = function() {
         })
         set_showSellDialog(true)
       }
-      set_blocking(false)
-
+      
     } catch (error) {
       handle_error(error, history)
-      set_blocking(false)
     }
+    set_blocking(false)
   }
 
   const addTimeSnack = (msg, color) => {
     enqueueSnackbar(msg, {
       variant : color,
       anchorOrigin: { horizontal: 'center', vertical: 'top' },
+      ContentProps: {
+        style: {
+          backgroundColor: "#3f51b5",
+          color: "white"
+        },
+        className: classes.text
+      },
+      action: (key) => (
+        <Button
+          style={{ color: "white" }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      )
     })
   }
 
@@ -198,7 +218,7 @@ export const StockSell = function() {
       set_account_loading(false)
     }
     loadData()
-    addTimeSnack(`股票更新時間：${moment().calendar()}`, 'info')
+    // addTimeSnack(`股票更新時間：${moment().calendar(null, { lastWeek: 'dddd HH:mm' })}`, 'info')
   }, [])
 
   //載入用戶擁有股票
@@ -285,7 +305,6 @@ export const StockSell = function() {
                 columns={userStock_columns}
                 data={userStock}
                 noContainer={true}
-                maxBodyHeight={'100%'}
                 noDataDisplay="沒有擁有的股票"
                 detailPanel={getPanel()}
                 actions={[
@@ -295,6 +314,7 @@ export const StockSell = function() {
                     onClick: handleOpenStockSell
                   },
                 ]}
+                headerStyle={{backgroundColor: '#fff3e0'}}
               />
             </CardBody>
           </Card>
@@ -306,6 +326,7 @@ export const StockSell = function() {
             open={showSellDialog}
             handleClose={handleCloseStockSell}
             stockData={stockData}
+            onExited={() => set_stockData(null)}
           />
         ) : null
       }

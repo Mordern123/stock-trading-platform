@@ -66,8 +66,15 @@ export const StockRank = function(){
       setLoading(true)
       try {
         const res = await apiRank_list_all()
+        console.log(res.data)
+
+        //刪除交易數量為0的資料
+        const noZeroTxn = res.data.accountDocs.filter((item) => item.txn_count !== 0)
+
+        console.log(noZeroTxn)
+
         //製作Table資料
-        const rowData = res.data.accountDocs.map((item, index) => {
+        const rowData = noZeroTxn.map((item, index) => {
           return [
             index+1,
             item.user.student_id,

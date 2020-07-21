@@ -8,6 +8,7 @@ import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
 import Typography from '@material-ui/core/Typography';
+import LaunchRoundedIcon from '@material-ui/icons/LaunchRounded';
 import { TextField, InputAdornment, Button } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
 import Material_Table from 'components/Table/Material_Table';
@@ -15,6 +16,7 @@ import { apiUserStock_track_get, apiUserStock_track } from '../api'
 import ClearRoundedIcon from '@material-ui/icons/ClearRounded';
 import { useSnackbar } from 'notistack';
 import { handle_error } from '../tools'
+import copy from 'clipboard-copy'
 
 const userTrack_columns = [
   {
@@ -41,24 +43,10 @@ const useStyles = makeStyles((theme) => ({
       fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     },
   },
-  searchInput1: {
-    margin: 8,
-    width: '50%',
-    "& input, label": {
-      fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
-    },
-    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: theme.palette.warning.main,
-    },
-    "& label.MuiInputLabel-animated.Mui-focused ": {
-      color: theme.palette.warning.main
-    },
-    "& .MuiOutlinedInput-root.Mui-focused svg": {
-      color: theme.palette.warning.main,
-    },
-  },
   searchInput2: {
-    margin: 8,
+    [theme.breakpoints.down("md")]: {
+      width: '100%'
+    },
     width: '50%',
     "& input, label": {
       fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
@@ -102,10 +90,45 @@ export const StockTrack = function() {
     }
   }
 
+    //複製股票動作
+    const copy_stock = (e, row) => {
+      copy(row.stock_id)
+      addCopySnack()
+      history.push('/admin/stockRealTime', { stock_id: row.stock_id})
+    }
+  
+    const addCopySnack = () => {
+      enqueueSnackbar('已複製剪貼簿', {
+        variant : "copy",
+        anchorOrigin: { horizontal: 'center', vertical: 'top' },
+        ContentProps: {
+          style: {
+            color: '#F5F5F5',
+          }
+        },
+        autoHideDuration: 2000,
+        action: (key) => (
+          <Button
+            style={{ color: "white" }}
+            onClick={() => closeSnackbar(key) }
+          >
+            OK
+          </Button> 
+        ),
+      })
+    }
+
   const addSnack = (msg, color) => {
     enqueueSnackbar(msg, {
       variant : color,
       anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      ContentProps: {
+        style: {
+          backgroundColor: "#9c27b0",
+          color: "white"
+        },
+        className: "ch_font"
+      },
       action: (key) => (
         <Button
           style={{ color: 'white' }}
@@ -165,9 +188,13 @@ export const StockTrack = function() {
                 columns={userTrack_columns}
                 data={userTrack}
                 noContainer={true}
-                maxBodyHeight={'100%'}
                 noDataDisplay="沒有追蹤的股票"
                 actions={[
+                  {
+                    icon: () => <LaunchRoundedIcon />,
+                    tooltip: '複製並搜尋',
+                    onClick: copy_stock
+                  },
                   {
                     icon: () => <ClearRoundedIcon />,
                     tooltip: '取消追蹤',

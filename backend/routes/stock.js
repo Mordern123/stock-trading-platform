@@ -9,12 +9,14 @@ import moment from 'moment';
 import { check_permission } from '../common/auth'
 import { queue } from '../server'
 import { task } from '../common/scraper'
+import { add_user_search } from '../common/stock'
 import { handle_error } from '../common/error'
 
 moment.locale('zh-tw');
 
 const router = Router()
 
+//取得收盤資料
 const get_all_stock = async (req, res) => {
   const { user, code } = await check_permission(req)
 
@@ -24,11 +26,25 @@ const get_all_stock = async (req, res) => {
     return
   }
 
-  const date = new Date('2020-04-16')
+  //判斷取得股票時間
+  var date;
+  let today_four = moment().hours(16).minutes(10) //設定下午4點10分
+  let is_after_four = moment().isAfter(today_four)
+
+  if(is_after_four) { //是否過了今日下午4點(防呆前端也有做)
+    let today = moment().format('YYYY-MM-DD') //今日最小單位
+    date = moment(today).toDate()
+
+  } else {
+    let yesterday = moment().subtract(1, 'days').format('YYYY-MM-DD') //昨日最小單位
+    date = moment(yesterday).toDate()
+  }
+
   const result = await Stock.find({data_time: date}).exec()
   res.json(result)
 }
 
+//取得全部股票排名
 const get_stock_rank = async (req, res) => {
   const { user, code } = await check_permission(req)
 
@@ -55,13 +71,16 @@ const get_stock_rank = async (req, res) => {
       { $limit : 50 }
     ]).exec()
   accountDocs = await Account.populate(accountDocs, 'user')
-  const updateTime = moment().calendar()
+
+  const updateTime = moment().calendar(null, { lastWeek: 'dddd HH:mm' }) //ex: 星期三 10:55
+
   res.json({
     accountDocs,
     updateTime
   })
 }
 
+//取得用戶擁有股票
 const get_user_stock = async (req, res) => {
   const { user, code } = await check_permission(req)
 
@@ -80,7 +99,7 @@ const get_user_stock = async (req, res) => {
     let newDoc = item
     newDoc.last_update = moment(item.last_update).startOf('hour').fromNow()
     newDoc.updatedAt = moment(item.updatedAt).startOf('hour').fromNow()
-    newDoc.createdAt = moment(item.createdAt).calendar()
+    newDoc.createdAt = moment(item.createdAt).calendar(null, { lastWeek: 'dddd HH:mm' }) //星期三 10:55
     return newDoc
   })
   res.json(userStockData)
@@ -136,7 +155,7 @@ const get_user_track = async (req, res) => {
       let { stock_id, track_time, createdAt, updatedAt } = userTrackDoc[i]
       let stockDoc = await Stock.findOne({stock_id}).sort('-data_time').exec() //取的目前最新股票
       userTrackDoc[i].stock = stockDoc
-      userTrackDoc[i].track_time = moment(track_time).calendar()
+      userTrackDoc[i].track_time = moment(track_time).calendar(null, { lastWeek: 'dddd HH:mm' }), //星期三 10:55
       userTrackDoc[i].createdAt = moment(createdAt).startOf('hour').fromNow()
       userTrackDoc[i].updatedAt = moment(updatedAt).startOf('hour').fromNow()
     }
@@ -148,7 +167,7 @@ const get_user_track = async (req, res) => {
   
 }
 
-//使用者追蹤股票
+//用戶追蹤股票
 const user_track_stock = async (req, res) => {
   try {
     const { user, code } = await check_permission(req)
@@ -179,7 +198,7 @@ const user_track_stock = async (req, res) => {
   }
 }
 
-//取得及時股票資訊
+//取得即時股票資訊
 const get_realTime_stock = async (req, res) => {
 
   const { user, code } = await check_permission(req)
@@ -190,11 +209,45 @@ const get_realTime_stock = async (req, res) => {
   }
 
   let stock_id = req.params.stock_id
+  let exists = await Stock.exists({stock_id})
+  let day = moment().day()
+  let isWeekend = (day === 6) || (day === 0) //判斷假日
+  let s = moment().hours(16).minutes(30) //今日下午4點30分
+  let e = moment().add(1, 'days').hours(9) //隔日早上9點
+  let is_between_close = moment().isBetween(s, e)
 
-  let stock = await Stock.findOne({stock_id}).limit(1).exec()
+  if(exists) {
+    if(is_between_close || isWeekend) { //在收盤期間
+      try {
+        let today_str = moment().format('YYYY-MM-DD') //今日最小單位
+        let today = moment(today_str).toDate()
+        let stock = await Stock.findOne({ stock_id, data_time: today}).exec() //找尋今日收盤資訊
+        let obj = {
+          website: 'close',
+          stock_id,
+          stock_name: stock.stock_name,
+          v: stock.txn_number, //累積成交量
+          o: stock.opening_price, //開盤
+          h: stock.highest_price, //當日最高
+          l: stock.lowest_price, //當日最低
+          z: stock.closing_price, //收盤價
+          y: stock.closing_price, //昨收(已收盤和收盤價一樣)
+          ud: (stock.up_down + stock.up_down_spread) || 0, //漲跌
+          request_time: moment(),
+        }
 
-  if(stock) {
-    await queue.add(() => task(user, stock.stock_id, stock.stock_name, res)); //加入排程
+        await add_user_search(user, obj) //儲存搜尋紀錄
+
+        res.json(obj)
+  
+      } catch (error) {
+        handle_error(error, res)
+      }
+    } else {
+      //取得最新資料
+      await queue.add(() => task(user, stock.stock_id, stock.stock_name, res)); //加入排程
+    }
+
   } else {
     res.status(204).send()
   }
@@ -211,7 +264,7 @@ const get_user_search = async(req, res) => {
   let result = docs.map((item) => {
     return {
       ...item,
-      request_time: moment(item.request_time).calendar(),
+      request_time: moment(item.request_time).calendar(null, { lastWeek: '這dddd HH:mm' }), //星期三 10:55,
       createdAt: moment(item.createdAt).startOf('hour').fromNow(),
       updatedAt: moment(item.updatedAt).startOf('hour').fromNow(),
     }

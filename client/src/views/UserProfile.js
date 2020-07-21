@@ -24,6 +24,7 @@ import { createMuiTheme } from '@material-ui/core/styles';
 import SwipeableViews from 'react-swipeable-views';
 import { apiUser_get } from '../api'
 import { handle_error } from '../tools'
+import '../assets/css/global.css'
 
 const barTheme = createMuiTheme({
   palette: {
@@ -88,7 +89,7 @@ export const UserProfile = function() {
   const classes = useStyles();
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState(0); //控制Panel轉換
+  const [value, setValue] = useState(1); //控制Panel轉換
   const [userData, setUserData] = useState(null);
   const history = useHistory()
 
@@ -135,7 +136,7 @@ export const UserProfile = function() {
                   size="small"
                   variant="outlined"
                   color="primary"
-                  className="m-0 p-0 mb-4"
+                  className="m-0 p-0 mb-4 ch_font"
                   onClick={handleOpen}
                 >
                   修改
@@ -150,7 +151,7 @@ export const UserProfile = function() {
                   className={classes.customTabs}
                 >
                   <Tab label="個人資料" className={`${classes.customTab} ${value == 0 ? classes.activeTab : null}`}/>
-                  <Tab label="活動分析" className={`${classes.customTab} ${value == 1 ? classes.activeTab : null}`}/>
+                  <Tab label="交易活動" className={`${classes.customTab} ${value == 1 ? classes.activeTab : null}`}/>
                   <Tab label="交易紀錄" className={`${classes.customTab} ${value == 2 ? classes.activeTab : null}`}/>
                 </Tabs>
                 <SwipeableViews

@@ -5,6 +5,9 @@ import MaterialTable, { MTableToolbar } from 'material-table';
 import Card from '@material-ui/core/Card';
 
 const tableTheme = createMuiTheme({
+  typography: {
+    fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif !important"
+  },
   overrides: {
       MuiTableRow: {
           hover: {
@@ -12,7 +15,7 @@ const tableTheme = createMuiTheme({
               cursor: 'default !important'
             }
           }
-      }
+      },
   }
 });
 
@@ -51,6 +54,8 @@ export default function Custom_MaterialTable(props) {
     detailPanel,
     actionsColumnIndex,
     noDataDisplay,
+    toolbarStyle,
+    headerStyle,
   } = props
   
   const options = {
@@ -65,17 +70,15 @@ export default function Custom_MaterialTable(props) {
     pageSizeOptions: pageSizeOptions || [50, 100, 200],
     maxBodyHeight: maxBodyHeight || 600,
     actionsColumnIndex: actionsColumnIndex == null ? 0 : actionsColumnIndex,
-    rowStyle: {
-      cursor: 'help'
-    }
+    headerStyle: headerStyle
   }
 
   // 更改key變數才會吃到搜尋字串
-  useEffect(() => {
+  React.useEffect(() => {
     setCount(count+1)
   }, [searchText, pageSize])
 
-  useEffect(() => {  
+  React.useEffect(() => {  
     let result_count = tableRef.current.state.data.length
     result_count = result_count < 10 ? 10 : result_count
     if(result_count < 50) {
@@ -100,7 +103,12 @@ export default function Custom_MaterialTable(props) {
         components={{
           Container: props => noContainer ? (
             <div {...props}></div>
-          ) : <Card raised {...props}></Card>
+          ) : <Card raised {...props}></Card>,
+          Toolbar: props => (
+            <div style={toolbarStyle}>
+              <MTableToolbar {...props} />
+            </div>
+          )
         }}
         localization={{
           header: {

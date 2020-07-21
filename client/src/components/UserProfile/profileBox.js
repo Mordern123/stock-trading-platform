@@ -7,10 +7,15 @@ import { Close } from '@material-ui/icons'
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Button from "components/CustomButtons/Button.js";
+import { MuiPickersUtilsProvider, KeyboardDatePicker } from '@material-ui/pickers';
+import DateFnsUtils from '@date-io/date-fns';
 import CustomInput from "components/CustomInput/CustomInput.js";
 import { apiUser_update } from "../../api"
 import { useSnackbar } from 'notistack';
 import { handle_error } from '../../tools'
+import moment from 'moment'
+import '../../assets/css/global.css'
+
 
 const styles = theme => ({
   inputLabel: {
@@ -28,6 +33,7 @@ const styles = theme => ({
     fontSize: '1.5rem'
   },
 })
+
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -56,9 +62,9 @@ export default function ProfileBox(props) {
       })
       const status = await loadData()
       if(status) {
-        addSnack("已成功更新個人資料", "success")
+        addSnack("已成功更新個人資料", "success", "#4caf50")
       } else {
-        addSnack("個人資料更新失敗", "error")
+        addSnack("個人資料更新失敗", "error", "#f44336")
       }
       handleClose()
       
@@ -67,9 +73,16 @@ export default function ProfileBox(props) {
     }
   }
 
-  const addSnack = (msg, color) => {
+  const addSnack = (msg, type, color) => {
     enqueueSnackbar(msg, {
-      variant : color,
+      variant: type,
+      ContentProps: {
+        style: {
+          backgroundColor: color,
+          color: "white"
+        },
+        className: classes.text
+      },
       anchorOrigin: { horizontal: 'right', vertical: 'top' },
     })
   }
@@ -123,6 +136,7 @@ export default function ProfileBox(props) {
                 fullWidth: true
               }}
               inputProps={{
+                className: 'ch_font',
                 defaultValue: user_name,
                 onChange: (e) => setUserName(e.target.value)
               }}
@@ -153,22 +167,30 @@ export default function ProfileBox(props) {
                 fullWidth: true
               }}
               inputProps={{
+                className: 'ch_font',
                 defaultValue: sex || '未設定',
                 onChange: (e) => setSex(e.target.value)
               }}
             />
           </GridItem>
           <GridItem xs={12} sm={12} md={6}>
-            <CustomInput
-              labelText="生日"
-              formControlProps={{
-                fullWidth: true
-              }}
-              inputProps={{
-                defaultValue: birthday || '未設定',
-                onChange: (e) => setBirthday(e.target.value)
-              }}
-            />
+            <div style={{marginTop: '11px'}}>
+              <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                <KeyboardDatePicker
+                  fullWidth
+                  disableToolbar
+                  // variant="inline"
+                  format="yyyy/MM/dd/"
+                  margin="normal"
+                  label="生日"
+                  value={_birthday || moment().toDate()}
+                  onChange={(e) => setBirthday(e)}
+                  KeyboardButtonProps={{
+                    'aria-label': 'change date',
+                  }}
+                />
+              </MuiPickersUtilsProvider>
+            </div>
           </GridItem>
         </GridContainer>
       </DialogContent>

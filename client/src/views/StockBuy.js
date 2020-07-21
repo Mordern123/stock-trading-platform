@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Fragment, useCallback } from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import { useHistory } from 'react-router'
+import { useHistory, useLocation } from 'react-router'
 import { InputBase, IconButton, Divider, Paper, Button } from '@material-ui/core';
 import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from '@material-ui/icons';
 import GridItem from "components/Grid/GridItem.js";
@@ -9,12 +9,15 @@ import Material_Table from 'components/Table/Material_Table';
 import BuyDialog from 'components/Transaction/Dialog_Buy';
 import CardStat from 'components/Transaction/Card_Stat';
 import Backdrop from '@material-ui/core/Backdrop';
+import LaunchRoundedIcon from '@material-ui/icons/LaunchRounded';
+import AccountBoxRoundedIcon from '@material-ui/icons/AccountBoxRounded';
 import { apiUserStock_track_get, apiUserStock_get, apiUser_account, apiStock_realTime, apiUserStock_search_list } from '../api'
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import { handle_error } from '../tools'
 import LinearProgress from '@material-ui/core/LinearProgress';
 import delay from 'delay'
+import copy from 'clipboard-copy'
 
 
 //bubble sort
@@ -88,6 +91,12 @@ const styles = theme => ({
   },
   searchInput: {
     "& input" : {
+      [theme.breakpoints.up("sm")]: {
+        fontSize: '1em'
+      },
+      [theme.breakpoints.down("sm")]: {
+        fontSize: '0.7em'
+      },
       textAlign: 'center',
       fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     },
@@ -130,6 +139,7 @@ export const StockBuy = function() {
   const [ update, set_update ] = useState(false);
   const [ blocking, set_blocking ] = useState(false);
   const history = useHistory()
+  const location = useLocation()
 
   const handleCloseStockBuy = () => {
     set_showBuyDialog(false)
@@ -143,8 +153,16 @@ export const StockBuy = function() {
   //處理搜尋股票
   const handle_search_stock = async() => {
     try {
-      if(!searchText || blocking) return
-      set_blocking(true)
+      //防呆
+      if(blocking) {
+        return
+      } else {
+        set_blocking(true)
+      }
+      if(!searchText) {
+        alert("請輸入股票代號")
+        return
+      }
 
       let res1 = await apiStock_realTime(searchText)
       await delay(2000)
@@ -164,20 +182,68 @@ export const StockBuy = function() {
       } else if(res1.status === 204) {
         alert("查無此股票")
       }
-      set_blocking(false)
-
+      
     } catch (error) {
       handle_error(error, history)
-      set_blocking(false)
     }
+    set_blocking(false)
+  }
 
+  const handle_keyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handle_search_stock()
+    }
   }
 
   const addTimeSnack = (msg, color) => {
     enqueueSnackbar(msg, {
       variant : color,
       anchorOrigin: { horizontal: 'center', vertical: 'top' },
+      ContentProps: {
+        style: {
+          backgroundColor: "#3f51b5",
+          color: "white"
+        },
+        className: classes.text
+      },
+      action: (key) => (
+        <Button
+          style={{ color: "white" }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      )
     })
+  }
+
+  const addCopySnack = () => {
+    enqueueSnackbar('已複製剪貼簿', {
+      variant : "copy",
+      anchorOrigin: { horizontal: 'center', vertical: 'top' },
+      ContentProps: {
+        style: {
+          color: '#F5F5F5',
+        },
+        className: classes.text
+      },
+      autoHideDuration: 2000,
+      action: (key) => (
+        <Button
+          style={{ color: "white" }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      ),
+    })
+  }
+
+  const copy_stock = (e, row) => {
+    copy(row.stock_id)
+    set_searchText(row.stock_id)
+    addCopySnack()
   }
 
   React.useEffect(() => {
@@ -194,7 +260,7 @@ export const StockBuy = function() {
       setLoading(false)
     }
     loadData()
-    addTimeSnack(`股票更新時間：${moment().calendar()}`, 'info')
+    // addTimeSnack(`股票更新時間：${moment().calendar(null, { lastWeek: 'dddd HH:mm' })}`, 'info')
   }, [])
 
   React.useEffect(() => {
@@ -206,6 +272,15 @@ export const StockBuy = function() {
     }
     load()
   }, [update])
+
+  //檢查是否透過跳轉過來
+  React.useEffect(() => {
+    if(location.state) {
+      if(location.state.stock_id) {
+        set_searchText(location.state.stock_id)
+      }
+    }
+  }, [])
   
   return (
     <Fragment>
@@ -232,20 +307,23 @@ export const StockBuy = function() {
       <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
           <Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
-            <IconButton color="primary" className="p-3" >
-              <ShowChart fontSize="large"/>
-            </IconButton>
+            <div className="p-3" >
+              <AccountBoxRoundedIcon color="primary" fontSize="large"/>
+            </div>
             <InputBase
               ref={searchRef}
               className={classes.searchInput}
               placeholder="搜尋股票代號"
               onChange={onChange}
+              onKeyDown={handle_keyDown}
+              value={searchText}
             />
             <IconButton
               type="button"
               color="primary"
               className="p-3"
               onClick={handle_search_stock}
+              onKeyDown={handle_keyDown}
             >
               <Search fontSize="large"/>
             </IconButton>
@@ -259,7 +337,16 @@ export const StockBuy = function() {
             useSearch={true}
             useExport={false}
             maxBodyHeight={700}
-            noDataDisplay="沒有符合的股票"
+            noDataDisplay="沒有搜尋紀錄"
+            actions={[
+              {
+                icon: () => <LaunchRoundedIcon />,
+                tooltip: '複製並搜尋',
+                onClick: copy_stock
+              },
+            ]}
+            headerStyle={{backgroundColor: '#fffde7'}}
+            toolbarStyle={{backgroundColor: '#fff59d'}}
           />
         </GridItem>
       </GridContainer>
@@ -271,6 +358,7 @@ export const StockBuy = function() {
             stockInfo={stockInfo}
             userStock={userStock}
             userTrack={userTrack}
+            onExited={() => set_stockInfo(null)}
           />
         ) : null
       }

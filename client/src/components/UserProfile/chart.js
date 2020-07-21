@@ -4,23 +4,36 @@ import Highcharts from 'highcharts'
 import HighchartsReact from 'highcharts-react-official'
 import moment from 'moment'
 import { useHistory } from 'react-router'
-import { apiTxn_get_class_avg } from '../../api'
+import { apiTxn_get_all } from '../../api'
 import { handle_error } from "../../tools"
 
 export default function Chart() {
-    const [timePoints, setTimePoints] = useState([])
-    const [individual_data, setIndividual_data] = useState([])
-    const [class_data, setClass_data] = useState([])
+    const [timePoints, set_timePoints] = useState([])
+    const [txnCount, set_txnCount] = useState([])
     const history = useHistory()
     const options = {
         chart: {
-            type: 'area'
+            type: 'column',
+            scrollablePlotArea: {
+                minWidth: 700,
+                scrollPositionX: 0,
+                opacity: 0
+            }
         },
-        accessibility: {
-            description: '顯示每日的股票交易次數'
+        responsive: {
+            rules: [{
+                condition: {
+                    minWidth: 700
+                },
+                chartOptions: {
+                    chart: {
+                        scrollablePlotArea: null
+                    }
+                }
+            }]
         },
         title: {
-            text: '股票交易活躍度'
+            text: '個人股票交易統計'
         },
         subtitle: {
             text: '顯示每日的股票交易次數'
@@ -66,37 +79,50 @@ export default function Chart() {
             }
         },
         series: [{
-            name: '個人活躍度',
-            data: [0,0,3,5,1,1,0,3,0,0]
+            name: '成功交易次數',
+            data: txnCount[0],
+            color: "#4caf50",
+            borderColor: null,
         }, {
-            name: '班級活躍度',
-            data: class_data
+            name: '失敗交易次數',
+            data: txnCount[1],
+            color: "#f44336",
+            borderColor: null,
         }]
     }
 
-    const loadData = async() => {
-        const days_ago = 10
-        const _timePoints = new Array(days_ago)
-        const classData = new Array(days_ago)
+    React.useEffect(() => {
+        const loadData = async() => {
+            try {
+                let days_ago = 10 //顯示天數
+                let x = [] //x軸
+                let y = [[],[]] //y軸(success,fail)
+                let res = await apiTxn_get_all({day: days_ago, pure: true})
 
-        try {
-            const res = await apiTxn_get_class_avg({ day: days_ago })
-    
-            for(let i = 0; i < days_ago; i++) {
-                let dayString = moment().subtract(i+1, 'days').format('YYYY-MM-DD'); //轉換為最小單位為天
-                _timePoints[i] = dayString
-                classData[i] = res.data[dayString] || 0
+                for(let i = days_ago; i >= 0; i--) {
+                    let s = [], f = []
+                    let dayString = moment().subtract(i, 'days').format('YYYY-MM-DD'); //轉換為最小單位為天
+                    res.data.forEach((item) => {
+                        let d = moment(item.order_time).format('YYYY-MM-DD')
+                        if(moment(dayString).isSame(moment(d))) {
+                            if(item.status === 'success') {
+                                s.push(item)
+                            } else if(item.status === 'fail') {
+                                f.push(item)
+                            }
+                        }
+                    })
+                    x.push(dayString)
+                    y[0].push(s.length)
+                    y[1].push(f.length)
+                }
+                set_timePoints(x)
+                set_txnCount(y)
+
+            } catch (error) {
+                handle_error(error, history)
             }
-    
-            setTimePoints(_timePoints)
-            setClass_data(classData)
-            
-        } catch (error) {
-            handle_error(error, history)
         }
-    }
-
-    useEffect(() => {
         loadData()
     }, [])
 

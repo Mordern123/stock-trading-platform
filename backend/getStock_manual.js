@@ -11,9 +11,10 @@ const init = () => {
     console.log("MongoDB database connection established successfully");
     console.log("The database is " + connection.name)
 
-    let today_str = moment().format('YYYY-MM-DD')
-    let today = moment(today_str).subtract(1, 'days').toDate()
-    getStock(today) //之後判斷日期
+    //找前一天
+    let today = moment().format('YYYY-MM-DD')
+    let yesterday = moment(today).subtract(1, 'days').toDate()
+    getStock(yesterday) //之後判斷日期
   })
   mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
 }
@@ -24,13 +25,13 @@ export const getStock = async(time) => {
     const stock_exists = await Stock.exists({data_time: time})
     if(stock_exists) {
       console.log(`${time} 收盤資料已取得`)
-      return
+      process.exit()
     }
     const res = await axios.get(`http://www.twse.com.tw/exchangeReport/MI_INDEX?response=json&date=${convertDate(time)}&type=ALL`, { headers: { Connection: 'close'}})
     // 沒有資料就停止程序
     if(res.data['data9'] == null) {
       console.log("查詢資料錯誤！")
-      // process.exit()
+      process.exit()
     }
     const stockData = {
       cloumns: res.data['fields9'],
@@ -63,7 +64,7 @@ export const getStock = async(time) => {
     if(stock_array.length > 0) {
       Stock.collection.insertMany(stock_array, () => {
         console.log(`收盤股票新增完成，完成時間:【${moment().toLocaleString()}】`)
-        // process.exit()
+        process.exit()
       })
       
     }
@@ -99,5 +100,5 @@ const getUpDown = (str) => {
   }
 }
 
-// init();
+init();
 

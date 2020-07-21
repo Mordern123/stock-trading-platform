@@ -14,6 +14,8 @@ import AdminNavbarLinks from "./AdminNavbarLinks.js";
 import Button from "components/CustomButtons/Button.js";
 import NavbarButton from './NavbarButton'
 import styles from "assets/jss/material-dashboard-react/components/headerStyle.js";
+import clsx from 'clsx'
+import '../../assets/css/global.css'
 
 const useStyles = makeStyles(styles);
 
@@ -35,26 +37,37 @@ export default function Header(props) {
   });
   return (
     <AppBar className={classes.appBar + appBarClasses}>
-      <Toolbar className={classes.container}>
-        <div className={classes.flex}>
+      <Toolbar className={clsx("d-flex justify-content-between", classes.container)}>
+        {/* <div className={classes.flex}> */}
           {/* Here we create navbar brand, based on route name */}
           {/* <Button color="transparent" href="#" className={classes.title}>
             {makeBrand()}
           </Button> */}
-        </div>
+        {/* </div> */}
         <Hidden smDown implementation="css">
           {/* <AdminNavbarLinks /> */}
-          <NavbarButton />
         </Hidden>
         <Hidden mdUp implementation="css">
+          {/* <Button variant="contained" color="primary" className="mr-3 w-100 h-100">
+            Primary
+          </Button> */}
           <IconButton
             color="inherit"
             aria-label="open drawer"
             onClick={props.handleDrawerToggle}
+            style={{
+              position: 'fixed',
+              top: '15px',
+              backgroundColor: 'rgba(242, 242, 242, 0.8)'
+            }}
           >
             <Menu />
           </IconButton>
         </Hidden>
+        <div className="ch_font" style={{ color: 'rgba(0, 0, 0, 0.54)', marginLeft: '20px'}}>
+          此平台支援手機和網頁版喔👾
+        </div>
+        <NavbarButton />
       </Toolbar>
     </AppBar>
   );

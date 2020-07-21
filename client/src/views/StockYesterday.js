@@ -6,15 +6,15 @@ import { Search, ShowChart } from '@material-ui/icons';
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Material_Table from 'components/Table/Material_Table';
-import BuyDialog from 'components/Transaction/Dialog_Buy';
-import CardStat from 'components/Transaction/Card_Stat';
-import ShoppingCartOutlinedIcon from '@material-ui/icons/ShoppingCartOutlined';
+import LaunchRoundedIcon from '@material-ui/icons/LaunchRounded';
 import FavoriteBorderRoundedIcon from '@material-ui/icons/FavoriteBorderRounded';
 import FavoriteRoundedIcon from '@material-ui/icons/FavoriteRounded';
 import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, } from '../api'
 import { useSnackbar } from 'notistack';
 import moment from 'moment';
 import { handle_error } from '../tools'
+import copy from 'clipboard-copy'
+import localforage from 'localforage'
 
 //bubble sort
 const customSort = (a, b, field) => {
@@ -117,6 +117,12 @@ const styles = theme => ({
   },
   searchInput: {
     "& input" : {
+      [theme.breakpoints.up("sm")]: {
+        fontSize: '1em'
+      },
+      [theme.breakpoints.down("sm")]: {
+        fontSize: '0.7em'
+      },
       textAlign: 'center',
       fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
     },
@@ -164,9 +170,9 @@ export const StockYesterday = function(props) {
       setTimeout(() => {
         setLoading(false)
         if(status) {
-          addSnack(`已取消 ${row.stock_id}【${row.stock_name}】的追蹤`, "success")
+          addTrackSnack(`已取消 ${row.stock_id}【${row.stock_name}】的追蹤`, "success")
         } else {
-          addSnack(`已將 ${row.stock_id}【${row.stock_name}】加入追蹤`, "success")
+          addTrackSnack(`已將 ${row.stock_id}【${row.stock_name}】加入追蹤`, "success")
         }
       }, 1000);
 
@@ -175,36 +181,46 @@ export const StockYesterday = function(props) {
     }
   }
 
-  //取得股票相關資料
-  const loadData = async() => {
-    setLoading(true)
+  //複製股票動作
+  const copy_stock = (e, row) => {
+    copy(row.stock_id)
+    addCopySnack()
+    history.push('/admin/stockRealTime', { stock_id: row.stock_id})
+  }
 
-    try {
-      const stock_res = await apiStock_list_all()
-      const track_res = await apiUserStock_track_get()
-      const onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
-      setTrack_data(onlyTrackId_data)
-      setStock_data(stock_res.data)
-      
-    } catch (error) {
-      handle_error(error, history)
-    }
-
-    setLoading(false)
+  const addCopySnack = () => {
+    enqueueSnackbar('已複製剪貼簿', {
+      variant : "copy",
+      anchorOrigin: { horizontal: 'center', vertical: 'top' },
+      ContentProps: {
+        style: {
+          color: '#F5F5F5',
+        },
+        className: classes.text
+      },
+      autoHideDuration: 2000,
+      action: (key) => (
+        <Button
+          style={{ color: "white" }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      ),
+    })
   }
 
   const getActions = useCallback(() => ([
     {
-      icon: 'refresh',
-      tooltip: 'Refresh Data',
-      isFreeAction: true,
-      onClick: () => {},
+      icon: () => <LaunchRoundedIcon />,
+      tooltip: '複製並搜尋',
+      onClick: copy_stock
     },
     rowData => {
       let inCollect = track_data.includes(rowData.stock_id) //判斷此股票使用者有沒有收藏
       return {
         icon: () => inCollect
-          ? <FavoriteRoundedIcon />
+          ? <FavoriteRoundedIcon style={{color: '#e57373'}}/>
           : <FavoriteBorderRoundedIcon />
         ,
         tooltip: inCollect ? 'Remove from Collect' : 'Add to Collect',
@@ -213,10 +229,19 @@ export const StockYesterday = function(props) {
     }
   ]), [track_data])
 
-  const addSnack = (msg, color) => {
+  //發出追蹤交易通知
+  const addTrackSnack = (msg, color) => {
     enqueueSnackbar(msg, {
       variant : color,
       anchorOrigin: { horizontal: 'right', vertical: 'top' },
+      autoHideDuration: 3000,
+      ContentProps: {
+        style: {
+          backgroundColor: "#9c27b0",
+          color: "white"
+        },
+        className: classes.text
+      },
       action: (key) => (
         <Button
           style={{ color: 'white' }}
@@ -225,7 +250,6 @@ export const StockYesterday = function(props) {
           OK
         </Button> 
       ),
-      persist: true
     })
   }
 
@@ -233,12 +257,81 @@ export const StockYesterday = function(props) {
     enqueueSnackbar(msg, {
       variant : color,
       anchorOrigin: { horizontal: 'center', vertical: 'top' },
+      ContentProps: {
+        style: {
+          backgroundColor: "#3f51b5",
+          color: "white"
+        },
+        className: classes.text
+      },
+      action: (key) => (
+        <Button
+          style={{ color: "white" }}
+          onClick={() => closeSnackbar(key) }
+        >
+          OK
+        </Button> 
+      )
     })
   }
 
-  useEffect(() => {
+  //取得sever資料
+  const load_stock_remote = async() => {
+    let stock_res = await apiStock_list_all()
+    let track_res = await apiUserStock_track_get()
+    let onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
+    await localforage.setItem("stocks", stock_res.data) //儲存進indexDB
+    await localforage.setItem("updateTime", moment().format('YYYY-MM-DD')) //新的更新
+
+    setTrack_data(onlyTrackId_data)
+    setStock_data(stock_res.data)
+  }
+  
+  //取得本地暫存
+  const load_stock_local = async(stocks) => {
+    let track_res = await apiUserStock_track_get()
+    let onlyTrackId_data = track_res.data.map(item => item.stock_id) //只要stock_id
+    setTrack_data(onlyTrackId_data)
+    setStock_data(stocks)
+  }
+  
+  //取得股票相關資料
+  React.useEffect(() => {
+    const loadData = async() => {
+      setLoading(true)
+      try {
+        let _stocks = await localforage.getItem('stocks')
+        let stocks = _stocks ? _stocks.length > 0 ? _stocks : null : _stocks
+        let today_four = moment().hours(16).minutes(10) //設定下午4點10分
+        let is_after_four = moment().isAfter(today_four)
+        
+        if(stocks) { //股票暫存是否存在
+          if(is_after_four) { //超過下午4點10分
+            let updateTime = await localforage.getItem("updateTime")
+            let today = moment(moment().format('YYYY-MM-DD')) //今日最小單位
+
+            if(moment(updateTime).isBefore(today)) { //今日尚未更新
+              await load_stock_remote()
+
+            } else { //今日已更新
+              await load_stock_local(stocks)
+            }
+
+          } else { //未超過4點10分拿暫存
+            await load_stock_local(stocks)
+          }
+        } else { //未有股票拿最新
+          await load_stock_remote()
+        }
+
+        addTimeSnack(`股票收盤資訊更新時間：${moment().calendar(null, { lastWeek: 'dddd HH:mm' })} 進行更新`, 'info')
+        
+      } catch (error) {
+        handle_error(error, history)
+      }
+      setLoading(false)
+    }
     loadData()
-    addTimeSnack(`股票更新時間：${moment().calendar()}`, 'info')
   }, [])
   
   return (
@@ -246,9 +339,6 @@ export const StockYesterday = function(props) {
       <GridContainer>
         <GridItem xs={12} sm={12} md={12}>
           <Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
-            <IconButton color="primary" className="p-3" >
-              <ShowChart fontSize="large"/>
-            </IconButton>
             <InputBase
               ref={searchRef}
               className={classes.searchInput}
@@ -275,6 +365,8 @@ export const StockYesterday = function(props) {
             actions={getActions()}
             maxBodyHeight={700}
             noDataDisplay="沒有符合的股票"
+            headerStyle={{backgroundColor: '#fffde7'}}
+            toolbarStyle={{backgroundColor: '#fff59d'}}
           />
         </GridItem>
       </GridContainer>

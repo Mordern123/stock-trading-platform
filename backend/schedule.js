@@ -44,11 +44,11 @@ export const start_get_closingStock_schedule = () => {
 	});
 };
 
-//進入收盤狀態排程(每日13:30)
+//進入收盤狀態排程(每日14:38)
 export const start_closing_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 13;
-	rule.minute = 30;
+	rule.hour = 14;
+	rule.minute = 38;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, function (fireDate) {

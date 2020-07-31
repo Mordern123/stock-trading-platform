@@ -168,20 +168,33 @@ export default function SellDialog(props) {
 	}, [reserve_time]);
 
 	return (
-		<Dialog open={open} TransitionComponent={Transition} fullWidth={true} maxWidth="sm" onExited={onExited}>
+		<Dialog
+			open={open}
+			TransitionComponent={Transition}
+			fullWidth={true}
+			maxWidth="sm"
+			onExited={onExited}
+		>
 			<DialogTitle className={clsx("pb-0", classes.dialogTitle)}>
 				<Hidden only={["xs", "sm"]} implementation="css">
 					<div className="d-flex align-items-center justify-content-between">
 						<span className="mr-1" style={{ fontSize: "30px", fontWeight: "bold" }}>
 							{stockInfo.stock_name}
 						</span>
-						<div style={{ color: "#e57373", fontSize: "1rem" }}>{`價格保留時間: ${reserve_time} 秒`}</div>
+						<div
+							style={{ color: "#e57373", fontSize: "1rem" }}
+						>{`價格保留時間: ${reserve_time} 秒`}</div>
 					</div>
 					<div className="d-flex align-items-end justify-content-between">
-						<h3 className="mb-0" style={{ fontSize: "3.5rem", color: "#1976d2", fontWeight: "bold" }}>
+						<h3
+							className="mb-0"
+							style={{ fontSize: "3.5rem", color: "#1976d2", fontWeight: "bold" }}
+						>
 							{stockInfo.z}
 						</h3>
-						<DialogContentText className={clsx("mb-2", classes.text)}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+						<DialogContentText className={clsx("mb-2 w-50 text-right", classes.text)}>
+							此為模擬股市交易資料，僅供模擬交易使用，有誤差值請見諒
+						</DialogContentText>
 					</div>
 				</Hidden>
 				<Hidden only={["md", "lg", "xl"]} implementation="css">
@@ -193,7 +206,10 @@ export default function SellDialog(props) {
 						</div>
 					</div>
 					<div className="row">
-						<h3 className="col mb-0" style={{ fontSize: "3.5rem", color: "#1976d2", fontWeight: "bold" }}>
+						<h3
+							className="col mb-0"
+							style={{ fontSize: "3.5rem", color: "#1976d2", fontWeight: "bold" }}
+						>
 							{stockInfo.z}
 						</h3>
 					</div>
@@ -203,53 +219,120 @@ export default function SellDialog(props) {
 						</div>
 					</div>
 					<div className="row">
-						<DialogContentText className={clsx("col mb-2", classes.text)}>股票即時資料有可能因網路速度有1~2分鐘的誤差值</DialogContentText>
+						<DialogContentText className={clsx("col mb-2", classes.text)}>
+							此為模擬股市交易資料，僅供模擬交易使用，有誤差值請見諒
+						</DialogContentText>
 					</div>
 				</Hidden>
 			</DialogTitle>
 			<DialogContent className={clsx("pt-0", classes.dialogContent, classes.text)}>
 				<List component="nav">
 					<ListItem button>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`證券代號： ${stockInfo.stock_id}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`證券代號： ${stockInfo.stock_id}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`即時成交價： ${stockInfo.z}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`即時成交價： ${stockInfo.z}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`漲跌： ${stockInfo.ud}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`漲跌： ${stockInfo.ud}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`累積成交量： ${stockInfo.v}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`累積成交量： ${stockInfo.v}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`開盤： ${stockInfo.o}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`開盤： ${stockInfo.o}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`每日最高： ${stockInfo.h}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`每日最高： ${stockInfo.h}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`每日最低： ${stockInfo.l}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`每日最低： ${stockInfo.l}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`昨收： ${stockInfo.y}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`昨收： ${stockInfo.y}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
-						<ListItemText primary={<Typography variant="subtitle1" className={classes.text}>{`近期買入價： ${userStock.stockInfo.z}`}</Typography>} />
+						<ListItemText
+							primary={
+								<Typography
+									variant="subtitle1"
+									className={classes.text}
+								>{`近期買入價： ${userStock.stockInfo.z}`}</Typography>
+							}
+						/>
 					</ListItem>
 					<Divider />
 					<ListItem button className={classes.text}>
 						<ListItemText
 							primary={
 								<Typography variant="subtitle1" className={classes.text}>
-									{`目前擁有張數： ${userStock ? parseInt(userStock.shares_number / 1000) : 0}張 (${userStock ? userStock.shares_number : 0} 股)`}
+									{`目前擁有張數： ${
+										userStock ? parseInt(userStock.shares_number / 1000) : 0
+									}張 (${userStock ? userStock.shares_number : 0} 股)`}
 								</Typography>
 							}
 						/>
@@ -263,7 +346,14 @@ export default function SellDialog(props) {
 							type="number"
 							variant="outlined"
 							InputProps={{
-								endAdornment: <InputAdornment position="end" children={<Typography className={classes.text}>張</Typography>} />,
+								endAdornment: (
+									<InputAdornment
+										position="end"
+										children={
+											<Typography className={classes.text}>張</Typography>
+										}
+									/>
+								),
 							}}
 							inputProps={{
 								min: 0,
@@ -278,10 +368,20 @@ export default function SellDialog(props) {
 				</Backdrop>
 			</DialogContent>
 			<DialogActions className="p-3">
-				<Button variant="contained" onClick={handleClose} classes={{ root: classes.cancelButton }} className={clsx(classes.text, classes.button)}>
+				<Button
+					variant="contained"
+					onClick={handleClose}
+					classes={{ root: classes.cancelButton }}
+					className={clsx(classes.text, classes.button)}
+				>
 					取消訂單
 				</Button>
-				<Button variant="contained" onClick={handleSellStock} classes={{ root: classes.submitButton }} className={clsx(classes.text, classes.button)}>
+				<Button
+					variant="contained"
+					onClick={handleSellStock}
+					classes={{ root: classes.submitButton }}
+					className={clsx(classes.text, classes.button)}
+				>
 					確定下單
 				</Button>
 			</DialogActions>

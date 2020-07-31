@@ -12,6 +12,7 @@ import { queue } from "../server";
 import { task } from "../common/scraper";
 import { add_user_search } from "../common/stock";
 import { handle_error } from "../common/error";
+import { to_num } from "../common/tools";
 
 moment.locale("zh-tw");
 
@@ -82,7 +83,12 @@ const get_stock_rank = async (req, res) => {
 	// ]).exec();
 	// accountDocs = await Account.populate(accountDocs, "user");
 
-	let accountDocs = await Account.find().sort({ total_amount: "desc" }).populate("user").limit(50).lean().exec();
+	let accountDocs = await Account.find()
+		.sort({ total_amount: "desc" })
+		.populate("user")
+		.limit(50)
+		.lean()
+		.exec();
 	let rank_data = accountDocs.map((item) => {
 		return {
 			student_id: item.user.student_id,
@@ -167,7 +173,9 @@ const get_user_track = async (req, res) => {
 			let { stock_id, track_time, createdAt, updatedAt } = userTrackDoc[i];
 			let stockDoc = await Stock.findOne({ stock_id }).sort("-data_time").exec(); //取的目前最新股票
 			userTrackDoc[i].stock = stockDoc;
-			(userTrackDoc[i].track_time = moment(track_time).calendar(null, { lastWeek: "dddd HH:mm" })), //星期三 10:55
+			(userTrackDoc[i].track_time = moment(track_time).calendar(null, {
+				lastWeek: "dddd HH:mm",
+			})), //星期三 10:55
 				(userTrackDoc[i].createdAt = moment(createdAt).startOf("hour").fromNow());
 			userTrackDoc[i].updatedAt = moment(updatedAt).startOf("hour").fromNow();
 		}
@@ -211,63 +219,53 @@ const user_track_stock = async (req, res) => {
 
 //取得即時股票資訊
 const get_realTime_stock = async (req, res) => {
-  const { user, code } = await check_permission(req)
-  if(!user) {
-    res.status(code).send()
-    return
-  }
+	const { user, code } = await check_permission(req);
+	if (!user) {
+		res.status(code).send();
+		return;
+	}
 
-  //檢查是否收盤
-  let global = await Global.findOne({ tag: "hongwei" }).exec()
-  if(global.stock_closing) {
-    res.status(205).send() //收盤中不可交易
-    return
-  }
+	let stock_id = req.params.stock_id;
+	let stockData = await Stock.findOne({ stock_id }).lean().exec(); //檢查股票是否存在
 
-  let stock_id = req.params.stock_id
-  let stockData = await Stock.findOne({stock_id}).lean().exec()
-  // let day = moment().day()
-  // let isWeekend = (day === 6) || (day === 0) //判斷假日
-  // let s = moment().hours(16).minutes(30) //今日下午4點30分
-  // let e = moment().add(1, 'days').hours(9) //隔日早上9點
-  // let is_between_close = moment().isBetween(s, e)
+	if (stockData) {
+		//檢查是否收盤
+		let global = await Global.findOne({ tag: "hongwei" }).exec();
 
-  if(stockData) {
-    if(false) { //在收盤期間
-      try {
-        let today_str = moment().format('YYYY-MM-DD') //今日最小單位
-        let today = moment(today_str).toDate()
-        let stock = await Stock.findOne({ stock_id, data_time: today}).exec() //找尋今日收盤資訊
-        let obj = {
-          website: 'close',
-          stock_id,
-          stock_name: stock.stock_name,
-          v: stock.txn_number, //累積成交量
-          o: stock.opening_price, //開盤
-          h: stock.highest_price, //當日最高
-          l: stock.lowest_price, //當日最低
-          z: stock.closing_price, //收盤價
-          y: stock.closing_price, //昨收(已收盤和收盤價一樣)
-          ud: (stock.up_down + stock.up_down_spread) || 0, //漲跌
-          request_time: moment(),
-        }
+		if (global.stock_closing) {
+			//在收盤期間
+			try {
+				// let today_str = moment().format("YYYY-MM-DD"); //今日最小單位
+				// let today = moment(today_str).toDate();
+				// let stock = await Stock.findOne({ stock_id, data_time: today }).exec(); //找尋今日收盤資訊
+				let stock = await Stock.findOne({ stock_id }).sort("-data_time").exec(); //取的目前最新收盤價
 
-        await add_user_search(user, obj) //儲存搜尋紀錄
-
-        res.json(obj)
-  
-      } catch (error) {
-        handle_error(error, res)
-      }
-    } else {
-      //取得最新資料
-      await queue.add(() => task(user, stockData.stock_id, stockData.stock_name, res)); //加入排程
-    }
-
-  } else {
-    res.status(204).send() //找不到股票
-  }
-}
+				let obj = {
+					website: "close",
+					stock_id,
+					stock_name: stock.stock_name,
+					v: parseInt(parseInt(to_num(stock.trading_volume)) / 1000), //累積成交量(張數)
+					o: to_num(stock.opening_price), //開盤
+					h: to_num(stock.highest_price), //當日最高
+					l: to_num(stock.lowest_price), //當日最低
+					z: to_num(stock.closing_price), //收盤價
+					y: to_num(stock.closing_price), //昨收(已收盤和收盤價一樣)
+					ud: stock.up_down + stock.up_down_spread || 0, //漲跌
+					request_time: moment().toDate(),
+				};
+				await add_user_search(user, obj); //儲存搜尋紀錄
+				res.json(obj);
+			} catch (error) {
+				handle_error(error, res);
+			}
+		} else {
+			//取得最新資料
+			await queue.add(() => task(user, stockData.stock_id, stockData.stock_name, res)); //加入排程
+		}
+	} else {
+		res.status(204).send(); //找不到股票
+	}
+};
 
 //取得使用者搜尋紀錄
 const get_user_search = async (req, res) => {
@@ -276,7 +274,10 @@ const get_user_search = async (req, res) => {
 		res.status(code).send();
 		return;
 	}
-	let docs = await UserSearch.find({ user: user._id }).sort({ request_time: "desc" }).lean().exec();
+	let docs = await UserSearch.find({ user: user._id })
+		.sort({ request_time: "desc" })
+		.lean()
+		.exec();
 	let result = docs.map((item) => {
 		return {
 			...item,

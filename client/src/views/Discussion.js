@@ -214,22 +214,20 @@ export const Discussion = function() {
           </div>
         </div>
       </div>
-      <Paper elevation={loading ? 2 : 0}>
-        <div className={classes.cardContainer}>
-          <div className="row">
-            {data.map((item, i) => {
-              return (
-                <div key={i} className="col-xs-12 col-sm-6 col-md-3">
-                  <MsgCard msg={item} color={random_colors[i]} onClick={onClick}/>
-                </div>
-              )
-            })}
-          </div>
-          <Backdrop className={classes.backdrop} open={loading}>
-            <CircularProgress color="inherit" />
-          </Backdrop>
+      <div className={classes.cardContainer}>
+        <div className="row">
+          {data.map((item, i) => {
+            return (
+              <div key={i} className="col-xs-12 col-sm-6 col-md-3">
+                <MsgCard msg={item} color={random_colors[i]} onClick={onClick}/>
+              </div>
+            )
+          })}
         </div>
-      </Paper>
+        <Backdrop className={classes.backdrop} open={loading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </div>
       <MsgDialog msg={msg} open={open} close={close}/>
       <AlertDialog open={checkShow} close={close} submit={submit} blocking={blocking}/>
     </React.Fragment>

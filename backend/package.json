@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js --exec babel-node --inspect=10000",
-    "stock": "babel-node --inspect getStock_manual.js --inspect=20000",
-    "txn": "babel-node --inspect txn.js --inspect=30000"
+    "stock": "babel-node getStock_manual.js",
+    "txn": "babel-node manual_txn.js"
   },
   "author": "",
   "license": "ISC",

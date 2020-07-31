@@ -61,7 +61,7 @@ app.use('/class', classRouter)
 app.use('/stock', stockRouter)
 app.use('/txn', txnRouter)
 
-app.get('test', async(req, res) => {
+app.get('/test', async(req, res) => {
   const doc = await Global.findOne({ tag: "hongwei"}).exec()
   res.json(doc)
 })

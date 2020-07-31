@@ -229,7 +229,6 @@ const get_realTime_stock = async (req, res) => {
 
   let stock_id = req.params.stock_id
   let stockData = await Stock.findOne({stock_id}).lean().exec()
-  console.log(stockData)
   // let day = moment().day()
   // let isWeekend = (day === 6) || (day === 0) //判斷假日
   // let s = moment().hours(16).minutes(30) //今日下午4點30分

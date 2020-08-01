@@ -31,7 +31,8 @@ const new_user = async (req, res) => {
 		await new Account({
 			user: newUser.id,
 			balance: 1000000,
-			last_update: moment(),
+			last_update: moment().toDate(),
+			last_value_update: moment().toDate(),
 		}).save();
 
 		await new UserSession({
@@ -46,19 +47,22 @@ const new_user = async (req, res) => {
 
 const user_login = async (req, res) => {
 	try {
-		const { student_id, hashValue } = req.body;
-		let userDoc = await User.findOne({ student_id: student_id }).exec();
+		const { id, hashValue } = req.body;
+		let userDoc1 = await User.findOne({ email: id }).exec();
+		let userDoc2 = await User.findOne({ student_id: id }).exec();
+		let userDoc = userDoc1 ? userDoc1 : userDoc2 ? userDoc2 : null; //email沒有就檢查student_id
 		if (userDoc) {
 			//加密計算
 			const session = await UserSession.findOne({ user: userDoc._id }); //取得session key
-			console.log(session);
-			const value = crypto.createHmac("sha512", session.user_key).update(userDoc.password).digest("hex");
+			const value = crypto
+				.createHmac("sha512", session.user_key)
+				.update(userDoc.password)
+				.digest("hex");
 
 			//隨機Token
 			crypto.randomBytes(16, async (err, buffer) => {
 				if (err) throw err;
 				var token = buffer.toString("hex"); //token值
-				console.log(value === hashValue);
 				if (value === hashValue) {
 					let options = {
 						maxAge: 1000 * 60 * 60 * 24 * 7, // would expire after 7 days
@@ -68,7 +72,10 @@ const user_login = async (req, res) => {
 					let isExist = await UserSession.exists({ user: userDoc._id });
 					if (isExist) {
 						//更新cookie
-						await UserSession.updateOne({ user: userDoc._id }, { cookie: token }).exec();
+						await UserSession.updateOne(
+							{ user: userDoc._id },
+							{ cookie: token }
+						).exec();
 					} else {
 						//新增session和cookie
 						await new UserSession({
@@ -77,7 +84,6 @@ const user_login = async (req, res) => {
 						}).save();
 					}
 
-					console.log(123);
 					res.cookie("user_token", token, options);
 					res.json({ status: true, payload: userDoc });
 				} else {
@@ -94,8 +100,10 @@ const user_login = async (req, res) => {
 
 const get_login_key = async (req, res) => {
 	try {
-		const { student_id } = req.body;
-		let user = await User.findOne({ student_id: student_id });
+		const { id } = req.body;
+		let userDoc1 = await User.findOne({ email: id }).exec();
+		let userDoc2 = await User.findOne({ student_id: id }).exec();
+		let user = userDoc1 ? userDoc1 : userDoc2 ? userDoc2 : null; //email沒有就檢查student_id
 
 		if (user) {
 			//隨機亂數Token
@@ -192,7 +200,9 @@ const get_user_account = async (req, res) => {
 		newDoc.updatedAt = moment(updatedAt).startOf("hour").fromNow();
 		newDoc.createdAt = moment(createdAt).calendar(null, { lastWeek: "dddd HH:mm" }); //星期x xx:xx
 		newDoc.last_update = moment(last_update).calendar(null, { lastWeek: "dddd HH:mm" }); //星期x xx:xx
-		newDoc.last_value_update = moment(last_value_update).calendar(null, { lastWeek: "dddd HH:mm" }); //星期x xx:xx
+		newDoc.last_value_update = moment(last_value_update).calendar(null, {
+			lastWeek: "dddd HH:mm",
+		}); //星期x xx:xx
 		res.json(newDoc);
 	} else {
 		res.json(false);

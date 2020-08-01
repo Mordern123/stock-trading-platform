@@ -104,17 +104,15 @@ export default function SignUp() {
 				password,
 			});
 
-			console.log(res.data);
-
 			if (res.data.status) {
 				//註冊成功
 				//進行登入工作
-				const key_res = await apiUser_login_key({ student_id });
+				const key_res = await apiUser_login_key({ id: email });
 				if (key_res.data) {
 					const hashValue = sha512(password, key_res.data);
-					const user_res = await apiUser_login({ student_id, hashValue });
+					const user_res = await apiUser_login({ id: email, hashValue });
 					const { status, payload } = user_res.data;
-					console.log(user_res.data);
+
 					if (status) {
 						//本地儲存
 						localStorage.clear();
@@ -126,7 +124,7 @@ export default function SignUp() {
 						alert(payload);
 					}
 				} else {
-					alert("無此用戶!");
+					alert("學號或信箱輸入有誤!");
 				}
 			} else {
 				alert(res.data.payload);
@@ -223,7 +221,14 @@ export default function SignUp() {
               />
             </Grid> */}
 					</Grid>
-					<Button type="submit" fullWidth variant="contained" color="primary" className={clsx(classes.submit, "ch_font")} disabled={blocking}>
+					<Button
+						type="submit"
+						fullWidth
+						variant="contained"
+						color="primary"
+						className={clsx(classes.submit, "ch_font")}
+						disabled={blocking}
+					>
 						註冊
 					</Button>
 					<Grid container justify="flex-end">

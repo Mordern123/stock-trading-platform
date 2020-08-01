@@ -140,7 +140,6 @@ export default function SignInSide() {
 							margin="normal"
 							required
 							fullWidth
-							type="email"
 							label="學號 or 信箱"
 							autoFocus
 							onChange={(e) => set_id(e.target.value)}

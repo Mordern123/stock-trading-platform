@@ -98,7 +98,6 @@ const add_post = async (req, res) => {
 //上線人數
 const get_online_count = async (req, res) => {
 	let count = await UserSession.countDocuments({ cookie: { $ne: "" } });
-	console.log(count);
 	res.json(count);
 };
 

@@ -108,23 +108,27 @@ export default function SellDialog(props) {
 
 		if (stock_num) {
 			if (stock_num > 0) {
-				try {
-					const res = await apiUserStock_sell({
-						stock_id: stockInfo.stock_id,
-						shares_number: stock_num * 1000, //一張1000股
-						stockInfo: stockInfo,
-					});
-					await delay(2000);
+				if (stock_num <= 1000) {
+					try {
+						const res = await apiUserStock_sell({
+							stock_id: stockInfo.stock_id,
+							shares_number: stock_num * 1000, //一張1000股
+							stockInfo: stockInfo,
+						});
+						await delay(2000);
 
-					if (res.status === 200) {
-						addSnack(); //發出通知
-					} else {
-						alert("交易失敗，請稍後嘗試");
+						if (res.status === 200) {
+							addSnack(); //發出通知
+						} else {
+							alert("交易失敗，請稍後嘗試");
+						}
+						handleClose();
+					} catch (error) {
+						handle_error(error, history);
+						handleClose();
 					}
-					handleClose();
-				} catch (error) {
-					handle_error(error, history);
-					handleClose();
+				} else {
+					alert("每筆訂單交易上限1000張");
 				}
 			} else {
 				alert("輸入值要大於0");

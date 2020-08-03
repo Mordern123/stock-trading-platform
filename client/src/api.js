@@ -25,6 +25,7 @@ export const apiClass_addAnnounce = (data) => classReq.post("/add_Announce", dat
 export const apiClass_get_post_all = () => classReq.get("/post");
 export const apiClass_get_post = (data) => classReq.get("/post", { params: data });
 export const apiClass_add_post = (data) => classReq.post("/post", data);
+export const apiClass_get_online = () => classReq.get("/online");
 
 // Stock
 export const apiStock_list_all = () => stockReq.get("get/all");
@@ -48,3 +49,4 @@ export const apiTxn_get_fail = (data) => txnReq.get("get/user/fail", { params: d
 export const apiTxn_get_waiting = (data) => txnReq.get("get/user/waiting", { params: data });
 export const apiTxn_get_error = (data) => txnReq.get("get/user/error", { params: data });
 export const apiTxn_get_class_avg = (data) => txnReq.get("get/class/avg", { params: data });
+export const apiTxn_delete_txn = (data) => txnReq.delete("user", { params: data });

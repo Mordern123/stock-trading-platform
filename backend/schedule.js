@@ -8,7 +8,7 @@ import Global from "./models/global_model";
 export const start_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.minute = new schedule.Range(0, 59, 30); //每10分鐘一次
-	rule.hour = new schedule.Range(8, 13); //每天9點到14點
+	rule.hour = new schedule.Range(9, 14); //每天9點到14點
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, function (fireDate) {

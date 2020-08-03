@@ -84,7 +84,7 @@ const useStyles = makeStyles(styles);
 export default function BuyDialog(props) {
 	const classes = useStyles();
 	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-	const { open, handleClose, stockInfo, userStock, userTrack, onExited } = props;
+	const { open, handleClose, stockInfo, userStock, userTrack, account, onExited } = props;
 	const [stock_num, setStock_num] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [trackStatus, set_trackStatus] = useState(false);
@@ -111,25 +111,30 @@ export default function BuyDialog(props) {
 
 		if (stock_num) {
 			if (stock_num > 0) {
-				try {
-					const res = await apiUserStock_buy({
-						stock_id: stockInfo.stock_id,
-						stockInfo: stockInfo,
-						shares_number: stock_num * 1000, //一張1000股
-					});
-					await delay(2000);
+				if (stock_num <= 1000) {
+					// if (stock_num * 1000 * stockInfo.z > account.balance) //購買總金額超過餘額
+					try {
+						const res = await apiUserStock_buy({
+							stock_id: stockInfo.stock_id,
+							stockInfo: stockInfo,
+							shares_number: stock_num * 1000, //一張1000股
+						});
+						await delay(2000);
 
-					if (res.status === 200) {
-						addSnack(); //發出通知
-					} else {
-						alert("交易失敗，請稍後嘗試");
+						if (res.status === 200) {
+							addSnack(); //發出通知
+						} else {
+							alert("交易失敗，請稍後嘗試");
+						}
+						handleClose();
+					} catch (error) {
+						handle_error(error, history);
 					}
-					handleClose();
-				} catch (error) {
-					handle_error(error, history);
+				} else {
+					alert("每筆訂單交易上限1000張");
 				}
 			} else {
-				alert("輸入值要大於0");
+				alert("購買張數需大於0");
 			}
 		} else {
 			alert("欄位不能為空");

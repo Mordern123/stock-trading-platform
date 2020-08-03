@@ -15,12 +15,15 @@ import Button from "components/CustomButtons/Button.js";
 import NavbarButton from "./NavbarButton";
 import styles from "assets/jss/material-dashboard-react/components/headerStyle.js";
 import clsx from "clsx";
+import logo from "assets/img/dock3.gif";
+import { apiClass_get_online } from "../../api";
 import "../../assets/css/global.css";
 
 const useStyles = makeStyles(styles);
 
 export default function Header(props) {
 	const classes = useStyles();
+	const [online, set_online] = React.useState("---");
 	function makeBrand() {
 		var name;
 		props.routes.map((prop) => {
@@ -35,6 +38,24 @@ export default function Header(props) {
 	const appBarClasses = classNames({
 		[" " + classes[color]]: color,
 	});
+
+	const update_online = async () => {
+		let res = await apiClass_get_online();
+		set_online(res.data);
+	};
+
+	React.useEffect(() => {
+		const interval = setInterval(async () => {
+			update_online();
+		}, 1000 * 10);
+
+		return () => clearInterval(interval);
+	}, [online]);
+
+	React.useEffect(() => {
+		update_online();
+	}, []);
+
 	return (
 		<AppBar className={classes.appBar + appBarClasses}>
 			<Toolbar className={clsx("d-flex justify-content-between", classes.container)}>
@@ -68,7 +89,10 @@ export default function Header(props) {
 					className="ch_font w-100 d-flex align-items-center justify-content-center"
 					style={{ color: "rgba(0, 0, 0, 0.54)", fontSize: "0.8rem" }}
 				>
-					👾每30分鐘會處理一次交易喔👾
+					{/* 👾每30分鐘會處理一次交易喔👾 */}
+					<img src={logo} style={{ width: "30px" }} />
+					{`目前有 ${online} 個人在線上喔`}
+					<img src={logo} style={{ width: "30px" }} />
 				</div>
 				<NavbarButton />
 			</Toolbar>

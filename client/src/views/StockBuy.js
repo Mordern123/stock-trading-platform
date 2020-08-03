@@ -11,7 +11,13 @@ import CardStat from "components/Transaction/Card_Stat";
 import Backdrop from "@material-ui/core/Backdrop";
 import LaunchRoundedIcon from "@material-ui/icons/LaunchRounded";
 import AccountBoxRoundedIcon from "@material-ui/icons/AccountBoxRounded";
-import { apiUserStock_track_get, apiUserStock_get, apiUser_account, apiStock_realTime, apiUserStock_search_list } from "../api";
+import {
+	apiUserStock_track_get,
+	apiUserStock_get,
+	apiUser_account,
+	apiStock_realTime,
+	apiUserStock_search_list,
+} from "../api";
 import { useSnackbar } from "notistack";
 import moment from "moment";
 import { handle_error } from "../tools";
@@ -302,8 +308,21 @@ export const StockBuy = function() {
 						<div className="p-3">
 							<AccountBoxRoundedIcon color="primary" fontSize="large" />
 						</div>
-						<InputBase ref={searchRef} className={classes.searchInput} placeholder="搜尋股票代號" onChange={onChange} onKeyDown={handle_keyDown} value={searchText} />
-						<IconButton type="button" color="primary" className="p-3" onClick={handle_search_stock} onKeyDown={handle_keyDown}>
+						<InputBase
+							ref={searchRef}
+							className={classes.searchInput}
+							placeholder="搜尋股票代號"
+							onChange={onChange}
+							onKeyDown={handle_keyDown}
+							value={searchText}
+						/>
+						<IconButton
+							type="button"
+							color="primary"
+							className="p-3"
+							onClick={handle_search_stock}
+							onKeyDown={handle_keyDown}
+						>
 							<Search fontSize="large" />
 						</IconButton>
 					</Paper>
@@ -330,7 +349,15 @@ export const StockBuy = function() {
 				</GridItem>
 			</GridContainer>
 			{stockInfo ? (
-				<BuyDialog open={showBuyDialog} handleClose={handleCloseStockBuy} stockInfo={stockInfo} userStock={userStock} userTrack={userTrack} onExited={() => set_stockInfo(null)} />
+				<BuyDialog
+					open={showBuyDialog}
+					handleClose={handleCloseStockBuy}
+					account={account}
+					stockInfo={stockInfo}
+					userStock={userStock}
+					userTrack={userTrack}
+					onExited={() => set_stockInfo(null)}
+				/>
 			) : null}
 			<Backdrop className={classes.backdrop} open={blocking}>
 				<div className="w-100 h-100 d-flex flex-column justify-content-center align-items-center">

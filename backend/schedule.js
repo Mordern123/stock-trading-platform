@@ -17,11 +17,23 @@ export const start_txn_schedule = () => {
 	});
 };
 
-//計算股票總價值排程(每日15:05)
-export const start_stockValue_schedule = () => {
+//計算股票總價值排程1(每日15:05)
+export const start_stockValue_schedule1 = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 15;
 	rule.minute = 5;
+
+	schedule.scheduleJob(rule, function (fireDate) {
+		console.log(`股票總價值開始計算時間: ${fireDate}`);
+		runEveryUserStock();
+	});
+};
+
+//計算股票總價值排程2(每日8:30)
+export const start_stockValue_schedule2 = () => {
+	var rule = new schedule.RecurrenceRule();
+	rule.hour = 8;
+	rule.minute = 30;
 
 	schedule.scheduleJob(rule, function (fireDate) {
 		console.log(`股票總價值開始計算時間: ${fireDate}`);

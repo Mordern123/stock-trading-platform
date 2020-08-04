@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const test_serverAddress = "localhost:5000";
 export const serverAddress = "35.229.149.140:5000";
-export const baseURL = `http://${serverAddress}`;
+export const baseURL = `http://${test_serverAddress}`;
 
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true });
 const classReq = axios.create({ baseURL: `${baseURL}/class`, withCredentials: true });

@@ -10,7 +10,14 @@ import classRouter from "./routes/class";
 import stockRouter from "./routes/stock";
 import txnRouter from "./routes/transaction";
 import Global from "./models/global_model";
-import { start_txn_schedule, start_get_closingStock_schedule, start_closing_schedule, start_opening_schedule, start_stockValue_schedule } from "./schedule";
+import {
+	start_txn_schedule,
+	start_get_closingStock_schedule,
+	start_closing_schedule,
+	start_opening_schedule,
+	start_stockValue_schedule1,
+	start_stockValue_schedule2,
+} from "./schedule";
 
 require("dotenv").config();
 
@@ -29,14 +36,26 @@ connection.once("open", () => {
 	start_get_closingStock_schedule();
 	start_closing_schedule();
 	start_opening_schedule();
-	start_stockValue_schedule();
+	start_stockValue_schedule1();
+	start_stockValue_schedule2();
 });
 
-mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
+mongoose.connect(process.env.DB_CONN_STRING, {
+	useNewUrlParser: true,
+	useCreateIndex: true,
+	useUnifiedTopology: true,
+});
 mongoose.set("useFindAndModify", false);
 
 //允許cors要求網址
-var allowedOrigins = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8080", "http://127.0.0.1:8080", "http://192.168.0.6:8080", "http://35.229.149.140:80"];
+var allowedOrigins = [
+	"http://localhost:3000",
+	"http://127.0.0.1:3000",
+	"http://localhost:8080",
+	"http://127.0.0.1:8080",
+	"http://192.168.0.6:8080",
+	"http://35.229.149.140:80",
+];
 app.use(
 	cors({
 		origin: (origin, callback) => {

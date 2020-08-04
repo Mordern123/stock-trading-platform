@@ -16,7 +16,11 @@ export const runTxn = () => {
 		runEveryTxn();
 	});
 	mongoose.set("useFindAndModify", false);
-	mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
+	mongoose.connect(process.env.DB_CONN_STRING, {
+		useNewUrlParser: true,
+		useCreateIndex: true,
+		useUnifiedTopology: true,
+	});
 };
 
 //獨立執行起點
@@ -28,7 +32,11 @@ export const runStockValue = () => {
 		runEveryUserStock();
 	});
 	mongoose.set("useFindAndModify", false);
-	mongoose.connect(process.env.DB_CONN_STRING, { useNewUrlParser: true, useCreateIndex: true, useUnifiedTopology: true });
+	mongoose.connect(process.env.DB_CONN_STRING, {
+		useNewUrlParser: true,
+		useCreateIndex: true,
+		useUnifiedTopology: true,
+	});
 };
 
 ///////////////////////////////////////////////
@@ -259,7 +267,7 @@ const updateTxn = async (id, status, CODE) => {
 	});
 };
 
-//更新用戶結餘
+//更新用戶結餘(balance)
 const updateBalance = async (user, value) => {
 	await Account.findOneAndUpdate(
 		{
@@ -293,7 +301,7 @@ const updateStock = async (user) => {
 	//取得用戶交易數量
 	let txn_count = await UserTxn.countDocuments({ user }).exec();
 
-	//更新帳戶資料
+	//更新擁有股票資料
 	userAllStocks = await UserStock.find({ user }).exec(); //重新確認股票擁有數量
 	await Account.findOneAndUpdate(
 		{
@@ -344,5 +352,3 @@ const updateStockValue = async (user) => {
 		}
 	);
 };
-
-// txn()

@@ -16,6 +16,7 @@ import { apiUser_login, apiUser_login_key } from "../api";
 import FaceRoundedIcon from "@material-ui/icons/FaceRounded";
 import crypto from "crypto";
 import clsx from "clsx";
+import logo from "assets/img/dock.gif";
 import "../assets/css/global.css";
 
 function Copyright() {
@@ -127,9 +128,10 @@ export default function SignInSide() {
 			<Grid item xs={false} sm={4} md={7} className={classes.image} />
 			<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
 				<div className={classes.paper}>
-					<Avatar className={classes.avatar}>
+					<img src={logo} width="50px" />
+					{/* <Avatar className={classes.avatar}>
 						<FaceRoundedIcon />
-					</Avatar>
+					</Avatar> */}
 					<Typography className="ch_font" component="h1" variant="h5">
 						登入
 					</Typography>

@@ -36,7 +36,8 @@
     "react-slick": "^0.25.2",
     "react-swipeable-views": "^0.13.3",
     "react-virtualized": "^9.21.2",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "socket.io-client": "^2.3.0"
   },
   "scripts": {
     "start": "react-scripts start",

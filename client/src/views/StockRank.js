@@ -12,6 +12,11 @@ import { apiRank_list_all, apiTxn_list_all } from "../api";
 import { handle_error } from "../tools";
 import clsx from "clsx";
 
+const tips = [
+	"貼心提醒: 未進行任何交易是不會顯示在排名上的喔",
+	"貼心提醒: 股票排名更新時間為開盤當日 15:05 喔",
+];
+
 const column = ["名次", "學號", "帳戶總價值", "擁有股票種類數量"];
 
 const styles = {
@@ -53,6 +58,7 @@ export const StockRank = function() {
 	const [txnData, set_txnData] = useState(null);
 	const [updateTime, setUpdateTime] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [random_n, set_random_n] = useState(Math.floor(Math.random() * tips.length));
 	const history = useHistory();
 
 	//載入帳戶
@@ -66,7 +72,6 @@ export const StockRank = function() {
 				const noZeroTxn = res.data.rank_data.filter(
 					(item) => item.txn_count !== 0 && item.total_amount !== 0
 				);
-				console.log(noZeroTxn);
 
 				//製作Table資料
 				const rowData = noZeroTxn.map((item, index) => {
@@ -107,6 +112,7 @@ export const StockRank = function() {
 					</CardHeader>
 					<CardBody>
 						{txnData ? <Chart data={txnData} /> : null}
+						<p className="ch_font text-danger text-center mt-3">{tips[random_n]}</p>
 						<Table tableHeaderColor="warning" tableHead={column} tableData={rankData} />
 					</CardBody>
 				</Card>

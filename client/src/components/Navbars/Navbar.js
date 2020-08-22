@@ -21,40 +21,21 @@ import "../../assets/css/global.css";
 
 const useStyles = makeStyles(styles);
 
-export default function Header(props) {
+export default function Header({ routes, rtlActive, color, handleDrawerToggle, online }) {
 	const classes = useStyles();
-	const [online, set_online] = React.useState("---");
 	function makeBrand() {
 		var name;
-		props.routes.map((prop) => {
+		routes.map((prop) => {
 			if (window.location.href.indexOf(prop.layout + prop.path) !== -1) {
-				name = props.rtlActive ? prop.rtlName : prop.name;
+				name = rtlActive ? prop.rtlName : prop.name;
 			}
 			return null;
 		});
 		return name;
 	}
-	const { color } = props;
 	const appBarClasses = classNames({
 		[" " + classes[color]]: color,
 	});
-
-	const update_online = async () => {
-		let res = await apiClass_get_online();
-		set_online(res.data);
-	};
-
-	React.useEffect(() => {
-		const interval = setInterval(async () => {
-			update_online();
-		}, 1000 * 10);
-
-		return () => clearInterval(interval);
-	}, [online]);
-
-	React.useEffect(() => {
-		update_online();
-	}, []);
 
 	return (
 		<AppBar className={classes.appBar + appBarClasses}>
@@ -75,7 +56,7 @@ export default function Header(props) {
 					<IconButton
 						color="inherit"
 						aria-label="open drawer"
-						onClick={props.handleDrawerToggle}
+						onClick={handleDrawerToggle}
 						style={{
 							position: "fixed",
 							top: "15px",

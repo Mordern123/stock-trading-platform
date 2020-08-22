@@ -17,7 +17,8 @@ import logo from "assets/img/dock.gif";
 import { WindowScroller } from "react-virtualized";
 import { useSnackbar } from "notistack";
 import { check_cookie } from "../tools";
-import { apiUser_logout } from "../api";
+import { apiUser_logout, baseURL } from "../api";
+import io from "socket.io-client";
 
 let ps;
 
@@ -34,6 +35,7 @@ function Admin({ ...rest }) {
 	const [color, setColor] = React.useState("blue");
 	const [fixedClasses, setFixedClasses] = React.useState("dropdown show");
 	const [mobileOpen, setMobileOpen] = React.useState(false);
+	const [online, set_online] = React.useState("---");
 
 	const switchRoutes = (
 		<Switch>
@@ -105,15 +107,31 @@ function Admin({ ...rest }) {
 
 	//初始執行
 	React.useEffect(() => {
+		let socket = io(baseURL);
+		socket.on("connect", function() {
+			console.log("user connect");
+		});
+		socket.on("online", (data) => {
+			set_online(data);
+		});
+		socket.on("disconnect", function() {
+			console.log("user disconnet");
+		});
+
+		return () => socket.disconnect();
+	}, []);
+
+	//初始執行
+	React.useEffect(() => {
 		var timeout;
 		var interval;
 
-		document.onmousemove = function() {
-			clearTimeout(timeout);
-			timeout = setTimeout(() => {
-				logout(); //30分鐘沒移動登出
-			}, 1000 * 60 * 30);
-		};
+		// document.onmousemove = function() {
+		// 	clearTimeout(timeout);
+		// 	timeout = setTimeout(() => {
+		// 		logout(); //30分鐘沒移動登出
+		// 	}, 1000 * 60 * 30);
+		// };
 		interval = setInterval(() => {
 			const user_token = check_cookie("user_token");
 			if (!user_token) logout();
@@ -126,7 +144,7 @@ function Admin({ ...rest }) {
 		}
 
 		return () => {
-			clearTimeout(timeout);
+			// clearTimeout(timeout);
 			clearInterval(interval);
 		};
 	}, []);
@@ -159,7 +177,12 @@ function Admin({ ...rest }) {
 				{...rest}
 			/>
 			<div className={classes.mainPanel} ref={mainPanel}>
-				<Navbar routes={routes} handleDrawerToggle={handleDrawerToggle} {...rest} />
+				<Navbar
+					routes={routes}
+					handleDrawerToggle={handleDrawerToggle}
+					{...rest}
+					online={online}
+				/>
 				{/* On the /maps route we want the map to be on full screen - this is not possible if the content and container classes are present because they have some paddings which would make the map smaller */}
 				{getRoute() ? (
 					<div className={classes.content}>

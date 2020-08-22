@@ -10,13 +10,19 @@ import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
-import { apiUser_new, apiUser_login, apiUser_login_key } from "../api";
+import { apiUser_new, apiUser_login, apiUser_login_key, apiGlobal } from "../api";
 import { handle_error } from "../tools";
 import clsx from "clsx";
 import crypto from "crypto";
+import logo from "assets/img/dock.gif";
 import "../assets/css/global.css";
 
 function Copyright() {
@@ -59,6 +65,17 @@ export default function SignUp() {
 	const [student_id, set_stu_id] = useState(null);
 	const [password, set_psd] = useState(null);
 	const [blocking, set_blocking] = useState(false);
+	const [class_list, set_class_list] = useState([]);
+	const [class_id, set_class_id] = useState("");
+
+	//載入課程列表
+	React.useEffect(() => {
+		const load = async () => {
+			let res = await apiGlobal();
+			set_class_list(res.data.class);
+		};
+		load();
+	}, []);
 
 	const sha512 = (password, secret) => {
 		const value = crypto
@@ -75,9 +92,14 @@ export default function SignUp() {
 			e.preventDefault();
 			const required_check = user_name && email;
 			const stu_id_check = !isNaN(student_id) && student_id.length == 10;
-			const password_check = password.match(/^(?=.*\d)(?=.*[a-z]).{6,30}$/);
+			// const password_check = password.match(/^(?=.*\d)(?=.*[a-z]).{6,30}$/);
 			if (!required_check) {
 				alert("請勿空白");
+				set_blocking(false);
+				return;
+			}
+			if (!class_id) {
+				alert("請選擇你所修之課程名稱");
 				set_blocking(false);
 				return;
 			}
@@ -91,17 +113,18 @@ export default function SignUp() {
 				set_blocking(false);
 				return;
 			}
-			if (!password_check) {
-				alert("密碼格式錯誤(英數混合6~30字元)");
-				set_blocking(false);
-				return;
-			}
+			// if (!password_check) {
+			// 	alert("密碼格式錯誤(英數混合6~30字元)");
+			// 	set_blocking(false);
+			// 	return;
+			// }
 			//進行註冊
 			const res = await apiUser_new({
 				user_name,
 				email,
 				student_id,
 				password,
+				class_id,
 			});
 
 			if (res.data.status) {
@@ -136,24 +159,59 @@ export default function SignUp() {
 		}
 	};
 
+	console.log(class_id);
+
 	return (
 		<Container component="main" maxWidth="xs">
 			<CssBaseline />
 			<div className={classes.paper}>
-				<Avatar className={classes.avatar}>
-					<LockOutlinedIcon />
-				</Avatar>
+				<img src={logo} width="50px" />
 				<Typography className="ch_font" component="h1" variant="h5">
 					註冊
 				</Typography>
 				<form className={classes.form} onSubmit={submit}>
 					<Grid container spacing={2}>
+						<Grid item xs={12} sm={12}>
+							<Typography
+								className="ch_font text-danger text-center"
+								component="h1"
+								variant="h6"
+							>
+								帳號創建時請務必注意!
+							</Typography>
+							<Typography
+								className="ch_font text-danger text-center"
+								component="h3"
+								variant="h6"
+							>
+								成績會依據帳號所屬課程和學號去查詢
+							</Typography>
+						</Grid>
+						<Grid item xs={12} sm={12}>
+							<FormControl variant="outlined" className="w-100">
+								<Select
+									required
+									className="ch_font"
+									value={class_id || "null"}
+									onChange={(e) => set_class_id(e.target.value)}
+								>
+									<MenuItem className="ch_font" value="null" disabled>
+										{"請選擇修課名稱(重要)"}
+									</MenuItem>
+									{class_list.map((item, i) => (
+										<MenuItem key={i} value={item.id} className="ch_font">
+											{item.name}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</Grid>
 						<Grid item xs={12} sm={6}>
 							<TextField
 								variant="outlined"
 								required
 								fullWidth
-								label="學生姓名"
+								label="暱稱(之後可改)"
 								autoComplete="name"
 								onChange={(e) => set_name(e.target.value)}
 								inputProps={{
@@ -214,12 +272,6 @@ export default function SignUp() {
 								}}
 							/>
 						</Grid>
-						{/* <Grid item xs={12}>
-              <FormControlLabel
-                control={<Checkbox value="allowExtraEmails" color="primary" />}
-                label={<div className="ch_font">{"我同意使用這個網站規則"}</div>}
-              />
-            </Grid> */}
 					</Grid>
 					<Button
 						type="submit"
@@ -229,7 +281,7 @@ export default function SignUp() {
 						className={clsx(classes.submit, "ch_font")}
 						disabled={blocking}
 					>
-						註冊
+						註冊並登入
 					</Button>
 					<Grid container justify="flex-end">
 						<Grid item>

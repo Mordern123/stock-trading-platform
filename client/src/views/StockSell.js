@@ -239,7 +239,6 @@ export const StockSell = function() {
 			set_txn_loading(true);
 			try {
 				const res = await apiTxn_get_success({ pure: true });
-				console.log(res.data);
 				set_userTxn(res.data);
 			} catch (error) {
 				handle_error(error, history);

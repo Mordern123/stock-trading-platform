@@ -25,6 +25,16 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 import delay from "delay";
 import copy from "clipboard-copy";
 
+//提醒教學資訊
+const tips = [
+	"貼心提醒: 收盤時間不會處理交易喔",
+	"貼心提醒: 搜尋股價請確定金額在下單喔",
+	"貼心提醒: 若股價有誤可重新搜尋喔",
+	"貼心提醒: 【交易狀態】可以取消未處理訂單喔",
+	"貼心提醒: 開盤期間訂單每30分鐘會處理一次",
+	"貼心提醒: 股票總價值是每日更新的喔",
+];
+
 //bubble sort
 const customSort = (a, b, field) => {
 	let pureS1 = a[field].replace(/,/g, "");
@@ -143,6 +153,7 @@ export const StockBuy = function() {
 	const [userHistory, set_userHistory] = useState([]);
 	const [update, set_update] = useState(false);
 	const [blocking, set_blocking] = useState(false);
+	const [random_n, set_random_n] = useState(Math.floor(Math.random() * tips.length));
 	const history = useHistory();
 	const location = useLocation();
 
@@ -304,6 +315,7 @@ export const StockBuy = function() {
 			</GridContainer>
 			<GridContainer>
 				<GridItem xs={12} sm={12} md={12}>
+					<p className="ch_font text-danger text-center">{tips[random_n]}</p>
 					<Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
 						<div className="p-3">
 							<AccountBoxRoundedIcon color="primary" fontSize="large" />

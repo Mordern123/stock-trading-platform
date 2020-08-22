@@ -10,6 +10,10 @@ const accountSchema = new Schema(
 			required: true,
 			ref: "User",
 		},
+		class_id: {
+			type: Schema.Types.String,
+			required: true,
+		},
 		balance: {
 			type: Schema.Types.Long,
 			required: true,

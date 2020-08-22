@@ -80,7 +80,6 @@ const useStyles = makeStyles(styles);
 function Announcement(props) {
 	const { collection, updateTime } = props;
 	const classes = useStyles();
-	console.log(collection);
 	return (
 		<Card className="mb-5" raised>
 			<CardMedia

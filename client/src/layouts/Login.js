@@ -129,11 +129,11 @@ export default function SignInSide() {
 			<Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
 				<div className={classes.paper}>
 					<img src={logo} width="50px" />
-					{/* <Avatar className={classes.avatar}>
-						<FaceRoundedIcon />
-					</Avatar> */}
 					<Typography className="ch_font" component="h1" variant="h5">
 						登入
+					</Typography>
+					<Typography className="ch_font text-secondary" component="h1" variant="h6">
+						股票模擬交易平台
 					</Typography>
 					<form key={count} className={classes.form} onSubmit={submit}>
 						<TextField
@@ -199,7 +199,7 @@ export default function SignInSide() {
               </Grid> */}
 							<Grid item>
 								<Link className="ch_font" href="/signup" variant="body2">
-									{"還沒有帳號? 創建一個吧"}
+									{"註冊一個新帳號"}
 								</Link>
 							</Grid>
 						</Grid>

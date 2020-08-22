@@ -1,13 +1,14 @@
 import schedule from "node-schedule";
 import { runEveryTxn, runEveryUserStock } from "./txn";
+import { remove_stock_data } from "./common/stock";
 import { getStock } from "./getStock";
 import moment from "moment";
 import Global from "./models/global_model";
 
-//處理股票交易排程(每30分鐘)
+// * 處理股票交易排程(每30分鐘)
 export const start_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.minute = new schedule.Range(0, 59, 30); //每10分鐘一次
+	rule.minute = new schedule.Range(0, 59, 30); //每30分鐘一次
 	rule.hour = new schedule.Range(9, 14); //每天9點到14點
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
@@ -17,7 +18,7 @@ export const start_txn_schedule = () => {
 	});
 };
 
-//計算股票總價值排程1(每日15:05)
+// * 計算股票總價值排程1(每日15:05)
 export const start_stockValue_schedule1 = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 15;
@@ -29,7 +30,7 @@ export const start_stockValue_schedule1 = () => {
 	});
 };
 
-//計算股票總價值排程2(每日8:30)
+// * 計算股票總價值排程2(每日8:30)
 export const start_stockValue_schedule2 = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 8;
@@ -41,7 +42,7 @@ export const start_stockValue_schedule2 = () => {
 	});
 };
 
-//取得收盤資料排程(每日14:35)
+// * 取得收盤資料排程(每日14:35)
 export const start_get_closingStock_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 14;
@@ -56,7 +57,7 @@ export const start_get_closingStock_schedule = () => {
 	});
 };
 
-//進入收盤狀態排程(每日14:38)
+// * 進入收盤狀態排程(每日14:38)
 export const start_closing_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 14;
@@ -72,7 +73,7 @@ export const start_closing_schedule = () => {
 	});
 };
 
-//進入開盤狀態排程(每日9:00)
+// * 進入開盤狀態排程(每日9:00)
 export const start_opening_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 9;
@@ -85,5 +86,20 @@ export const start_opening_schedule = () => {
 		};
 		console.log(`進入開盤時間: ${fireDate}`);
 		change();
+	});
+};
+
+// * 每個禮拜刪除收盤資料(每個禮拜天11點)
+export const remove_closing_stock_data = () => {
+	var rule = new schedule.RecurrenceRule();
+	rule.hour = 23; //每個禮拜天11點
+	rule.dayOfWeek = 0; //每個禮拜天
+
+	schedule.scheduleJob(rule, function (fireDate) {
+		const remove = async () => {
+			await remove_stock_data();
+		};
+		console.log(`刪除收盤資料: ${fireDate}`);
+		remove();
 	});
 };

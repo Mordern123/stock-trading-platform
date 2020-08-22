@@ -2,6 +2,7 @@ import { Router } from "express";
 import User from "../models/user_model";
 import Account from "../models/account_model";
 import UserSession from "../models/user_session_model";
+import UserClass from "../models/user_class_model";
 import moment from "moment";
 import crypto from "crypto";
 import { check_permission } from "../common/auth";
@@ -11,30 +12,49 @@ const router = Router();
 
 const new_user = async (req, res) => {
 	try {
-		const userData = req.body;
-		let isExist = await User.exists({ student_id: userData.student_id });
+		const { student_id, email, user_name, password, class_id } = req.body;
+		let isExist = await User.exists({ student_id });
 
 		if (isExist) {
 			res.json({ status: false, payload: "學號已有人使用" });
 			return;
 		}
 
-		let result = await User.find({ email: userData.email }).exec();
+		let result = await User.find({ email }).exec();
 		if (result.length > 0) {
 			res.json({ status: false, payload: "信箱已有人使用" });
 			return;
 		}
 
-		//建立相關文件
-		const newUser = await new User(req.body).save();
+		if (class_id && !["GLOBAL_CLASS", "CLASS1", "CLASS2", "CLASS3"].includes(class_id)) {
+			res.json({ status: false, payload: "未指定班級" });
+			return;
+		}
 
+		//建立使用者
+		const newUser = await new User({
+			student_id,
+			email,
+			user_name,
+			password,
+		}).save();
+
+		// 建立使用者所屬課堂
+		await new UserClass({
+			user: newUser.id,
+			class_id: class_id,
+		}).save();
+
+		// 建立新戶
 		await new Account({
 			user: newUser.id,
+			class_id: class_id,
 			balance: 1000000,
 			last_update: moment().toDate(),
 			last_value_update: moment().toDate(),
 		}).save();
 
+		// 建立使用者Session
 		await new UserSession({
 			user: newUser.id,
 		}).save();
@@ -163,14 +183,13 @@ const update_user_data = async (req, res) => {
 		return;
 	}
 
-	const { user_name, sex, birthday, email } = req.body;
+	const { user_name, sex, birthday } = req.body;
 	const userDoc = await User.findByIdAndUpdate(
 		user._id,
 		{
 			user_name,
 			sex,
 			birthday,
-			email,
 		},
 		{
 			new: true,

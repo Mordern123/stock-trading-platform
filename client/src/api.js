@@ -4,11 +4,15 @@ export const test_serverAddress = "localhost:5000";
 export const serverAddress = "35.229.149.140:5000";
 export const baseURL = `http://${serverAddress}`;
 
+const request = axios.create({ baseURL: `${baseURL}`, withCredentials: true });
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true });
 const classReq = axios.create({ baseURL: `${baseURL}/class`, withCredentials: true });
 const stockReq = axios.create({ baseURL: `${baseURL}/stock`, withCredentials: true });
 const userStockReq = axios.create({ baseURL: `${baseURL}/stock/user`, withCredentials: true });
 const txnReq = axios.create({ baseURL: `${baseURL}/txn`, withCredentials: true });
+
+// Global
+export const apiGlobal = () => request.get("/global");
 
 // User
 export const apiUser_login = (data) => userReq.post("/login", data);
@@ -25,7 +29,10 @@ export const apiClass_addAnnounce = (data) => classReq.post("/add_Announce", dat
 export const apiClass_get_post_all = () => classReq.get("/post");
 export const apiClass_get_post = (data) => classReq.get("/post", { params: data });
 export const apiClass_add_post = (data) => classReq.post("/post", data);
+export const apiClass_get_comment = (data) => classReq.get("/comment", { params: data });
+export const apiClass_add_comment = (data) => classReq.post("/comment", data);
 export const apiClass_get_online = () => classReq.get("/online");
+export const apiClass_get_user = () => classReq.get("/user");
 
 // Stock
 export const apiStock_list_all = () => stockReq.get("get/all");

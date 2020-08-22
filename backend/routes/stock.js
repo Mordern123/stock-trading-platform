@@ -4,6 +4,7 @@ import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";
 import UserTxn from "../models/user_txn_model";
 import UserSearch from "../models/user_search_model";
+import UserClass from "../models/user_class_model";
 import Account from "../models/account_model";
 import Global from "../models/global_model";
 import moment from "moment";
@@ -66,44 +67,52 @@ const get_stock_rank = async (req, res) => {
 		return;
 	}
 
-	// let accountDocs = await Account.aggregate([
-	// 	{
-	// 		$addFields: {
-	// 			totalValue: {
-	// 				$add: ["$stock_value", "$balance"],
-	// 			},
-	// 		},
-	// 	},
-	// 	{
-	// 		$sort: {
-	// 			totalValue: -1,
-	// 		},
-	// 	},
-	// 	{ $limit: 50 },
-	// ]).exec();
-	// accountDocs = await Account.populate(accountDocs, "user");
+	const doc = await UserClass.findOne({ user: user._id }).exec();
 
-	let accountDocs = await Account.find()
-		.sort({ total_amount: "desc" })
-		.populate("user")
-		.limit(50)
-		.lean()
-		.exec();
-	let rank_data = accountDocs.map((item) => {
-		return {
-			student_id: item.user.student_id,
-			total_amount: item.total_amount || 0,
-			stock_number: item.stock_number,
-			txn_count: item.txn_count,
-		};
-	});
+	// 沒有userClass實體就取得所有班級排名
+	if (doc) {
+		let accountDocs = await Account.find({ class_id: doc.class_id })
+			.sort({ total_amount: "desc" })
+			.populate("user")
+			.limit(50)
+			.lean()
+			.exec();
+		let rank_data = accountDocs.map((item) => {
+			return {
+				student_id: item.user.student_id,
+				total_amount: item.total_amount || 0,
+				stock_number: item.stock_number,
+				txn_count: item.txn_count,
+			};
+		});
+		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
 
-	const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
+		res.json({
+			rank_data,
+			updateTime,
+		});
+	} else {
+		let accountDocs = await Account.find()
+			.sort({ total_amount: "desc" })
+			.populate("user")
+			.limit(50)
+			.lean()
+			.exec();
+		let rank_data = accountDocs.map((item) => {
+			return {
+				student_id: item.user.student_id,
+				total_amount: item.total_amount || 0,
+				stock_number: item.stock_number,
+				txn_count: item.txn_count,
+			};
+		});
+		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
 
-	res.json({
-		rank_data,
-		updateTime,
-	});
+		res.json({
+			rank_data,
+			updateTime,
+		});
+	}
 };
 
 //取得用戶擁有股票
@@ -138,11 +147,14 @@ const user_place_order = async (req, res) => {
 			return;
 		}
 
+		const doc = await UserClass.findOne({ user: user._id }).exec();
+
 		if (req.params.type != "buy" && req.params.type != "sell") throw false;
 		const { stock_id, stockInfo, shares_number } = req.body; //前端傳送值
 		const time = Date(Date.now());
 
 		const userTxnDoc = await new UserTxn({
+			class_id: doc ? doc.class_id : "GLOBAL_CLASS",
 			user: user._id,
 			stock_id,
 			shares_number,

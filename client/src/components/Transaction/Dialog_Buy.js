@@ -418,6 +418,9 @@ export default function BuyDialog(props) {
 							type="number"
 							variant="outlined"
 							InputProps={{
+								startAdornment: (
+									<InputAdornment position="start">市價交易</InputAdornment>
+								),
 								endAdornment: (
 									<InputAdornment
 										position="end"

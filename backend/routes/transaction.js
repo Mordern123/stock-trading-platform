@@ -3,6 +3,7 @@ import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";
 import UserTxn from "../models/user_txn_model";
+import UserClass from "../models/user_class_model";
 import User from "../models/user_model";
 import moment from "moment";
 import { check_permission } from "../common/auth";
@@ -21,20 +22,41 @@ const get_all_txn = async (req, res) => {
 		return;
 	}
 
-	if (day) {
-		let s = moment().subtract(parseInt(day), "days").format("YYYYMMDD"); //起始時間
-		let e = moment().add(1, "days").format("YYYYMMDD"); //結束時間取明天
-		let txnDoc = await UserTxn.find({
-			order_time: {
-				$gte: moment(s),
-				$lt: moment(e),
-			},
-		}).exec();
+	const doc = await UserClass.findOne({ user: user._id }).exec();
 
-		res.json(txnDoc);
+	if (doc) {
+		if (day) {
+			let s = moment().subtract(parseInt(day), "days").format("YYYYMMDD"); //起始時間
+			let e = moment().add(1, "days").format("YYYYMMDD"); //結束時間取明天
+			let txnDoc = await UserTxn.find({
+				class_id: doc.class_id,
+				order_time: {
+					$gte: moment(s),
+					$lt: moment(e),
+				},
+			}).exec();
+
+			res.json(txnDoc);
+		} else {
+			const txnDoc = await UserTxn.find({ class_id: doc.class_id }).exec();
+			res.json(txnDoc);
+		}
 	} else {
-		const txnDoc = await UserTxn.find().exec();
-		res.json(txnDoc);
+		if (day) {
+			let s = moment().subtract(parseInt(day), "days").format("YYYYMMDD"); //起始時間
+			let e = moment().add(1, "days").format("YYYYMMDD"); //結束時間取明天
+			let txnDoc = await UserTxn.find({
+				order_time: {
+					$gte: moment(s),
+					$lt: moment(e),
+				},
+			}).exec();
+
+			res.json(txnDoc);
+		} else {
+			const txnDoc = await UserTxn.find().exec();
+			res.json(txnDoc);
+		}
 	}
 };
 
@@ -138,28 +160,59 @@ const get_class_txn_avg = async (req, res) => {
 	const countObj = {};
 	const avgObj = {};
 
-	const userCount = await User.countDocuments();
+	const doc = await UserClass.findOne({ user: user._id }).exec();
 
-	const txnDoc = await UserTxn.find({
-		order_time: {
-			$gte: startDay.toDate(),
-		},
-	})
-		.sort({
-			order_time: 1,
+	// 沒有userClass實體就取得所有user交易狀況
+	if (doc) {
+		const userCount = await UserClass.countDocuments({ class_id: doc.class_id });
+
+		const txnDoc = await UserTxn.find({
+			class_id: doc.class_id,
+			order_time: {
+				$gte: startDay.toDate(),
+			},
 		})
-		.exec();
+			.sort({
+				order_time: 1,
+			})
+			.exec();
 
-	if (txnDoc) {
-		txnDoc.forEach((txn) => {
-			let ds = moment(txn.order_time).format("YYYY-MM-DD");
-			let txnCount = countObj[ds] || 0;
-			countObj[ds] = txnCount + 1; //計算交易次數
-		});
+		if (txnDoc) {
+			txnDoc.forEach((txn) => {
+				let ds = moment(txn.order_time).format("YYYY-MM-DD");
+				let txnCount = countObj[ds] || 0;
+				countObj[ds] = txnCount + 1; //計算交易次數
+			});
 
-		//計算平均每位學生的交易次數
-		for (let key in countObj) {
-			avgObj[key] = Math.round((countObj[key] / userCount) * 10) / 10;
+			//計算平均每位學生的交易次數
+			for (let key in countObj) {
+				avgObj[key] = Math.round((countObj[key] / userCount) * 10) / 10;
+			}
+		}
+	} else {
+		const userCount = await User.countDocuments();
+
+		const txnDoc = await UserTxn.find({
+			order_time: {
+				$gte: startDay.toDate(),
+			},
+		})
+			.sort({
+				order_time: 1,
+			})
+			.exec();
+
+		if (txnDoc) {
+			txnDoc.forEach((txn) => {
+				let ds = moment(txn.order_time).format("YYYY-MM-DD");
+				let txnCount = countObj[ds] || 0;
+				countObj[ds] = txnCount + 1; //計算交易次數
+			});
+
+			//計算平均每位學生的交易次數
+			for (let key in countObj) {
+				avgObj[key] = Math.round((countObj[key] / userCount) * 10) / 10;
+			}
 		}
 	}
 

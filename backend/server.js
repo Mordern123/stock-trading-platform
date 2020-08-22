@@ -17,13 +17,16 @@ import {
 	start_opening_schedule,
 	start_stockValue_schedule1,
 	start_stockValue_schedule2,
+	remove_closing_stock_data,
 } from "./schedule";
+import socket from "socket.io";
 
 require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 const server = Server(app);
+const io = socket().listen(server);
 const connection = mongoose.connection;
 export const queue = new PQueue({ concurrency: 3, interval: 1000, intervalCap: 3 }); //工作管理佇列，每1秒reset，1秒內不能同時執行超過3個程序
 
@@ -38,6 +41,7 @@ connection.once("open", () => {
 	start_opening_schedule();
 	start_stockValue_schedule1();
 	start_stockValue_schedule2();
+	remove_closing_stock_data();
 });
 
 mongoose.connect(process.env.DB_CONN_STRING, {
@@ -61,17 +65,6 @@ app.use(
 		origin: (origin, callback) => {
 			return callback(null, true);
 		},
-		// origin: function(origin, callback){
-		//   // allow requests with no origin
-		//   // (like mobile apps or curl requests)
-		//   if(!origin) return callback(null, true);
-		//   if(allowedOrigins.indexOf(origin) === -1){
-		//     var msg = 'The CORS policy for this site does not ' +
-		//               'allow access from the specified Origin.';
-		//     return callback(new Error(msg), false);
-		//   }
-		//   return callback(null, true);
-		// },
 		credentials: true,
 	})
 );
@@ -85,10 +78,25 @@ app.use("/class", classRouter);
 app.use("/stock", stockRouter);
 app.use("/txn", txnRouter);
 
-//測試用
-app.get("/test", async (req, res) => {
+//取得全域參數
+app.get("/global", async (req, res) => {
 	const doc = await Global.findOne({ tag: "hongwei" }).exec();
 	res.json(doc);
+});
+
+global.online_count = 0; //上線平台總人數
+io.on("connection", (socket) => {
+	const online_add = async () => {
+		online_count += 1;
+		io.emit("online", online_count);
+		console.log("一位使用者上線，總人數: " + online_count);
+	};
+	online_add();
+	socket.on("disconnect", async () => {
+		online_count -= 1;
+		io.emit("online", online_count);
+		console.log("一位使用者下線，總人數: " + online_count);
+	});
 });
 
 server.listen(port, () => {

@@ -92,6 +92,7 @@ export const start_opening_schedule = () => {
 // * 每個禮拜刪除收盤資料(每個禮拜天11點)
 export const remove_closing_stock_data = () => {
 	var rule = new schedule.RecurrenceRule();
+	rule.minute = 30; //23:30分
 	rule.hour = 23; //每個禮拜天11點
 	rule.dayOfWeek = 0; //每個禮拜天
 

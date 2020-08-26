@@ -189,7 +189,6 @@ export const StockBuy = function() {
 					set_userStock(userHas);
 					set_userTrack(userTrack);
 					set_stockInfo(res1.data);
-					set_update(!update);
 					set_showBuyDialog(true);
 				}
 			} else if (res1.status === 204) {
@@ -280,7 +279,7 @@ export const StockBuy = function() {
 			}
 		};
 		load();
-	}, [update]);
+	}, []);
 
 	//檢查是否透過跳轉過來
 	React.useEffect(() => {

@@ -9,7 +9,12 @@ import Material_Table from "components/Table/Material_Table";
 import LaunchRoundedIcon from "@material-ui/icons/LaunchRounded";
 import FavoriteBorderRoundedIcon from "@material-ui/icons/FavoriteBorderRounded";
 import FavoriteRoundedIcon from "@material-ui/icons/FavoriteRounded";
-import { apiStock_list_all, apiUserStock_track, apiUserStock_track_get, apiStock_get_updateTime } from "../api";
+import {
+	apiStock_list_all,
+	apiUserStock_track,
+	apiUserStock_track_get,
+	apiStock_get_updateTime,
+} from "../api";
 import { useSnackbar } from "notistack";
 import moment from "moment";
 import { handle_error } from "../tools";
@@ -219,7 +224,12 @@ export const StockYesterday = function(props) {
 			(rowData) => {
 				let inCollect = track_data.includes(rowData.stock_id); //判斷此股票使用者有沒有收藏
 				return {
-					icon: () => (inCollect ? <FavoriteRoundedIcon style={{ color: "#e57373" }} /> : <FavoriteBorderRoundedIcon />),
+					icon: () =>
+						inCollect ? (
+							<FavoriteRoundedIcon style={{ color: "#e57373" }} />
+						) : (
+							<FavoriteBorderRoundedIcon />
+						),
 					tooltip: inCollect ? "Remove from Collect" : "Add to Collect",
 					onClick: handleTrack,
 				};
@@ -227,6 +237,13 @@ export const StockYesterday = function(props) {
 		],
 		[track_data]
 	);
+
+	const handle_keyDown = (e) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			handleSearch();
+		}
+	};
 
 	//發出追蹤交易通知
 	const addTrackSnack = (msg, color) => {
@@ -327,8 +344,19 @@ export const StockYesterday = function(props) {
 			<GridContainer>
 				<GridItem xs={12} sm={12} md={12}>
 					<Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
-						<InputBase ref={searchRef} className={classes.searchInput} placeholder="搜尋任何股票關鍵字" />
-						<IconButton type="button" color="primary" className="p-3" onClick={handleSearch}>
+						<InputBase
+							ref={searchRef}
+							className={classes.searchInput}
+							placeholder="搜尋任何股票關鍵字"
+							onKeyDown={handle_keyDown}
+						/>
+						<IconButton
+							type="button"
+							color="primary"
+							className="p-3"
+							onClick={handleSearch}
+							onKeyDown={handle_keyDown}
+						>
 							<Search fontSize="large" />
 						</IconButton>
 					</Paper>

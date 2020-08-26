@@ -31,12 +31,7 @@ const styles = (theme) => ({
 });
 
 const useStyles = makeStyles(styles);
-export default function Custom_MaterialTable(props) {
-	const classes = useStyles();
-	const tableRef = useRef();
-	const [count, setCount] = useState(0);
-	const [pageSize, setPageSize] = useState(50);
-	const {
+export default function Custom_MaterialTable({
 		title,
 		columns,
 		data,
@@ -56,9 +51,10 @@ export default function Custom_MaterialTable(props) {
 		noDataDisplay,
 		toolbarStyle,
 		headerStyle,
-	} = props;
-
-	const options = {
+	} ) {
+	const classes = useStyles();
+	const tableRef = useRef();
+	const [options, set_options] = React.useState({
 		draggable: false,
 		toolbar: showToolBar && true,
 		search: useSearch && true,
@@ -66,39 +62,46 @@ export default function Custom_MaterialTable(props) {
 		filtering: useFilter && true,
 		columnsButton: useColumns && true,
 		searchText: searchText || "",
-		pageSize: pageSize,
+		pageSize: 10,
 		pageSizeOptions: pageSizeOptions || [50, 100, 200],
 		maxBodyHeight: maxBodyHeight || 600,
 		actionsColumnIndex: actionsColumnIndex == null ? 0 : actionsColumnIndex,
 		headerStyle: headerStyle,
-	};
+	})
 
-	// 更改key變數才會吃到搜尋字串
-	React.useEffect(() => {
-		setCount(count + 1);
-	}, [searchText, pageSize]);
+	// ! 可能會造成 memory leak
+	// React.useEffect(() => {
+	// 	let result_count = tableRef.current.state.data.length;
+	// 	result_count = result_count < 10 ? 10 : result_count;
+	// 	if (result_count < 50) {
+	// 		setPageSize(result_count);
+	// 	} else {
+	// 		setPageSize(50);
+	// 	}
+	// }, [isLoading == false]);
 
-	React.useEffect(() => {
-		let result_count = tableRef.current.state.data.length;
-		result_count = result_count < 10 ? 10 : result_count;
-		if (result_count < 50) {
-			setPageSize(result_count);
-		} else {
-			setPageSize(50);
-		}
-	}, [isLoading == false]);
+	// React.useEffect(() => {
+	// 	if(searchText) {
+	// 		set_options({
+	// 			...options,
+	// 			searchText: searchText
+	// 		})
+	// 	}
+	// }, [searchText])
 
 	return (
 		<ThemeProvider theme={tableTheme}>
 			<MaterialTable
 				className={classes.row}
 				tableRef={tableRef}
-				key={count}
 				isLoading={isLoading}
 				title={<div className="ch_font">{title}</div>}
 				columns={columns}
 				data={data}
-				options={options}
+				options={{
+					...options,
+					searchText
+				}}
 				components={{
 					Container: (props) =>
 						noContainer ? <div {...props}></div> : <Card raised {...props}></Card>,
@@ -120,7 +123,6 @@ export default function Custom_MaterialTable(props) {
 						labelRowsSelect: "筆",
 					},
 				}}
-				onRowClick={(event, rowData) => {}}
 				actions={actions}
 				detailPanel={detailPanel}
 			/>

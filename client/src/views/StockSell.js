@@ -25,6 +25,7 @@ import SellDialog from "components/StockManage/Dialog_Sell";
 import StockDetail from "components/StockManage/Detail_Stock";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import delay from "delay";
+import clsx from "clsx";
 
 const userStock_columns = [
 	{
@@ -282,7 +283,7 @@ export const StockSell = function() {
 							<TextField
 								label="搜尋擁有股票"
 								placeholder="輸入任何關鍵字"
-								className={classes.searchInput1}
+								className={clsx(classes.searchInput1, "mb-3")}
 								margin="dense"
 								variant="outlined"
 								onChange={(e) => set_searchText(e.target.value)}

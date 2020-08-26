@@ -32,26 +32,26 @@ const styles = (theme) => ({
 
 const useStyles = makeStyles(styles);
 export default function Custom_MaterialTable({
-		title,
-		columns,
-		data,
-		showToolBar,
-		useExport,
-		useFilter,
-		useSearch,
-		useColumns,
-		actions,
-		searchText,
-		isLoading,
-		noContainer,
-		pageSizeOptions,
-		maxBodyHeight,
-		detailPanel,
-		actionsColumnIndex,
-		noDataDisplay,
-		toolbarStyle,
-		headerStyle,
-	} ) {
+	title,
+	columns,
+	data,
+	showToolBar,
+	useExport,
+	useFilter,
+	useSearch,
+	useColumns,
+	actions,
+	searchText,
+	isLoading,
+	noContainer,
+	pageSizeOptions,
+	maxBodyHeight,
+	detailPanel,
+	actionsColumnIndex,
+	noDataDisplay,
+	toolbarStyle,
+	headerStyle,
+}) {
 	const classes = useStyles();
 	const tableRef = useRef();
 	const [options, set_options] = React.useState({
@@ -67,7 +67,7 @@ export default function Custom_MaterialTable({
 		maxBodyHeight: maxBodyHeight || 600,
 		actionsColumnIndex: actionsColumnIndex == null ? 0 : actionsColumnIndex,
 		headerStyle: headerStyle,
-	})
+	});
 
 	// ! 可能會造成 memory leak
 	// React.useEffect(() => {
@@ -80,14 +80,13 @@ export default function Custom_MaterialTable({
 	// 	}
 	// }, [isLoading == false]);
 
-	// React.useEffect(() => {
-	// 	if(searchText) {
-	// 		set_options({
-	// 			...options,
-	// 			searchText: searchText
-	// 		})
-	// 	}
-	// }, [searchText])
+	React.useEffect(() => {
+		if (searchText) {
+			tableRef.current.onSearchChange(searchText);
+		} else {
+			tableRef.current.onSearchChange();
+		}
+	}, [searchText]);
 
 	return (
 		<ThemeProvider theme={tableTheme}>
@@ -98,10 +97,7 @@ export default function Custom_MaterialTable({
 				title={<div className="ch_font">{title}</div>}
 				columns={columns}
 				data={data}
-				options={{
-					...options,
-					searchText
-				}}
+				options={options}
 				components={{
 					Container: (props) =>
 						noContainer ? <div {...props}></div> : <Card raised {...props}></Card>,

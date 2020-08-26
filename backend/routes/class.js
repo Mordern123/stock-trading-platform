@@ -54,7 +54,7 @@ const get_Announcement = async (req, res) => {
 				.exec();
 			res.json(result);
 		} else {
-			const result = await Announcement.find({})
+			const result = await Announcement.find({ class_id: "GLOBAL_CLASS" })
 				.populate("publisher", "user_name")
 				.sort({ publish_date: "desc" })
 				.exec();

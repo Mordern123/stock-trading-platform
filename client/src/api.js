@@ -3,7 +3,7 @@ import axios from "axios";
 export const test_serverAddress = "localhost:5000";
 // export const serverAddress = "35.229.149.140:5000";
 export const serverAddress = "140.120.53.198:5000";
-export const baseURL = `http://${test_serverAddress}`;
+export const baseURL = `http://${serverAddress}`;
 
 const request = axios.create({ baseURL: `${baseURL}`, withCredentials: true });
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true });

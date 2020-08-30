@@ -1,6 +1,6 @@
 # 股市模擬交易平台
 
-## http://35.229.149.140/login
+## http://dock.nchustock.ga
 
 ---
 

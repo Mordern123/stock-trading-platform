@@ -8,7 +8,8 @@
     "start": "nodemon server.js --exec babel-node --inspect=10000",
     "win-start": "cross-env ./node_modules/.bin/babel-node server.js",
     "stock": "babel-node getStock_manual.js",
-    "txn": "babel-node manual_txn.js"
+    "txn": "babel-node manual_txn.js",
+    "value": "babel-node manual_value.js"
   },
   "author": "",
   "license": "ISC",
@@ -29,7 +30,8 @@
     "nodemon": "^2.0.4",
     "p-queue": "^6.5.0",
     "restler": "^3.4.0",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "step": "^1.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.4",

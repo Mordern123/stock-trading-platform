@@ -4,11 +4,12 @@ import UserStock from "./models/user_stock_model";
 import UserTxn from "./models/user_txn_model";
 import Account from "./models/account_model";
 import User from "./models/user_model";
+import Global from "./models/global_model";
 import moment from "moment";
 require("dotenv").config();
 
 //獨立執行起點
-export const runTxn = () => {
+export const _runEveryTxn = () => {
 	const connection = mongoose.connection;
 	connection.once("open", () => {
 		console.log("MongoDB database connection established successfully");
@@ -24,7 +25,7 @@ export const runTxn = () => {
 };
 
 //獨立執行起點
-export const runStockValue = () => {
+export const _runEveryUserStock = () => {
 	const connection = mongoose.connection;
 	connection.once("open", () => {
 		console.log("MongoDB database connection established successfully");
@@ -41,87 +42,156 @@ export const runStockValue = () => {
 
 ///////////////////////////////////////////////
 
-//伺服器運行處理交易執行起點
+// * 伺服器運行處理交易執行起點
 export const runEveryTxn = async () => {
-	const userTxnDocs = await UserTxn.find({ status: "waiting" }).sort({ date: "asc" }).exec(); //取得所有等待交易資料(由小到大)
+	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
+	const closing_time = moment(globalDoc.stock_update).hour(13).minute(30); //13:30收盤
 
-	const promises1 = [];
+	// * 取得今日收盤之前所有等待交易資料(由早到晚)
+	const userTxnDocs = await UserTxn.find({
+		status: "waiting",
+		// data_time: { $lte: closing_time.toDate() },
+	})
+		.sort({ date: "asc" })
+		.exec();
 
-	//處理每筆訂單
+	// * 處理每筆訂單
 	for (let i = 0; i < userTxnDocs.length; i++) {
 		console.log(`正在處理第${i + 1}筆...`);
 		let { type } = userTxnDocs[i];
-		if (type == "buy") {
-			await runBuy(userTxnDocs[i]); //處理買股
-		} else if (type == "sell") {
-			await runSell(userTxnDocs[i]); //處理賣股
-		}
+		await runTxn(type, userTxnDocs[i], null);
 	}
 
-	// await Promise.all(promises1) //等待訂單處理結束
-
-	//更新所有用戶帳戶資訊
-	const userAllDocs = await User.find().exec();
-	const promises2 = [];
-
-	for (let i = 0; i < userAllDocs.length; i++) {
-		let { _id } = userAllDocs[i];
-		await updateStock(_id);
-	}
-
-	// await Promise.all(promises2) //等待用戶資料更新結束
-
-	console.log(`所有帳戶更新完成`);
+	console.log(`所有交易處理完成`);
 	console.log(`處理結束，共${userTxnDocs.length}筆`);
 };
 
-//伺服器運行計算股票總價值起點
+// * 伺服器運行計算股票總價值起點
 export const runEveryUserStock = async () => {
-	//更新所有用戶帳戶資訊
+	// * 更新所有用戶帳戶資訊
 	const userAllDocs = await User.find().exec();
-	const promises2 = [];
 
 	for (let i = 0; i < userAllDocs.length; i++) {
 		let { _id } = userAllDocs[i];
 		await updateStockValue(_id);
 	}
 
-	// await Promise.all(promises2) //等待用戶資料更新結束
-
 	console.log(`所有股票總價值更新完成`);
 };
 
-const runBuy = async (userTxnDoc) => {
+// * 處理交易入口
+export const runTxn = async (type, userTxnDoc, stockData) => {
+	const {
+		_id,
+		user,
+		stock_id,
+		bid_price,
+		shares_number,
+		order_type,
+		stockInfo,
+		closing,
+	} = userTxnDoc;
 	try {
-		const { _id, user, stock_id, shares_number, stockInfo } = userTxnDoc;
-		const stock_price = parseFloat(stockInfo.z); //下單成交價
+		// ! 檢查訂單是否還存在
+		let txn_exist = await UserTxn.exists({ _id: _id });
+		if (!txn_exist) return;
 
-		let stock_exists = await Stock.exists({ stock_id });
-
-		//未存在此股票
-		if (!stock_exists) {
-			await updateTxn(_id, "fail", 0);
+		// ! 開盤需要即時股票資訊
+		if (!closing && !stockData) {
+			await updateTxn(_id, "fail", 7);
 			return;
 		}
 
-		//出價小於收盤價(無法購買)
-		// if(bid_price < stock_price) {
-		//   await updateTxn(_id, 'fail', 1)
-		//   return
-		// }
+		// ! 開盤/收盤預設變數
+		let new_stockInfo; //使用的股票資料
+		let yesterday_price; //昨日收盤價
+		let current_price; //目前股價
+		let stock_price; //運算股價
 
-		//餘額無法購買股票
-		const txn_value = await checkBalance(user, stock_price, shares_number);
-		if (txn_value == null) {
+		if (closing) {
+			//收盤
+			new_stockInfo = stockInfo; //收盤資料
+			yesterday_price = parseFloat(new_stockInfo.y);
+			current_price = parseFloat(new_stockInfo.z);
+			switch (order_type) {
+				case "market":
+					stock_price = parseFloat(new_stockInfo.z);
+					break;
+				case "limit":
+					stock_price = bid_price; // 限價交易: 股價=用戶出價
+					break;
+				default:
+					stock_price = 0; //false
+					break;
+			}
+		} else {
+			//開盤
+			// ? 如果即時股價為0則改用下單時抓尋時的股票資料
+			new_stockInfo = parseFloat(stockData.z) > 0 ? stockData : stockInfo;
+			yesterday_price = parseFloat(new_stockInfo.y);
+			current_price = parseFloat(new_stockInfo.z);
+			stock_price = parseFloat(new_stockInfo.z);
+		}
+
+		// ! 檢查股票價格不能為0
+		if (stock_price <= 0 || yesterday_price <= 0) {
+			await updateTxn(_id, "fail", 8);
+			return;
+		}
+
+		// ! 檢查股票是否漲跌停不能交易
+		let price_diff_percent =
+			(Math.abs(current_price - yesterday_price) / yesterday_price) * 100;
+		//市價交易超過9%就算漲跌停
+		if (price_diff_percent >= 9) {
+			//判斷漲跌停
+			if (parseFloat(new_stockInfo.ud) >= 0) {
+				await updateTxn(_id, "fail", 9);
+			} else {
+				await updateTxn(_id, "fail", 10);
+			}
+			return;
+		}
+
+		// * 執行買入or賣出
+		if (type === "buy") {
+			await runBuy(userTxnDoc, new_stockInfo, stock_price);
+		} else if (type === "sell") {
+			await runSell(userTxnDoc, new_stockInfo, stock_price);
+		}
+	} catch (error) {
+		await updateTxn(_id, "error", 7);
+		console.log(error);
+	}
+};
+
+// * 處理買入交易
+const runBuy = async (userTxnDoc, stockInfo, stock_price) => {
+	const { _id, user, stock_id, shares_number, order_type, closing } = userTxnDoc;
+	try {
+		// ! 檢查餘額無法購買股票
+		let txn_value = await checkBalance(user, stock_price, shares_number);
+		if (txn_value === null) {
 			await updateTxn(_id, "fail", 5);
 			return;
 		}
 
-		//交易可執行
-		const userHasStock = await UserStock.exists({ user, stock_id }); //確認用戶是否擁有此股票
+		// ! 收盤處理，出價小於收盤最低價(限價購買)
+		if (closing) {
+			if (order_type === "limit") {
+				let lowest_price = parseFloat(stockInfo.l);
+				if (stock_price < lowest_price) {
+					await updateTxn(_id, "fail", 1);
+					return;
+				}
+			}
+		}
+
+		// * 交易可執行
+		let userHasStock = await UserStock.exists({ user, stock_id }); //確認用戶是否擁有此股票
 		if (userHasStock) {
 			//更新擁有股數
-			let userStockDoc = await UserStock.findOneAndUpdate(
+			await UserStock.findOneAndUpdate(
 				{
 					user,
 					stock_id,
@@ -129,7 +199,7 @@ const runBuy = async (userTxnDoc) => {
 				{
 					stockInfo,
 					$inc: { shares_number }, //增加股數
-					last_update: moment(),
+					last_update: moment().toDate(),
 				},
 				{
 					new: true,
@@ -137,59 +207,58 @@ const runBuy = async (userTxnDoc) => {
 			).exec();
 		} else {
 			//新增擁有股票
-			let newUserStockDoc = await new UserStock({
+			await new UserStock({
 				user,
 				stock_id,
 				stockInfo,
 				shares_number,
-				last_update: moment(),
+				last_update: moment().toDate(),
 			}).save();
 		}
 
+		// * 更新該用戶帳戶
+		await updateAccount(user, -txn_value);
+
+		// * 更新交易狀態
 		await updateTxn(_id, "success", 6);
-		await updateBalance(user, -txn_value); //購買後減少餘額
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
 	}
 };
 
-const runSell = async (userTxnDoc) => {
+// * 處理賣出交易
+const runSell = async (userTxnDoc, stockInfo, stock_price) => {
+	const { _id, user, stock_id, shares_number, order_type, closing } = userTxnDoc;
 	try {
-		const { _id, user, stock_id, shares_number, stockInfo } = userTxnDoc;
-		const stock_price = parseFloat(stockInfo.z); //下單成交價
-
-		let stock_exists = await Stock.exists({ stock_id });
-
-		//未存在此股票
-		if (!stock_exists) {
-			updateTxn(_id, "fail", 0);
-			return;
-		}
-
-		//用戶未擁有此股票
-		const hasStock = await UserStock.exists({ user, stock_id });
+		// ! 檢查用戶是否擁有此股票
+		let hasStock = await UserStock.exists({ user, stock_id });
 		if (!hasStock) {
 			updateTxn(_id, "fail", 3);
 			return;
 		}
 
-		//出價大於收盤價(無法賣出)
-		// if(bid_price > stock_price) {
-		//   updateTxn(_id, 'fail', 2)
-		//   return
-		// }
-
-		//賣出股數超過擁有股數(無法賣出)
+		// ! 賣出股數超過擁有股數(無法賣出)
 		let userStockDoc = await UserStock.findOne({ user, stock_id }).exec();
 		if (shares_number > userStockDoc.shares_number) {
 			updateTxn(_id, "fail", 4);
 			return;
 		}
 
-		//可正常交易
+		// ! 收盤處理，出價大於於收盤最高價(限價賣出)
+		if (closing) {
+			if (order_type === "limit") {
+				let highest_price = parseFloat(stockInfo.h);
+				if (stock_price > highest_price) {
+					await updateTxn(_id, "fail", 2);
+					return;
+				}
+			}
+		}
+
+		// * 交易可執行
 		const txn_value = stock_price * shares_number;
-		userStockDoc = await UserStock.findOneAndUpdate(
+		await UserStock.findOneAndUpdate(
 			{
 				user,
 				stock_id,
@@ -204,15 +273,19 @@ const runSell = async (userTxnDoc) => {
 			}
 		).exec();
 
+		// * 更新該用戶帳戶
+		await updateAccount(user, txn_value);
+
+		// * 更新交易狀態
 		await updateTxn(_id, "success", 6);
-		await updateBalance(user, txn_value); //售出後增加餘額
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
 	}
 };
 
-const getStock = async (stock_id) => {
+// * 取得收盤股票資訊
+export const getStock = async (stock_id) => {
 	let hasStock = await Stock.exists({ stock_id });
 	if (hasStock) {
 		const stockDoc = await Stock.findOne({ stock_id }).sort("-data_time").exec(); //取的目前最新股票
@@ -222,14 +295,16 @@ const getStock = async (stock_id) => {
 	}
 };
 
-const checkBalance = async (user, stock_price, n) => {
+// * 檢查餘額是否足夠
+export const checkBalance = async (user, stock_price, n) => {
 	const value = stock_price * n; //成交價 * 購買股數
 	const accountDoc = await Account.findOne({ user }).exec();
 
 	return accountDoc.balance >= value ? value : null;
 };
 
-const updateTxn = async (id, status, CODE) => {
+// * 更新交易結果訊息
+export const updateTxn = async (id, status, CODE) => {
 	let msg;
 	switch (CODE) {
 		case 0:
@@ -256,35 +331,28 @@ const updateTxn = async (id, status, CODE) => {
 		case 7:
 			msg = "OCCUR_ERROR"; //交易發生錯誤
 			break;
+		case 8:
+			msg = "ZERO_PRICE"; //交易股價為0
+			break;
+		case 9:
+			msg = "LIMIT_UP"; //股票漲停不能交易
+			break;
+		case 10:
+			msg = "LIMIT_DOWN"; //股票跌停不能交易
+			break;
 		default:
 			msg = "OCCUR_ERROR"; //交易發生錯誤
 			break;
 	}
-	const userTxnDoc = await UserTxn.findByIdAndUpdate(id, {
+	await UserTxn.findByIdAndUpdate(id, {
 		status,
-		txn_time: moment(),
+		txn_time: moment().toDate(),
 		msg,
 	});
 };
 
-//更新用戶結餘(balance)
-const updateBalance = async (user, value) => {
-	await Account.findOneAndUpdate(
-		{
-			user,
-		},
-		{
-			$inc: { balance: value }, //更新結餘
-			last_update: moment().toDate(),
-		},
-		{
-			new: true,
-		}
-	);
-};
-
-//更新某個用戶擁有股票和交易數量
-const updateStock = async (user) => {
+// * 更新某個用戶帳戶資訊
+export const updateAccount = async (user, value) => {
 	let userAllStocks = await UserStock.find({ user }).exec();
 
 	//取得用戶擁有股票資訊
@@ -310,7 +378,8 @@ const updateStock = async (user) => {
 		{
 			stock_number: userAllStocks.length,
 			txn_count: txn_count,
-			// last_update: moment().toDate(),
+			$inc: { balance: value }, //更新結餘
+			last_update: moment().toDate(),
 		},
 		{
 			new: true,
@@ -318,8 +387,8 @@ const updateStock = async (user) => {
 	);
 };
 
-//更新某個用戶股票價值(用收盤價計算)
-const updateStockValue = async (user) => {
+// * 更新某個用戶股票價值(用收盤價計算)
+export const updateStockValue = async (user) => {
 	let total_value = 0; //股票總價值
 	let userAllStocks = await UserStock.find({ user }).exec();
 

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import schedule from "node-schedule";
 import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";
@@ -10,8 +11,8 @@ import Global from "../models/global_model";
 import moment from "moment";
 import { check_permission } from "../common/auth";
 import { queue } from "../server";
-import { task } from "../common/scraper";
-import { add_user_search } from "../common/stock";
+import { task, txn_task } from "../common/scraper";
+import { add_user_search } from "../common/utils";
 import { handle_error } from "../common/error";
 import { to_num } from "../common/tools";
 
@@ -139,7 +140,8 @@ const get_user_stock = async (req, res) => {
 //用戶下訂單
 const user_place_order = async (req, res) => {
 	try {
-		const { user, code } = await check_permission(req);
+		let { user, code } = await check_permission(req);
+		let { stock_id, stockInfo, shares_number, bid_price } = req.body; //前端傳送值
 
 		if (!user) {
 			res.clearCookie("user_token");
@@ -147,21 +149,42 @@ const user_place_order = async (req, res) => {
 			return;
 		}
 
-		const doc = await UserClass.findOne({ user: user._id }).exec();
+		if (!["buy", "sell"].includes(req.params.type)) throw false; //檢查交易類型
+		if (!["market", "limit"].includes(req.query.order_type)) throw false; //檢查委託單類型
+		if (req.query.order_type === "limit" && !bid_price && bid_price <= 0) throw false; //檢查限價交易資料
 
-		if (req.params.type != "buy" && req.params.type != "sell") throw false;
-		const { stock_id, stockInfo, shares_number } = req.body; //前端傳送值
-		const time = Date(Date.now());
+		let doc = await UserClass.findOne({ user: user._id }).exec();
+		let global = await Global.findOne({ tag: "hongwei" }).exec();
+		let current_time = moment().toDate(); //下單時間
 
-		const userTxnDoc = await new UserTxn({
-			class_id: doc ? doc.class_id : "GLOBAL_CLASS",
+		// * 新增一筆訂單
+		const _userTxnDoc = await new UserTxn({
+			class_id: doc ? doc.class_id : "GLOBAL_CLASS", //沒有class_id代表是global
 			user: user._id,
 			stock_id,
 			shares_number,
 			stockInfo,
 			type: req.params.type,
-			order_time: time,
+			order_type: req.query.order_type,
+			order_time: current_time,
+			bid_price: bid_price || 0,
+			closing: global.stock_closing,
 		}).save();
+		const userTxnDoc = _userTxnDoc.toObject();
+
+		// * 只有市價交易要指定時間進行交易排程
+		// * 加上只有開盤時間會進行交易排程
+		if (req.query.order_type === "market" && !global.stock_closing) {
+			let txn_time = moment().add(40, "m").toDate(); //處理交易時間
+			console.log("一筆訂單將在: " + txn_time.toLocaleString() + " 處理");
+			let j = schedule.scheduleJob(txn_time, async () => {
+				// ! 檢查訂單是否還存在
+				let txn_exist = await UserTxn.exists({ _id: userTxnDoc._id });
+				if (txn_exist) {
+					queue.add(() => txn_task(userTxnDoc));
+				}
+			}); //加入執行佇列
+		}
 
 		res.json(userTxnDoc);
 	} catch (error) {
@@ -215,7 +238,6 @@ const user_track_stock = async (req, res) => {
 
 		if (hasStock) {
 			userTrackDoc = await UserTrack.findOneAndDelete({ user: user._id, stock_id }).exec();
-			res.json(userTrackDoc);
 		} else {
 			userTrackDoc = await new UserTrack({
 				user: user._id,
@@ -241,11 +263,11 @@ const get_realTime_stock = async (req, res) => {
 	let stockData = await Stock.findOne({ stock_id }).lean().exec(); //檢查股票是否存在
 
 	if (stockData) {
-		//檢查是否收盤
 		let global = await Global.findOne({ tag: "hongwei" }).exec();
 
+		// ! 檢查是否收盤
 		if (global.stock_closing) {
-			//在收盤期間
+			// * 收盤期間取收盤資料
 			try {
 				// let today_str = moment().format("YYYY-MM-DD"); //今日最小單位
 				// let today = moment(today_str).toDate();
@@ -271,8 +293,8 @@ const get_realTime_stock = async (req, res) => {
 				handle_error(error, res);
 			}
 		} else {
-			//取得最新資料
-			await queue.add(() => task(user, stockData.stock_id, stockData.stock_name, res)); //加入排程
+			// * 爬蟲取得最新資料
+			await queue.add(() => task(user, stockData.stock_id, stockData.stock_name, res)); //加入執行佇列
 		}
 	} else {
 		res.status(204).send(); //找不到股票

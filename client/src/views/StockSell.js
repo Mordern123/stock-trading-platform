@@ -263,7 +263,7 @@ export const StockSell = function() {
 				</GridItem>
 				<GridItem xs={12} sm={6} md={6}>
 					<CardStat
-						title="股票總價值"
+						title="股票總價值(每日更新)"
 						updateTime={account ? `${account.last_value_update} 更新` : "更新中..."}
 						value={account ? account.stock_value : 0}
 						color="warning"

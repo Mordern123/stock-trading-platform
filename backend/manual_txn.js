@@ -1,4 +1,3 @@
-import { runTxn, runStockValue } from "./txn";
+import { _runEveryTxn } from "./txn";
 
-// runTxn();
-runStockValue();
+_runEveryTxn();

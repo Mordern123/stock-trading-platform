@@ -25,6 +25,14 @@ const userTxnSchema = new Schema(
 			type: String,
 			required: true,
 		},
+		order_type: {
+			type: String,
+			required: true,
+		},
+		bid_price: {
+			type: Number,
+			default: 0,
+		},
 		shares_number: {
 			type: Number,
 			required: true,
@@ -44,6 +52,10 @@ const userTxnSchema = new Schema(
 		msg: {
 			type: String,
 			default: null,
+		},
+		closing: {
+			type: Boolean,
+			required: true,
 		},
 	},
 	{

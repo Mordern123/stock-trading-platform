@@ -2,8 +2,9 @@ import axios from "axios";
 
 export const test_serverAddress = "localhost:5000";
 // export const serverAddress = "35.229.149.140:5000";
-export const serverAddress = "140.120.53.198:5000";
-export const baseURL = `http://${serverAddress}`;
+// export const serverAddress = "140.120.53.198:5000";
+export const serverAddress = "dock.nchustock.ga:5000";
+export const baseURL = `http://${test_serverAddress}`;
 
 const request = axios.create({ baseURL: `${baseURL}`, withCredentials: true });
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true });
@@ -45,8 +46,9 @@ export const apiStock_get_updateTime = () => stockReq.get("get/updateTime");
 export const apiUserStock_get = () => userStockReq.post("/get");
 export const apiUserStock_track = (data) => userStockReq.post("/track", data);
 export const apiUserStock_track_get = () => userStockReq.post("/track/get");
-export const apiUserStock_buy = (data) => userStockReq.post("/order/buy", data);
-export const apiUserStock_sell = (data) => userStockReq.post("/order/sell", data);
+export const apiUserStock_buy = (data, params) => userStockReq.post("/order/buy", data, { params });
+export const apiUserStock_sell = (data, params) =>
+	userStockReq.post("/order/sell", data, { params });
 export const apiUserStock_search_list = () => userStockReq.get("/search");
 
 // Transaction

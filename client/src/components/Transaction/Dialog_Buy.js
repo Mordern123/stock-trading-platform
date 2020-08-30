@@ -16,13 +16,18 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
 import InputAdornment from "@material-ui/core/InputAdornment";
 import Typography from "@material-ui/core/Typography";
 import Backdrop from "@material-ui/core/Backdrop";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import IconButton from "@material-ui/core/IconButton";
 import Hidden from "@material-ui/core/Hidden";
-import { apiUserStock_buy, apiUserStock_track } from "../../api";
+import { apiUserStock_buy, apiUserStock_track, apiGlobal } from "../../api";
 import { green, red } from "@material-ui/core/colors";
 import { useSnackbar } from "notistack";
 import Snack_Detail from "./Snack_Detail";
@@ -77,6 +82,11 @@ const styles = (theme) => ({
 			outline: "none",
 		},
 	},
+	selectBtn: {
+		"& label": {
+			fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
+		},
+	},
 });
 
 const useStyles = makeStyles(styles);
@@ -89,6 +99,9 @@ export default function BuyDialog(props) {
 	const [loading, setLoading] = useState(false);
 	const [trackStatus, set_trackStatus] = useState(false);
 	const [reserve_time, set_reserve_time] = useState(180); //價格保留時間
+	const [order_type, set_order_type] = useState("");
+	const [bid_price, set_bid_price] = useState("");
+	const [global, set_global] = useState({});
 	const history = useHistory();
 
 	const handleNumberChange = (e) => {
@@ -96,7 +109,12 @@ export default function BuyDialog(props) {
 		setStock_num(n);
 	};
 
-	//購買股票
+	const handlePriceChange = (e) => {
+		let n = parseFloat(e.target.value);
+		set_bid_price(n);
+	};
+
+	// * 購買股票
 	const handleBuyStock = async () => {
 		//防呆
 		setLoading(true);
@@ -109,16 +127,34 @@ export default function BuyDialog(props) {
 			return;
 		}
 
+		//未選擇交易類型
+		if (!order_type) {
+			alert("請選擇交易類型");
+			setLoading(false);
+			return;
+		}
+
+		//限價未輸入價格
+		if (order_type === "limit" && !bid_price && bid_price <= 0) {
+			alert("輸入價格必須大於0");
+			setLoading(false);
+			return;
+		}
+
 		if (stock_num) {
 			if (stock_num > 0) {
 				if (stock_num <= 1000) {
 					// if (stock_num * 1000 * stockInfo.z > account.balance) //購買總金額超過餘額
 					try {
-						const res = await apiUserStock_buy({
-							stock_id: stockInfo.stock_id,
-							stockInfo: stockInfo,
-							shares_number: stock_num * 1000, //一張1000股
-						});
+						const res = await apiUserStock_buy(
+							{
+								stock_id: stockInfo.stock_id,
+								stockInfo: stockInfo,
+								shares_number: stock_num * 1000, //一張1000股
+								bid_price: bid_price,
+							},
+							{ order_type }
+						);
 						await delay(2000);
 
 						if (res.status === 200) {
@@ -137,7 +173,7 @@ export default function BuyDialog(props) {
 				alert("購買張數需大於0");
 			}
 		} else {
-			alert("欄位不能為空");
+			alert("必須輸入購買張數");
 		}
 
 		setLoading(false);
@@ -180,7 +216,8 @@ export default function BuyDialog(props) {
 						stock_id: stockInfo.stock_id,
 						stock_name: stockInfo.stock_name,
 						stock_num,
-						stock_price: stockInfo.z,
+						stock_price: bid_price,
+						order_type: order_type,
 					}}
 				/>
 			),
@@ -209,6 +246,11 @@ export default function BuyDialog(props) {
 		});
 	};
 
+	//更改訂單類型
+	const change_orderType = (e) => {
+		set_order_type(e.target.value);
+	};
+
 	//追蹤狀態
 	React.useEffect(() => {
 		set_trackStatus(Boolean(userTrack));
@@ -226,6 +268,55 @@ export default function BuyDialog(props) {
 
 		return () => clearInterval(interval);
 	}, [reserve_time]);
+
+	//取得global
+	React.useEffect(() => {
+		const load = async () => {
+			let res = await apiGlobal();
+			set_global(res.data);
+		};
+		load();
+	}, []);
+
+	const get_input_class = () => {
+		if (order_type === "market") {
+			return "col-12 col-md-6 overflow-hidden pt-2 mt-3";
+		} else if (order_type === "limit") {
+			return "col-12 col-md-4 overflow-hidden pt-2 mt-3";
+		} else {
+			return "col-12 col-md-6 overflow-hidden pt-2 mt-3";
+		}
+	};
+
+	const Tips = () => {
+		if (order_type === "market" && global.stock_closing) {
+			return (
+				<p className="ch_font text-danger text-center">
+					{"提醒: 現在為收盤期間，市價交易，金額將以收盤價作為計算"}
+				</p>
+			);
+		} else if (order_type === "limit" && global.stock_closing) {
+			return (
+				<p className="ch_font text-danger text-center">
+					{"提醒: 現在為收盤期間，限價交易，訂單將於下一個收盤日之後處理"}
+				</p>
+			);
+		} else if (order_type === "market" && !global.stock_closing) {
+			return (
+				<p className="ch_font text-danger text-center">
+					{"提醒: 現在為開盤期間，市價交易，訂單於下單後40分鐘後抓取市價處理"}
+				</p>
+			);
+		} else if (order_type === "limit" && !global.stock_closing) {
+			return (
+				<p className="ch_font text-danger text-center">
+					{"提醒: 現在為開盤期間，限價交易，訂單將於今日收盤後進行處理"}
+				</p>
+			);
+		} else {
+			return <div></div>;
+		}
+	};
 
 	return (
 		<Dialog
@@ -412,14 +503,64 @@ export default function BuyDialog(props) {
 					<Divider />
 				</List>
 				<div className="row d-flex justify-content-end align-items-center mt-3">
-					<div className="col-12 col-md-5 overflow-hidden pt-2">
+					<div className="col-12 justify-content-center align-center">
+						<Tips />
+					</div>
+					<div className={get_input_class()}>
+						<FormControl variant="outlined" fullWidth className={classes.selectBtn}>
+							<InputLabel className="ch_font">{"選擇交易類型"}</InputLabel>
+							<Select
+								value={order_type}
+								onChange={change_orderType}
+								label={"選擇交易類型"}
+							>
+								<MenuItem className="ch_font" value="" disabled>
+									<em>請選擇交易類型</em>
+								</MenuItem>
+								<MenuItem className="ch_font" value={"market"}>
+									市價交易
+								</MenuItem>
+								<MenuItem className="ch_font" value={"limit"}>
+									限價交易
+								</MenuItem>
+							</Select>
+						</FormControl>
+					</div>
+					{order_type === "limit" ? (
+						<div className={get_input_class()}>
+							<TextField
+								label="每股價格"
+								type="number"
+								variant="outlined"
+								InputProps={{
+									startAdornment: (
+										<InputAdornment position="start">{"每股"}</InputAdornment>
+									),
+									endAdornment: (
+										<InputAdornment
+											position="end"
+											children={
+												<Typography className={classes.text}>元</Typography>
+											}
+										/>
+									),
+								}}
+								inputProps={{
+									min: 0,
+								}}
+								className={clsx("w-100", classes.stockInput)}
+								onChange={handlePriceChange}
+							/>
+						</div>
+					) : null}
+					<div className={get_input_class()}>
 						<TextField
 							label="股票買入數量"
 							type="number"
 							variant="outlined"
 							InputProps={{
 								startAdornment: (
-									<InputAdornment position="start">市價交易</InputAdornment>
+									<InputAdornment position="start">{"下單"}</InputAdornment>
 								),
 								endAdornment: (
 									<InputAdornment

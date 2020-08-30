@@ -29,12 +29,34 @@ const get_columns = (type) => {
 				title: "證券名稱",
 			},
 			{
+				title: "訂單類型",
+				render: (rowData) => {
+					if (rowData.order_type === "market") {
+						return "市價";
+					} else if (rowData.order_type === "limit") {
+						return "限價";
+					} else {
+						return "---";
+					}
+				},
+			},
+			{
 				field: "type",
 				title: "交易類型",
 			},
 			{
 				field: "stockInfo.z",
-				title: "交易價格",
+				title: "每股價格",
+			},
+			{
+				title: "每股出價",
+				render: (rowData) => {
+					if (rowData.bid_price > 0) {
+						return rowData.bid_price;
+					} else {
+						return "無";
+					}
+				},
 			},
 			{
 				field: "shares_number",
@@ -64,12 +86,34 @@ const get_columns = (type) => {
 				title: "證券名稱",
 			},
 			{
+				title: "訂單類型",
+				render: (rowData) => {
+					if (rowData.order_type === "market") {
+						return "市價";
+					} else if (rowData.order_type === "limit") {
+						return "限價";
+					} else {
+						return "---";
+					}
+				},
+			},
+			{
 				field: "type",
 				title: "交易類型",
 			},
 			{
 				field: "stockInfo.z",
-				title: "交易價格",
+				title: "每股價格",
+			},
+			{
+				title: "每股出價",
+				render: (rowData) => {
+					if (rowData.bid_price > 0) {
+						return rowData.bid_price;
+					} else {
+						return "無";
+					}
+				},
 			},
 			{
 				field: "shares_number",

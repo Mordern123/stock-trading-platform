@@ -3,19 +3,25 @@ import moment from "moment";
 import { add_user_search } from "../common/utils";
 import { to_num, to_ud } from "../common/tools";
 import { handle_error } from "../common/error";
+import https from "https";
 
 //使用者搜尋爬蟲
 export const crawl_tw_stock = async (user, stock_id, stock_name, res) => {
 	try {
+		const agent = new https.Agent({
+			rejectUnauthorized: false,
+		});
 		let res1 = await axios.get(
-			`https://mis.twse.com.tw/stock/api/getStock.jsp?ch=${stock_id}.tw&json=1&delay=0`
+			`https://mis.twse.com.tw/stock/api/getStock.jsp?ch=${stock_id}.tw&json=1&delay=0`,
+			{ httpsAgent: agent }
 		);
 
 		if (res1.data.msgArray.length === 0) throw new Error(404);
 
 		let request_time = moment().toDate();
 		let res2 = await axios.get(
-			`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${res1.data.msgArray[0].key}&json=1&delay=0`
+			`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${res1.data.msgArray[0].key}&json=1&delay=0`,
+			{ httpsAgent: agent }
 		);
 
 		if (res2.data.msgArray.length === 0) throw new Error(404);
@@ -51,15 +57,20 @@ export const crawl_tw_stock = async (user, stock_id, stock_name, res) => {
 //系統交易搜尋爬蟲
 export const txn_crawl_tw_stock = async (stock_id, stock_name) => {
 	try {
+		const agent = new https.Agent({
+			rejectUnauthorized: false,
+		});
 		let res1 = await axios.get(
-			`https://mis.twse.com.tw/stock/api/getStock.jsp?ch=${stock_id}.tw&json=1&delay=0`
+			`https://mis.twse.com.tw/stock/api/getStock.jsp?ch=${stock_id}.tw&json=1&delay=0`,
+			{ httpsAgent: agent }
 		);
 
 		if (res1.data.msgArray.length === 0) throw new Error(404);
 
 		let request_time = moment().toDate();
 		let res2 = await axios.get(
-			`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${res1.data.msgArray[0].key}&json=1&delay=0`
+			`https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${res1.data.msgArray[0].key}&json=1&delay=0`,
+			{ httpsAgent: agent }
 		);
 
 		if (res2.data.msgArray.length === 0) throw new Error(404);

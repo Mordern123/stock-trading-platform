@@ -141,6 +141,13 @@ export default function BuyDialog(props) {
 			return;
 		}
 
+		//限價輸入價格過高
+		if (order_type === "limit" && bid_price >= 1000000) {
+			alert("輸入價格過高");
+			setLoading(false);
+			return;
+		}
+
 		if (stock_num) {
 			if (stock_num > 0) {
 				if (stock_num <= 1000) {
@@ -347,7 +354,7 @@ export default function BuyDialog(props) {
 						</div>
 						<div
 							style={{ color: "#e57373", fontSize: "1rem" }}
-						>{`價格保留時間: ${reserve_time} 秒`}</div>
+						>{`頁面關閉時間: ${reserve_time} 秒`}</div>
 					</div>
 					<div className="d-flex align-items-end justify-content-between">
 						<h3

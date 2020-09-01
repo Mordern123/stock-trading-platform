@@ -6,23 +6,6 @@ import mongoose from "mongoose";
 import moment from "moment";
 require("dotenv").config();
 
-const init = () => {
-	const connection = mongoose.connection;
-	connection.once("open", () => {
-		console.log("MongoDB database connection established successfully");
-		console.log("The database is " + connection.name);
-
-		let today_str = moment().format("YYYY-MM-DD");
-		let today = moment(today_str).subtract(1, "days").toDate();
-		getStock(today); //之後判斷日期
-	});
-	mongoose.connect(process.env.DB_CONN_STRING, {
-		useNewUrlParser: true,
-		useCreateIndex: true,
-		useUnifiedTopology: true,
-	});
-};
-
 export const getStock = async (time) => {
 	try {
 		console.log("取得收盤資訊日期為: ", moment(time).toLocaleString());
@@ -76,15 +59,19 @@ export const getStock = async (time) => {
 					let update_date = moment(time).format("YYYY-MM-DD");
 					await Global.findOneAndUpdate(
 						{ tag: "hongwei" },
-						{ stock_update: update_date }
+						{ stock_update_time: update_date, stock_updated: true }
 					).exec();
 				};
 				update(); //更新收盤資料日期
 				console.log(`收盤股票新增完成，完成時間:【${moment().toLocaleString()}】`);
+				console.log("----------------------------------------");
 			});
+		} else {
+			return false;
 		}
 	} catch (error) {
 		console.log(error);
+		return false;
 	}
 };
 

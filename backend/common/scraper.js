@@ -42,7 +42,6 @@ export const txn_task = async (userTxnDoc) => {
 	if (random_n === 1) {
 		// ! PCHOME爬蟲要特別處理
 		funcs[random_n](stock_id, stock_name, async (stockData) => {
-			console.log(stockData);
 			if (stockData) {
 				await runTxn(type, userTxnDoc, stockData);
 			} else {

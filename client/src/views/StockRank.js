@@ -17,7 +17,7 @@ const tips = [
 	"貼心提醒: 股票排名更新時間為開盤當日 15:05 喔",
 ];
 
-const column = ["名次", "學號", "帳戶總價值", "擁有股票種類數量"];
+const column = ["名次", "學號", "帳戶總價值", "擁有股票種類", "總交易次數"];
 
 const styles = {
 	cardCategoryWhite: {
@@ -75,7 +75,13 @@ export const StockRank = function() {
 
 				//製作Table資料
 				const rowData = noZeroTxn.map((item, index) => {
-					return [index + 1, item.student_id, item.total_amount, item.stock_number];
+					return [
+						index + 1,
+						item.student_id,
+						item.total_amount,
+						item.stock_number,
+						item.txn_count,
+					];
 				});
 
 				set_rankData(rowData);

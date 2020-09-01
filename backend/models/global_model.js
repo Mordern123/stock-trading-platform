@@ -15,9 +15,16 @@ const globalSchema = new Schema(
 			required: true,
 			default: true,
 		},
-		stock_update: {
+		stock_updated: {
+			//是否更新資料
+			type: Boolean,
+			required: true,
+			default: true,
+		},
+		stock_update_time: {
 			//收盤更新日期 ex: 2020-07-22
 			type: String,
+			required: true,
 		},
 		class: {
 			type: Array,

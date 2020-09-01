@@ -32,7 +32,7 @@ const get_all_stock = async (req, res) => {
 
 		//取得收盤股票時間
 		let global = await Global.findOne({ tag: "hongwei" }).exec();
-		let date = moment(global.stock_update).toDate();
+		let date = moment(global.stock_update_time).toDate();
 		let result = await Stock.find({ data_time: date }).exec();
 		res.json(result);
 	} catch (error) {
@@ -52,7 +52,7 @@ const get_stock_updateTime = async (req, res) => {
 
 		//取得收盤股票時間
 		let global = await Global.findOne({ tag: "hongwei" }).exec();
-		res.json(global.stock_update);
+		res.json(global.stock_update_time);
 	} catch (error) {
 		handle_error(error, res);
 	}
@@ -137,7 +137,7 @@ const get_user_stock = async (req, res) => {
 	res.json(userStockData);
 };
 
-//用戶下訂單
+// * 用戶下訂單
 const user_place_order = async (req, res) => {
 	try {
 		let { user, code } = await check_permission(req);
@@ -149,13 +149,16 @@ const user_place_order = async (req, res) => {
 			return;
 		}
 
+		// ! 判斷必須條件
 		if (!["buy", "sell"].includes(req.params.type)) throw false; //檢查交易類型
 		if (!["market", "limit"].includes(req.query.order_type)) throw false; //檢查委託單類型
 		if (req.query.order_type === "limit" && !bid_price && bid_price <= 0) throw false; //檢查限價交易資料
 
+		// ? 變數
 		let doc = await UserClass.findOne({ user: user._id }).exec();
 		let global = await Global.findOne({ tag: "hongwei" }).exec();
 		let current_time = moment().toDate(); //下單時間
+		let closing = req.query.order_type === "limit" ? true : global.stock_closing; // ? 限價一律收盤後處理
 
 		// * 新增一筆訂單
 		const _userTxnDoc = await new UserTxn({
@@ -168,13 +171,12 @@ const user_place_order = async (req, res) => {
 			order_type: req.query.order_type,
 			order_time: current_time,
 			bid_price: bid_price || 0,
-			closing: global.stock_closing,
+			closing,
 		}).save();
 		const userTxnDoc = _userTxnDoc.toObject();
 
-		// * 只有市價交易要指定時間進行交易排程
-		// * 加上只有開盤時間會進行交易排程
-		if (req.query.order_type === "market" && !global.stock_closing) {
+		// ! 只有開盤時間交易需要排程
+		if (!closing) {
 			let txn_time = moment().add(40, "m").toDate(); //處理交易時間
 			console.log("一筆訂單將在: " + txn_time.toLocaleString() + " 處理");
 			let j = schedule.scheduleJob(txn_time, async () => {
@@ -251,7 +253,7 @@ const user_track_stock = async (req, res) => {
 	}
 };
 
-//取得即時股票資訊
+// * 取得即時股票資訊
 const get_realTime_stock = async (req, res) => {
 	const { user, code } = await check_permission(req);
 	if (!user) {
@@ -265,8 +267,8 @@ const get_realTime_stock = async (req, res) => {
 	if (stockData) {
 		let global = await Global.findOne({ tag: "hongwei" }).exec();
 
-		// ! 檢查是否收盤
-		if (global.stock_closing) {
+		// ! 檢查是否收盤後+取得收盤資料
+		if (global.stock_closing && global.stock_updated) {
 			// * 收盤期間取收盤資料
 			try {
 				// let today_str = moment().format("YYYY-MM-DD"); //今日最小單位

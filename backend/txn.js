@@ -45,12 +45,16 @@ export const _runEveryUserStock = () => {
 // * 伺服器運行處理交易執行起點
 export const runEveryTxn = async () => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
-	const closing_time = moment(globalDoc.stock_update).hour(13).minute(30); //13:30收盤
+	const closing_time = moment(globalDoc.stock_update_time).hour(13).minute(30); //13:30收盤
 
-	// * 取得今日收盤之前所有等待交易資料(由早到晚)
+	// * 取得要處理的交易資料(由早到晚)
 	const userTxnDocs = await UserTxn.find({
-		status: "waiting",
-		// data_time: { $lte: closing_time.toDate() },
+		status: "waiting", //等待處理的交易
+		closing: true, //收盤後處理
+		$or: [
+			{ order_type: "market" }, //市價交易必處理
+			{ order_time: { $lte: closing_time.toDate() } }, //下單時間在收盤之前
+		],
 	})
 		.sort({ date: "asc" })
 		.exec();
@@ -96,8 +100,8 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 		let txn_exist = await UserTxn.exists({ _id: _id });
 		if (!txn_exist) return;
 
-		// ! 開盤需要即時股票資訊
-		if (!closing && !stockData) {
+		// ! 開盤市價交易，需要即時股票資訊
+		if (order_type === "market" && !closing && !stockData) {
 			await updateTxn(_id, "fail", 7);
 			return;
 		}
@@ -109,40 +113,53 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 		let stock_price; //運算股價
 
 		if (closing) {
-			//收盤
-			new_stockInfo = stockInfo; //收盤資料
-			yesterday_price = parseFloat(new_stockInfo.y);
-			current_price = parseFloat(new_stockInfo.z);
-			switch (order_type) {
-				case "market":
-					stock_price = parseFloat(new_stockInfo.z);
-					break;
-				case "limit":
-					stock_price = bid_price; // 限價交易: 股價=用戶出價
-					break;
-				default:
-					stock_price = 0; //false
-					break;
+			//收盤處理
+			const last_closing_data = await getStock(stock_id, 1); // ? 次新的收盤資料(上上一次)
+
+			// ! 檢查是否有收盤資料
+			if (last_closing_data) {
+				new_stockInfo = stockInfo; // ? 最新收盤資料(上一次)
+				yesterday_price = parseFloat(last_closing_data.closing_price) || 0; // ? 次新收盤價
+				current_price = parseFloat(new_stockInfo.z) || 0; // ? 最新收盤價
+				switch (order_type) {
+					case "market":
+						stock_price = parseFloat(new_stockInfo.z) || 0;
+						break;
+					case "limit":
+						stock_price = bid_price || 0; // ? 限價交易: 股價=用戶出價
+						break;
+					default:
+						stock_price = 0; //false
+						break;
+				}
+			} else {
+				await updateTxn(_id, "fail", 7);
+				return;
 			}
 		} else {
-			//開盤
+			//開盤處理
 			// ? 如果即時股價為0則改用下單時抓尋時的股票資料
 			new_stockInfo = parseFloat(stockData.z) > 0 ? stockData : stockInfo;
-			yesterday_price = parseFloat(new_stockInfo.y);
-			current_price = parseFloat(new_stockInfo.z);
-			stock_price = parseFloat(new_stockInfo.z);
+			yesterday_price = parseFloat(new_stockInfo.y) || 0;
+			current_price = parseFloat(new_stockInfo.z) || 0;
+			stock_price = parseFloat(new_stockInfo.z) || 0;
 		}
 
 		// ! 檢查股票價格不能為0
-		if (stock_price <= 0 || yesterday_price <= 0) {
+		if (!stock_price && !current_price) {
 			await updateTxn(_id, "fail", 8);
 			return;
 		}
 
 		// ! 檢查股票是否漲跌停不能交易
-		let price_diff_percent =
-			(Math.abs(current_price - yesterday_price) / yesterday_price) * 100;
-		//市價交易超過9%就算漲跌停
+		let price_diff_percent;
+		if (yesterday_price) {
+			price_diff_percent =
+				(Math.abs(current_price - yesterday_price) / yesterday_price) * 100;
+		} else {
+			price_diff_percent = (Math.abs(parseFloat(new_stockInfo.ud)) / yesterday_price) * 100;
+		}
+		// ? 市價交易超過9%就算漲跌停
 		if (price_diff_percent >= 9) {
 			//判斷漲跌停
 			if (parseFloat(new_stockInfo.ud) >= 0) {
@@ -285,10 +302,11 @@ const runSell = async (userTxnDoc, stockInfo, stock_price) => {
 };
 
 // * 取得收盤股票資訊
-export const getStock = async (stock_id) => {
+export const getStock = async (stock_id, number = 0) => {
 	let hasStock = await Stock.exists({ stock_id });
 	if (hasStock) {
-		const stockDoc = await Stock.findOne({ stock_id }).sort("-data_time").exec(); //取的目前最新股票
+		const stockDocs = await Stock.find({ stock_id }).sort("-data_time").exec(); //取的目前最新股票
+		const stockDoc = stockDocs[number];
 		return stockDoc;
 	} else {
 		return null;

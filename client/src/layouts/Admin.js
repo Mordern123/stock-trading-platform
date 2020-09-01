@@ -17,7 +17,7 @@ import logo from "assets/img/dock.gif";
 import { WindowScroller } from "react-virtualized";
 import { useSnackbar } from "notistack";
 import { check_cookie } from "../tools";
-import { apiUser_logout, baseURL } from "../api";
+import { apiUser_logout, baseURL, apiGlobal } from "../api";
 import io from "socket.io-client";
 
 let ps;
@@ -36,6 +36,7 @@ function Admin({ ...rest }) {
 	const [fixedClasses, setFixedClasses] = React.useState("dropdown show");
 	const [mobileOpen, setMobileOpen] = React.useState(false);
 	const [online, set_online] = React.useState("---");
+	const [closing, set_closing] = React.useState(false);
 
 	const switchRoutes = (
 		<Switch>
@@ -55,6 +56,16 @@ function Admin({ ...rest }) {
 			<Redirect from="/admin" to="/admin/home" />
 		</Switch>
 	);
+
+	React.useEffect(() => {
+		const load = async () => {
+			let res = await apiGlobal();
+			if (res.data) {
+				set_closing(res.data.stock_closing);
+			}
+		};
+		load();
+	}, []);
 
 	const handleImageClick = (image) => {
 		setImage(image);
@@ -174,6 +185,7 @@ function Admin({ ...rest }) {
 				handleDrawerToggle={handleDrawerToggle}
 				open={mobileOpen}
 				color={color}
+				closing={closing}
 				{...rest}
 			/>
 			<div className={classes.mainPanel} ref={mainPanel}>

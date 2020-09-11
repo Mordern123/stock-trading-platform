@@ -5,12 +5,12 @@ import { getStock } from "./getStock";
 import moment from "moment";
 import Global from "./models/global_model";
 
-// * 收盤處理股票交易排程(每天8:00、9:00、15:00)
+// * 收盤處理股票交易排程(每天9:00、15:00、24:00)
 export const start_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.minute = new schedule.Range(0, 59, 60); //每60分鐘一次
 	// rule.hour = [new schedule.Range(0, 8), new schedule.Range(15, 23)]; //15點到隔天早上8點
-	rule.hour = [8, 9, 15]; //每天8:00、9:00、15:00
+	rule.hour = [0, 9, 15]; //每天9:00、15:00、24:00
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {

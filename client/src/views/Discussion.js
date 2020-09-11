@@ -196,11 +196,11 @@ export const Discussion = function() {
 			<div className="row mb-4">
 				<div className="col">
 					<p className="ch_font text-center text-success">
-						{"小訣竅: 保持友善包容的態度和大家交流"}
+						{"保持友善包容的態度和大家交流：）"}
 					</p>
 					<div style={{ borderRadius: "3px", overflow: "hidden" }}>
 						<TextField
-							style={{ backgroundColor: "#fff176" }}
+							style={{ backgroundColor: "#FFFFFF" }}
 							className="w-100"
 							label={<span className="ch_font">標題</span>}
 							variant="filled"
@@ -210,10 +210,10 @@ export const Discussion = function() {
 								onChange: onChange,
 								value: title,
 							}}
-							placeholder="不可超過50個字"
+							placeholder="輸入你的文章標題"
 						/>
 						<TextField
-							style={{ backgroundColor: "#fff59d" }}
+							style={{ backgroundColor: "#F0F2F5" }}
 							className="w-100 ch_font"
 							label={<span className="ch_font">內容</span>}
 							multiline
@@ -232,7 +232,7 @@ export const Discussion = function() {
 								onChange: onChange,
 								value: content,
 							}}
-							placeholder="不可超過800字"
+							placeholder="想發表些什麼?"
 						/>
 					</div>
 				</div>

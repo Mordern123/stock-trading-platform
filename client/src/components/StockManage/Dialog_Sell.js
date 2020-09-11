@@ -290,7 +290,7 @@ export default function SellDialog(props) {
 							{stockInfo.z}
 						</h3>
 						<DialogContentText className={clsx("mb-2 w-50 text-right", classes.text)}>
-							此為模擬股市交易資料，僅供模擬交易使用，有誤差值請見諒
+							此為模擬股市交易資料，為提供模擬交易使用，若有誤差值請見諒
 						</DialogContentText>
 					</div>
 				</Hidden>

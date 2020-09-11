@@ -195,12 +195,12 @@ export default function BuyDialog(props) {
 			if (res.status === 200) {
 				if (trackStatus) {
 					addTrackSnack(
-						`已取消 ${stockInfo.stock_id}【${stockInfo.stock_name}】的追蹤`,
+						`已取消 ${stockInfo.stock_id}【${stockInfo.stock_name}】的收藏`,
 						"success"
 					);
 				} else {
 					addTrackSnack(
-						`已將 ${stockInfo.stock_id}【${stockInfo.stock_name}】加入追蹤`,
+						`已將 ${stockInfo.stock_id}【${stockInfo.stock_name}】加入收藏`,
 						"success"
 					);
 				}
@@ -364,7 +364,7 @@ export default function BuyDialog(props) {
 							{stockInfo.z}
 						</h3>
 						<DialogContentText className={clsx("mb-2 w-50 text-right", classes.text)}>
-							此為模擬股市交易資料，僅供模擬交易使用，有誤差值請見諒
+							此為模擬股市交易資料，為提供模擬交易使用，若有誤差值請見諒
 						</DialogContentText>
 					</div>
 				</Hidden>

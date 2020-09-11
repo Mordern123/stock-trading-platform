@@ -293,7 +293,7 @@ const sidebarStyle = (theme) => ({
 		zIndex: "4",
 		overflowScrolling: "touch",
 		"& $list": {
-			height: "100vh",
+			height: "750px",
 		},
 	},
 	activePro: {

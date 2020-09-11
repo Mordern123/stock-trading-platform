@@ -49,7 +49,7 @@ const new_user = async (req, res) => {
 		await new Account({
 			user: newUser.id,
 			class_id: class_id,
-			balance: 1000000,
+			balance: 2000000, //預設給帳戶200萬
 			last_update: moment().toDate(),
 			last_value_update: moment().toDate(),
 		}).save();

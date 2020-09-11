@@ -72,7 +72,7 @@ app.use(
 app.use(cookieParser("hongwei0417")); //cookie簽章
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(logger("dev"));
+app.use(logger("common"));
 app.use("/user", userRouter);
 app.use("/class", classRouter);
 app.use("/stock", stockRouter);

@@ -1,10 +1,6 @@
 import UserSearch from "../models/user_search_model";
 import { handle_error } from "./error";
 import Stock from "../models/stock_model";
-import UserStock from "../models/user_stock_model";
-import UserTxn from "../models/user_txn_model";
-import Account from "../models/account_model";
-import User from "../models/user_model";
 import Global from "../models/global_model";
 import moment from "moment";
 import { updateTxn } from "../txn";
@@ -14,6 +10,7 @@ export const add_user_search = async (user, stock) => {
 	let doc = await new UserSearch({
 		user: user._id,
 		...stock,
+		request_time: moment().toDate(),
 	}).save();
 };
 

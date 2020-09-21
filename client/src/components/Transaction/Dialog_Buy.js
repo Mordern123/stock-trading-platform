@@ -299,7 +299,7 @@ export default function BuyDialog(props) {
 		if (order_type === "market" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，市價交易，金額將以收盤價作為計算"}
+					{"提醒: 現在為收盤期間，市價交易，金額將以下次收盤價計算"}
 				</p>
 			);
 		} else if (order_type === "limit" && global.stock_closing) {

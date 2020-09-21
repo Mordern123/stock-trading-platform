@@ -16,7 +16,7 @@ const init = () => {
 		// let date = moment(date_str).subtract(1, "days").toDate();
 
 		// ? 爬指定日期
-		let date_str = moment("2020-08-28").format("YYYY-MM-DD");
+		let date_str = moment("2020-09-21").format("YYYY-MM-DD");
 		let date = moment(date_str).toDate();
 
 		getStock(date); //之後判斷日期

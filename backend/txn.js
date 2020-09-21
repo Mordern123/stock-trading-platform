@@ -6,9 +6,10 @@ import Account from "./models/account_model";
 import User from "./models/user_model";
 import Global from "./models/global_model";
 import moment from "moment";
+import { closing_data_to_stock_info } from "./common/tools";
 require("dotenv").config();
 
-//獨立執行起點
+//獨立執行交易處理起點
 export const _runEveryTxn = () => {
 	const connection = mongoose.connection;
 	connection.once("open", () => {
@@ -24,7 +25,7 @@ export const _runEveryTxn = () => {
 	});
 };
 
-//獨立執行起點
+//獨立執行總價值計算起點
 export const _runEveryUserStock = () => {
 	const connection = mongoose.connection;
 	connection.once("open", () => {
@@ -40,19 +41,22 @@ export const _runEveryUserStock = () => {
 	});
 };
 
-///////////////////////////////////////////////
-
 // * 伺服器運行處理交易執行起點
 export const runEveryTxn = async () => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
 	const closing_time = moment(globalDoc.stock_update_time).hour(13).minute(30); //13:30收盤
 
+	// ! 停止所有交易
+	if (globalDoc.shutDown_txn) {
+		console.log(`停止交易時間，不處理任何交易`);
+		return;
+	}
+
 	// * 取得要處理的交易資料(由早到晚)
 	const userTxnDocs = await UserTxn.find({
 		status: "waiting", //等待處理的交易
-		closing: true, //收盤後處理
+		closing: true, //收盤後要處理
 		$or: [
-			{ order_type: "market" }, //市價交易必處理
 			{ order_time: { $lte: closing_time.toDate() } }, //下單時間在收盤之前
 		],
 	})
@@ -114,11 +118,13 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 
 		if (closing) {
 			//收盤處理
+			const closing_data = await getStock(stock_id); // ? 最新收盤資料(上一次)
 			const last_closing_data = await getStock(stock_id, 1); // ? 次新的收盤資料(上上一次)
+			const current_stock_info = closing_data_to_stock_info(closing_data);
 
 			// ! 檢查是否有收盤資料
 			if (last_closing_data) {
-				new_stockInfo = stockInfo; // ? 最新收盤資料(上一次)
+				new_stockInfo = current_stock_info; // ? 最新收盤資料(上一次)
 				yesterday_price = parseFloat(last_closing_data.closing_price) || 0; // ? 次新收盤價
 				current_price = parseFloat(new_stockInfo.z) || 0; // ? 最新收盤價
 				switch (order_type) {
@@ -186,13 +192,6 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 const runBuy = async (userTxnDoc, stockInfo, stock_price) => {
 	const { _id, user, stock_id, shares_number, order_type, closing } = userTxnDoc;
 	try {
-		// ! 檢查餘額無法購買股票
-		let txn_value = await checkBalance(user, stock_price, shares_number);
-		if (txn_value === null) {
-			await updateTxn(_id, "fail", 5);
-			return;
-		}
-
 		// ! 收盤處理，出價小於收盤最低價(限價購買)
 		if (closing) {
 			if (order_type === "limit") {
@@ -202,6 +201,20 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price) => {
 					return;
 				}
 			}
+		}
+
+		// ! 檢查餘額無法購買股票
+		let total_value; //總金額
+		let handling_fee; //手續費
+		let txn_value = await checkBalance(user, stock_price, shares_number); //交易金額
+
+		if (txn_value === null) {
+			await updateTxn(_id, "fail", 5);
+			return;
+		} else {
+			handling_fee = (txn_value * 0.1425) / 100; // ? 買入手續費收取0.1425%
+			handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
+			total_value = txn_value + handling_fee;
 		}
 
 		// * 交易可執行
@@ -234,10 +247,10 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price) => {
 		}
 
 		// * 更新該用戶帳戶
-		await updateAccount(user, -txn_value);
+		await updateAccount(user, -total_value);
 
 		// * 更新交易狀態
-		await updateTxn(_id, "success", 6);
+		await updateTxn(_id, "success", 6, { handling_fee });
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
@@ -274,7 +287,14 @@ const runSell = async (userTxnDoc, stockInfo, stock_price) => {
 		}
 
 		// * 交易可執行
-		const txn_value = stock_price * shares_number;
+		let total_value; //總金額
+		let handling_fee; //手續費
+		let txn_value = stock_price * shares_number; //交易金額
+
+		handling_fee = (txn_value * 0.4425) / 100; // ? 買入手續費收取0.1425% + 證券交易稅0.3%
+		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
+		total_value = txn_value - handling_fee;
+
 		await UserStock.findOneAndUpdate(
 			{
 				user,
@@ -283,7 +303,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price) => {
 			{
 				stockInfo,
 				$inc: { shares_number: -shares_number }, //減少股數
-				last_update: moment(),
+				last_update: moment().toDate(),
 			},
 			{
 				new: true,
@@ -291,10 +311,10 @@ const runSell = async (userTxnDoc, stockInfo, stock_price) => {
 		).exec();
 
 		// * 更新該用戶帳戶
-		await updateAccount(user, txn_value);
+		await updateAccount(user, total_value);
 
 		// * 更新交易狀態
-		await updateTxn(_id, "success", 6);
+		await updateTxn(_id, "success", 6, { handling_fee });
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
@@ -322,8 +342,9 @@ export const checkBalance = async (user, stock_price, n) => {
 };
 
 // * 更新交易結果訊息
-export const updateTxn = async (id, status, CODE) => {
+export const updateTxn = async (id, status, CODE, options) => {
 	let msg;
+	let handling_fee = 0;
 	switch (CODE) {
 		case 0:
 			msg = "STOCK_NOT_FOUND"; //不存在此股票
@@ -345,6 +366,7 @@ export const updateTxn = async (id, status, CODE) => {
 			break;
 		case 6:
 			msg = "TXN_SUCCESS"; //交易成功
+			handling_fee = options.handling_fee; //手續費紀錄
 			break;
 		case 7:
 			msg = "OCCUR_ERROR"; //交易發生錯誤
@@ -366,6 +388,7 @@ export const updateTxn = async (id, status, CODE) => {
 		status,
 		txn_time: moment().toDate(),
 		msg,
+		handling_fee,
 	});
 };
 
@@ -389,6 +412,7 @@ export const updateAccount = async (user, value) => {
 
 	//更新擁有股票資料
 	userAllStocks = await UserStock.find({ user }).exec(); //重新確認股票擁有數量
+
 	await Account.findOneAndUpdate(
 		{
 			user,

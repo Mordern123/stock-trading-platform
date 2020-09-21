@@ -36,6 +36,12 @@ const globalSchema = new Schema(
 			required: true,
 			default: 0,
 		},
+		shutDown_txn: {
+			// 停止交易
+			type: Boolean,
+			required: true,
+			default: false,
+		},
 	},
 	{
 		timestamps: true,

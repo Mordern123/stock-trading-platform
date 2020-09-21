@@ -14,7 +14,7 @@ import { queue } from "../server";
 import { task, txn_task } from "../common/scraper";
 import { add_user_search } from "../common/utils";
 import { handle_error } from "../common/error";
-import { to_num } from "../common/tools";
+import { closing_data_to_stock_info } from "../common/tools";
 
 moment.locale("zh-tw");
 
@@ -156,9 +156,10 @@ const user_place_order = async (req, res) => {
 
 		// ? 變數
 		let doc = await UserClass.findOne({ user: user._id }).exec();
-		let global = await Global.findOne({ tag: "hongwei" }).exec();
+		let global = await Global.findOne({ tag: "hongwei" }).lean().exec();
 		let current_time = moment().toDate(); //下單時間
-		let closing = req.query.order_type === "limit" ? true : global.stock_closing; // ? 限價一律收盤後處理
+		let closing =
+			req.query.order_type === "limit" || global.shutDown_txn ? true : global.stock_closing; // ? 限價一律收盤後處理
 
 		// * 新增一筆訂單
 		const _userTxnDoc = await new UserTxn({
@@ -267,30 +268,18 @@ const get_realTime_stock = async (req, res) => {
 	if (stockData) {
 		let global = await Global.findOne({ tag: "hongwei" }).exec();
 
-		// ! 檢查是否收盤後+取得收盤資料
+		// ! 檢查是否收盤後+已取得收盤資料
 		if (global.stock_closing && global.stock_updated) {
 			// * 收盤期間取收盤資料
 			try {
 				// let today_str = moment().format("YYYY-MM-DD"); //今日最小單位
 				// let today = moment(today_str).toDate();
 				// let stock = await Stock.findOne({ stock_id, data_time: today }).exec(); //找尋今日收盤資訊
-				let stock = await Stock.findOne({ stock_id }).sort("-data_time").exec(); //取的目前最新收盤價
+				let closing_data = await Stock.findOne({ stock_id }).sort("-data_time").exec(); //取的目前最新收盤資料
+				let stock_info = closing_data_to_stock_info(closing_data);
 
-				let obj = {
-					website: "close",
-					stock_id,
-					stock_name: stock.stock_name,
-					v: parseInt(parseInt(to_num(stock.trading_volume)) / 1000), //累積成交量(張數)
-					o: to_num(stock.opening_price), //開盤
-					h: to_num(stock.highest_price), //當日最高
-					l: to_num(stock.lowest_price), //當日最低
-					z: to_num(stock.closing_price), //收盤價
-					y: to_num(stock.closing_price), //昨收(已收盤和收盤價一樣)
-					ud: stock.up_down + stock.up_down_spread || 0, //漲跌
-					request_time: moment().toDate(),
-				};
-				await add_user_search(user, obj); //儲存搜尋紀錄
-				res.json(obj);
+				await add_user_search(user, stock_info); //儲存搜尋紀錄
+				res.json(stock_info);
 			} catch (error) {
 				handle_error(error, res);
 			}

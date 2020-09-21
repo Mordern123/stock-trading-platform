@@ -57,6 +57,10 @@ const userTxnSchema = new Schema(
 			type: Boolean,
 			required: true,
 		},
+		handling_fee: {
+			type: Number,
+			default: 0,
+		},
 	},
 	{
 		timestamps: true,

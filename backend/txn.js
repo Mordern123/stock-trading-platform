@@ -56,7 +56,7 @@ export const runEveryTxn = async () => {
 	const userTxnDocs = await UserTxn.find({
 		status: "waiting", //等待處理的交易
 		closing: true, //收盤後要處理
-		// order_time: { $lte: closing_time.toDate() } //下單時間在收盤之前
+		order_time: { $lte: closing_time.toDate() } //下單時間在收盤之前
 	})
 		.sort({ date: "asc" })
 		.exec();

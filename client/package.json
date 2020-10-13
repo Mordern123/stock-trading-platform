@@ -22,6 +22,7 @@
     "material-table": "1.57.2",
     "moment": "^2.24.0",
     "mui-datatables": "^2.14.0",
+    "node-sass": "^4.14.1",
     "notistack": "^0.9.16",
     "perfect-scrollbar": "1.4.0",
     "prop-types": "15.7.2",

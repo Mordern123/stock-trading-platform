@@ -489,7 +489,7 @@ export default function SellDialog(props) {
 					) : null}
 					<div className={get_input_class()}>
 						<TextField
-							label="股票買入數量"
+							label="股票賣出數量"
 							type="number"
 							variant="outlined"
 							InputProps={{

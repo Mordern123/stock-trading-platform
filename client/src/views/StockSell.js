@@ -15,7 +15,10 @@ import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Material_Table from "components/Table/Material_Table";
 import CardStat from "components/Transaction/Card_Stat";
+import IconButton from "@material-ui/core/IconButton";
+import InputIcon from "@material-ui/icons/Input";
 import MonetizationOnRoundedIcon from "@material-ui/icons/MonetizationOnRounded";
+import LocalAtmIcon from "@material-ui/icons/LocalAtm";
 import Backdrop from "@material-ui/core/Backdrop";
 import { apiUserStock_get, apiUser_account, apiStock_realTime, apiTxn_get_success } from "../api";
 import { useSnackbar } from "notistack";
@@ -306,7 +309,15 @@ export const StockSell = function() {
 								detailPanel={getPanel()}
 								actions={[
 									{
-										icon: () => <MonetizationOnRoundedIcon />,
+										icon: () => (
+											<div
+												className="d-flex flex-column font-weight-bold justify-content-center align-items-center text-success"
+												style={{ fontSize: "0.8rem" }}
+											>
+												售出
+												<InputIcon style={{ fontSize: "1rem" }} />
+											</div>
+										),
 										tooltip: "售出股票",
 										onClick: handleOpenStockSell,
 									},

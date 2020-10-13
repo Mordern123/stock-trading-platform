@@ -2,7 +2,13 @@ import React, { useState, useEffect, useRef, Fragment, useCallback } from "react
 import { makeStyles } from "@material-ui/core/styles";
 import { useHistory, useLocation } from "react-router";
 import { InputBase, IconButton, Divider, Paper, Button } from "@material-ui/core";
-import { Search, ShowChart, AccountBalanceRounded, LocalAtmRounded } from "@material-ui/icons";
+import {
+	Search,
+	ShowChart,
+	AccountBalanceRounded,
+	LocalAtmRounded,
+	TimelapseOutlined,
+} from "@material-ui/icons";
 import GridItem from "components/Grid/GridItem.js";
 import GridContainer from "components/Grid/GridContainer.js";
 import Material_Table from "components/Table/Material_Table";
@@ -24,6 +30,7 @@ import { handle_error } from "../tools";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import delay from "delay";
 import copy from "clipboard-copy";
+import localforage from "localforage";
 
 //提醒教學資訊
 const tips = [
@@ -100,7 +107,6 @@ const styles = (theme) => ({
 		fontFamily: "'Noto Sans TC', Helvetica, Arial, sans-serif",
 	},
 	searchBox: {
-		padding: "2px 4px",
 		display: "flex",
 		alignItems: "center",
 		width: "100%",
@@ -155,16 +161,77 @@ export const StockBuy = function() {
 	const [update, set_update] = useState(false);
 	const [blocking, set_blocking] = useState(false);
 	const [random_n, set_random_n] = useState(Math.floor(Math.random() * tips.length));
+	const [recommend_list, set_recommend_list] = React.useState([]);
+	const [stock_data, set_stock_data] = React.useState([]);
 	const history = useHistory();
 	const location = useLocation();
 
-	const handleCloseStockBuy = () => {
-		set_showBuyDialog(false);
+	//載入股票資料
+	React.useEffect(() => {
+		const load = async () => {
+			let stock_data = await localforage.getItem("stocks"); //股票暫存
+			if (stock_data) {
+				set_stock_data(stock_data);
+				console.log(stock_data);
+			}
+		};
+		load();
+	}, []);
+
+	//監聽點擊外部事件
+	React.useEffect(() => {
+		document.addEventListener("click", function(e) {
+			const x = document.getElementsByClassName("autocomplete-items");
+			let need_remove = true;
+			for (var i = 0; i < x.length; i++) {
+				if (e.target === x[i] || e.target === searchRef.current.childNodes[0]) {
+					need_remove = false;
+				}
+			}
+			if (need_remove) {
+				set_recommend_list([]);
+			}
+		});
+	}, []);
+
+	//推薦搜尋
+	React.useEffect(() => {
+		//檢查文字和輸入框是否focus
+		if (searchText && searchRef.current.childNodes[0] === document.activeElement) {
+			const timer = setTimeout(() => {
+				const result = stock_data
+					.filter((item) => {
+						return (
+							item.stock_name.indexOf(searchText) !== -1 ||
+							item.stock_id.indexOf(searchText) !== -1
+						);
+					})
+					.slice(0, 20); //塞選前20筆
+				set_recommend_list(result);
+			}, [1000]);
+
+			return () => {
+				clearTimeout(timer);
+			};
+		} else {
+			set_recommend_list([]);
+		}
+	}, [searchText]);
+
+	//更改搜尋文字
+	const onChange = () => {
+		let text = searchRef.current.childNodes[0].value; //拿InputBase裡面的Input
+		set_searchText(text.trim());
 	};
 
-	const onChange = () => {
-		let text = searchRef.current.childNodes[0].value;
-		set_searchText(text.trim()); //拿InputBase裡面的Input
+	//選擇搜尋推薦選項
+	const select_recommend = (stock) => {
+		set_recommend_list([]);
+		set_searchText(stock.stock_id);
+	};
+
+	const handleCloseStockBuy = () => {
+		set_showBuyDialog(false);
 	};
 
 	//處理搜尋股票
@@ -316,16 +383,19 @@ export const StockBuy = function() {
 			<GridContainer>
 				<GridItem xs={12} sm={12} md={12}>
 					<p className="ch_font text-danger text-center">{tips[random_n]}</p>
-					<Paper component="form" elevation={5} className={`${classes.searchBox} mb-3`}>
+					<Paper
+						component="form"
+						elevation={5}
+						className={`${classes.searchBox} mb-3 position-relative`}
+					>
 						<div className="p-3">
 							<AccountBoxRoundedIcon color="primary" fontSize="large" />
 						</div>
 						<InputBase
 							ref={searchRef}
 							className={classes.searchInput}
-							placeholder="搜尋股票代號"
+							placeholder="搜尋股票名稱或是代號"
 							onChange={onChange}
-							onKeyDown={handle_keyDown}
 							value={searchText}
 						/>
 						<IconButton
@@ -337,6 +407,19 @@ export const StockBuy = function() {
 						>
 							<Search fontSize="large" />
 						</IconButton>
+						<div className="search-autocomplete">
+							<div className="autocomplete-list">
+								{recommend_list.map((item, i) => (
+									<div
+										key={i}
+										className="autocomplete-items"
+										onClick={() => select_recommend(item)}
+									>
+										{`${item.stock_id} 【${item.stock_name}】`}
+									</div>
+								))}
+							</div>
+						</div>
 					</Paper>
 					<Material_Table
 						title="搜尋紀錄"

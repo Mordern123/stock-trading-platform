@@ -12,14 +12,15 @@ import Sidebar from "components/Sidebar/Sidebar.js";
 import FixedPlugin from "components/FixedPlugin/FixedPlugin.js";
 import routes from "routes.js";
 import styles from "assets/jss/material-dashboard-react/layouts/adminStyle.js";
-import bgImage from "assets/img/sidebar-2.jpg";
+import bgImage from "assets/img/dock_bg.jpg";
 import logo from "assets/img/dock.gif";
 import { WindowScroller } from "react-virtualized";
 import { useSnackbar } from "notistack";
 import { check_cookie } from "../tools";
 import { apiUser_logout, baseURL, apiGlobal } from "../api";
 import io from "socket.io-client";
-
+import IconButton from "@material-ui/core/IconButton";
+import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
 let ps;
 
 const useStyles = makeStyles(styles);
@@ -27,7 +28,7 @@ const useStyles = makeStyles(styles);
 function Admin({ ...rest }) {
 	const classes = useStyles();
 	const history = useHistory();
-	const { enqueueSnackbar } = useSnackbar();
+	const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 	// ref to help us initialize PerfectScrollbar on windows devices
 	const mainPanel = React.createRef();
 	// states and functions
@@ -154,6 +155,8 @@ function Admin({ ...rest }) {
 			localStorage.setItem("comeBack", false);
 		}
 
+		addSnack_info1();
+
 		return () => {
 			// clearTimeout(timeout);
 			clearInterval(interval);
@@ -172,6 +175,33 @@ function Admin({ ...rest }) {
 				},
 				className: "ch_font",
 			},
+		});
+	};
+
+	const addSnack_info1 = () => {
+		enqueueSnackbar("🔥 \t股票系統正式開始計算成績 \t🔥", {
+			variant: "default",
+			anchorOrigin: { horizontal: "center", vertical: "top" },
+			autoHideDuration: 4000,
+			ContentProps: {
+				style: {
+					display: "flex",
+					justifyContent: "center",
+					color: "white",
+				},
+				className: "ch_font",
+			},
+			action: (id) => {
+				return (
+					<IconButton style={{ color: "white" }}>
+						<CheckRoundedIcon
+							className="text-warning"
+							onClick={() => closeSnackbar(id)}
+						/>
+					</IconButton>
+				);
+			},
+			persist: true,
 		});
 	};
 

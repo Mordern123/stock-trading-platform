@@ -1,3 +1,21 @@
-import { _runEveryUserStock } from "./txn";
+import mongoose from "mongoose";
+import { runEveryUserStock } from './txn'
+require("dotenv").config();
 
-_runEveryUserStock();
+//獨立執行總價值計算起點
+const Run = () => {
+	const connection = mongoose.connection;
+	connection.once("open", () => {
+		console.log("MongoDB database connection established successfully");
+		console.log("The database is " + connection.name);
+		runEveryUserStock();
+	});
+	mongoose.set("useFindAndModify", false);
+	mongoose.connect(process.env.DB_CONN_STRING, {
+		useNewUrlParser: true,
+		useCreateIndex: true,
+		useUnifiedTopology: true,
+	});
+};
+
+Run();

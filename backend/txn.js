@@ -9,38 +9,6 @@ import moment from "moment";
 import { closing_data_to_stock_info } from "./common/tools";
 require("dotenv").config();
 
-//獨立執行交易處理起點
-export const _runEveryTxn = () => {
-	const connection = mongoose.connection;
-	connection.once("open", () => {
-		console.log("MongoDB database connection established successfully");
-		console.log("The database is " + connection.name);
-		runEveryTxn();
-	});
-	mongoose.set("useFindAndModify", false);
-	mongoose.connect(process.env.DB_CONN_STRING, {
-		useNewUrlParser: true,
-		useCreateIndex: true,
-		useUnifiedTopology: true,
-	});
-};
-
-//獨立執行總價值計算起點
-export const _runEveryUserStock = () => {
-	const connection = mongoose.connection;
-	connection.once("open", () => {
-		console.log("MongoDB database connection established successfully");
-		console.log("The database is " + connection.name);
-		runEveryUserStock();
-	});
-	mongoose.set("useFindAndModify", false);
-	mongoose.connect(process.env.DB_CONN_STRING, {
-		useNewUrlParser: true,
-		useCreateIndex: true,
-		useUnifiedTopology: true,
-	});
-};
-
 // * 伺服器運行處理交易執行起點
 export const runEveryTxn = async () => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();

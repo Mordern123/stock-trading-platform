@@ -21,6 +21,7 @@ import { apiUser_logout, baseURL, apiGlobal } from "../api";
 import io from "socket.io-client";
 import IconButton from "@material-ui/core/IconButton";
 import CheckRoundedIcon from "@material-ui/icons/CheckRounded";
+import CheckCircleTwoToneIcon from '@material-ui/icons/CheckCircleTwoTone';
 let ps;
 
 const useStyles = makeStyles(styles);
@@ -191,17 +192,15 @@ function Admin({ ...rest }) {
 				},
 				className: "ch_font",
 			},
+			autoHideDuration: 1000 * 60 * 1,
 			action: (id) => {
 				return (
 					<IconButton style={{ color: "white" }}>
-						<CheckRoundedIcon
-							className="text-warning"
-							onClick={() => closeSnackbar(id)}
-						/>
+						<CheckCircleTwoToneIcon onClick={() => closeSnackbar(id)}/>
 					</IconButton>
 				);
 			},
-			persist: true,
+			// persist: true,
 		});
 	};
 

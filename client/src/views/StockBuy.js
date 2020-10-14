@@ -412,7 +412,7 @@ export const StockBuy = function() {
 								{recommend_list.map((item, i) => (
 									<div
 										key={i}
-										className="autocomplete-items"
+										className="autocomplete-items ch_font"
 										onClick={() => select_recommend(item)}
 									>
 										{`${item.stock_id} 【${item.stock_name}】`}

@@ -84,7 +84,7 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 		let user_bid_price = bid_price || 0; //用戶出價
 
 		if (closing) {
-			//收盤處理
+			//處理收盤交易
 			const closing_data = await getStock(stock_id); // ? 最新收盤資料(上一次)
 			const last_closing_data = await getStock(stock_id, 1); // ? 次新的收盤資料(上上一次)
 			const current_stock_info = closing_data_to_stock_info(closing_data);
@@ -94,13 +94,23 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 				new_stockInfo = current_stock_info; // ? 最新收盤資料(上一次)
 				yesterday_price = parseFloat(last_closing_data.closing_price) || 0; // ? 次新收盤價
 				current_price = parseFloat(new_stockInfo.z) || 0; // ? 最新收盤價
-				stock_price = parseFloat(new_stockInfo.z) || 0;
+				if(order_type === "limit") {
+					let lowest_price = parseFloat(new_stockInfo.l); //收盤最低點
+					let highest_price = parseFloat(new_stockInfo.h); //收盤最高點
+					if(lowest_price <= user_bid_price && user_bid_price <= highest_price) { //出價在區間內
+						stock_price = user_bid_price //? 限價交易計算價格用使用者出價
+					} else {
+						stock_price = parseFloat(new_stockInfo.z) || 0;
+					}
+				} else {
+					stock_price = parseFloat(new_stockInfo.z) || 0;
+				}
 			} else {
 				await updateTxn(_id, "fail", 7);
 				return;
 			}
 		} else {
-			//開盤處理
+			//處理開盤交易
 			// ? 如果即時股價為0則改用下單時抓尋時的股票資料
 			new_stockInfo = parseFloat(stockData.z) > 0 ? stockData : stockInfo;
 			yesterday_price = parseFloat(new_stockInfo.y) || 0;
@@ -109,7 +119,7 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 		}
 
 		// ! 檢查股票價格不能為0
-		if (!stock_price && !current_price) {
+		if (!stock_price || !current_price) {
 			await updateTxn(_id, "fail", 8);
 			return;
 		}

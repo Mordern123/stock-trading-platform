@@ -8,7 +8,7 @@ import Card from "components/Card/Card.js";
 import CardHeader from "components/Card/CardHeader.js";
 import CardBody from "components/Card/CardBody.js";
 import Chart from "../components/StockRank/chart";
-import { apiRank_list_all, apiTxn_list_all } from "../api";
+import { apiRank_list_all, apiTxn_list_all, apiUser_get } from "../api";
 import { handle_error } from "../tools";
 import clsx from "clsx";
 
@@ -59,6 +59,7 @@ export const StockRank = function() {
 	const [updateTime, setUpdateTime] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [random_n, set_random_n] = useState(Math.floor(Math.random() * tips.length));
+	const [userRowIndex, set_userRowIndex] = useState(null);
 	const history = useHistory();
 
 	//載入帳戶
@@ -67,14 +68,19 @@ export const StockRank = function() {
 			setLoading(true);
 			try {
 				const res = await apiRank_list_all();
+				const res2 = await apiUser_get();
 
 				//刪除交易數量為0和總資產為0的資料
 				const noZeroTxn = res.data.rank_data.filter(
 					(item) => item.txn_count !== 0 && item.total_amount !== 0
 				);
 
+				let rowIndex = null;
+
 				//製作Table資料
 				const rowData = noZeroTxn.map((item, index) => {
+					//取得user row index
+					if (res2.data.student_id === item.student_id) rowIndex = index;
 					return [
 						index + 1,
 						item.student_id,
@@ -84,6 +90,7 @@ export const StockRank = function() {
 					];
 				});
 
+				set_userRowIndex(rowIndex);
 				set_rankData(rowData);
 				setUpdateTime(res.data.updateTime);
 
@@ -119,7 +126,12 @@ export const StockRank = function() {
 					<CardBody>
 						{txnData ? <Chart data={txnData} /> : null}
 						<p className="ch_font text-danger text-center mt-3">{tips[random_n]}</p>
-						<Table tableHeaderColor="warning" tableHead={column} tableData={rankData} />
+						<Table
+							tableHeaderColor="warning"
+							tableHead={column}
+							tableData={rankData}
+							highlightRowIndex={userRowIndex}
+						/>
 					</CardBody>
 				</Card>
 			</GridItem>

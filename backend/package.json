@@ -10,7 +10,8 @@
     "stock": "babel-node getStock_manual.js",
     "txn": "babel-node manual_txn.js",
     "value": "babel-node manual_value.js",
-    "reset": "babel-node reset.js"
+    "reset": "babel-node reset.js",
+    "check": "babel-node check.js"
   },
   "author": "",
   "license": "ISC",

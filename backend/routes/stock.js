@@ -75,7 +75,7 @@ const get_stock_rank = async (req, res) => {
 		let accountDocs = await Account.find({ class_id: doc.class_id })
 			.sort({ total_amount: "desc" })
 			.populate("user")
-			.limit(50)
+			// .limit(50)
 			.lean()
 			.exec();
 		let rank_data = accountDocs.map((item) => {

@@ -11,7 +11,8 @@
     "txn": "babel-node manual_txn.js",
     "value": "babel-node manual_value.js",
     "reset": "babel-node reset.js",
-    "check": "babel-node check.js"
+    "check": "babel-node check.js",
+    "score": "babel-node score.js"
   },
   "author": "",
   "license": "ISC",
@@ -33,7 +34,8 @@
     "p-queue": "^6.5.0",
     "restler": "^3.4.0",
     "socket.io": "^2.3.0",
-    "step": "^1.0.0"
+    "step": "^1.0.0",
+    "xlsx": "^0.16.9"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.4",

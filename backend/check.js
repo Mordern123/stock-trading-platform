@@ -55,7 +55,6 @@ const user_data1 = [
     "4109066027"
 ]
 
-//獨立執行總價值計算起點
 const Run = () => {
 	const connection = mongoose.connection;
 	connection.once("open", () => {

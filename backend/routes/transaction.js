@@ -221,7 +221,8 @@ const get_class_txn_avg = async (req, res) => {
 
 router.route("/get/all").get(get_all_txn);
 router.route("/get/user/:type").get(get_user_txn);
-router.route("/user").delete(delete_user_txn);
 router.route("/get/class/avg").get(get_class_txn_avg);
+//! 暫時移除取消訂單功能
+// router.route("/user").delete(delete_user_txn);
 
 export default router;

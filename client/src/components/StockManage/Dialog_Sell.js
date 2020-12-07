@@ -238,25 +238,25 @@ export default function SellDialog(props) {
 		if (order_type === "market" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，市價交易，金額將以下次收盤價做為計算"}
+					{"提醒: 現在為收盤期間，即時交易(盤中處理)，金額將以下次收盤價計算"}
 				</p>
 			);
 		} else if (order_type === "limit" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，限價交易，訂單將於下一個收盤日之後處理"}
+					{"提醒: 現在為收盤期間，限價交易(盤後處理)，訂單將於下一個收盤日之後處理"}
 				</p>
 			);
 		} else if (order_type === "market" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為開盤期間，市價交易，訂單於下單後40分鐘後抓取市價處理"}
+					{"提醒: 現在為收盤期間，即時交易(盤中處理)，訂單於下單後40分鐘後抓取市價處理"}
 				</p>
 			);
 		} else if (order_type === "limit" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為開盤期間，限價交易，訂單將於今日收盤後進行處理"}
+					{"提醒: 現在為開盤期間，限價交易(盤後處理)，訂單將於今日收盤後進行處理"}
 				</p>
 			);
 		} else {
@@ -452,10 +452,10 @@ export default function SellDialog(props) {
 									<em>請選擇交易類型</em>
 								</MenuItem>
 								<MenuItem className="ch_font" value={"market"}>
-									市價交易
+									即時交易(盤中處理)
 								</MenuItem>
 								<MenuItem className="ch_font" value={"limit"}>
-									限價交易
+									限價交易(盤後處理)
 								</MenuItem>
 							</Select>
 						</FormControl>

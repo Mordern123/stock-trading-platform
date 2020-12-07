@@ -172,7 +172,6 @@ export const StockBuy = function() {
 			let stock_data = await localforage.getItem("stocks"); //股票暫存
 			if (stock_data) {
 				set_stock_data(stock_data);
-				console.log(stock_data);
 			}
 		};
 		load();
@@ -270,10 +269,16 @@ export const StockBuy = function() {
 		set_blocking(false);
 	};
 
-	const handle_keyDown = (e) => {
-		if (e.key === "Enter") {
-			e.preventDefault();
-			handle_search_stock();
+	const handle_keyDown = (isSearch) => {
+		return e => {
+			if (e.key === "Enter") {
+				e.preventDefault();
+				if(isSearch) {
+					handle_search_stock();
+				} else {
+					alert("請點擊右方搜尋按鈕")
+				}
+			}
 		}
 	};
 
@@ -397,13 +402,14 @@ export const StockBuy = function() {
 							placeholder="搜尋股票名稱或是代號"
 							onChange={onChange}
 							value={searchText}
+							onKeyDown={handle_keyDown(false)}
 						/>
 						<IconButton
 							type="button"
 							color="primary"
 							className="p-3"
 							onClick={handle_search_stock}
-							onKeyDown={handle_keyDown}
+							onKeyDown={handle_keyDown(true)}
 						>
 							<Search fontSize="large" />
 						</IconButton>

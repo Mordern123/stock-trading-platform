@@ -334,15 +334,15 @@ export const StockStatus = function() {
 								noDataDisplay="沒有任何待處理交易紀錄"
 								isLoading={loading}
 								headerStyle={{ backgroundColor: "#e1f5fe" }}
-								actions={[
-									{
-										icon: () => (
-											<CancelRoundedIcon style={{ color: "#e57373" }} />
-										),
-										tooltip: "取消訂單",
-										onClick: open_modal,
-									},
-								]}
+								// actions={[
+								// 	{
+								// 		icon: () => (
+								// 			<CancelRoundedIcon style={{ color: "#e57373" }} />
+								// 		),
+								// 		tooltip: "取消訂單",
+								// 		onClick: open_modal,
+								// 	},
+								// ]}
 								actionsColumnIndex={-1}
 							/>
 						</TabPanel>

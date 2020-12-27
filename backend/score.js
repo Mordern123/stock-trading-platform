@@ -1,7 +1,9 @@
 import xlsx from 'xlsx'
 import mongoose from "mongoose";
-import User from "./models/user_model"
+import UserTxn from "./models/user_txn_model"
 import Account from "./models/account_model"
+import User from './models/user_model'
+import moment from 'moment'
 require("dotenv").config();
 
 const class_name_list = ["財富管理實務", "網路理財", "投資學與金融科技"] //依據需求更改
@@ -34,6 +36,7 @@ const generate_excel = async() => {
     let rank = 1;
     for(let j = 0; j < accounts.length; j++) {
       const { balance, stock_number, stock_value, total_amount, txn_count, class_id, user } = accounts[j]
+      const first_txn = await UserTxn.find({ user: user._id }).sort({ order_time: 'asc'}).limit(1).lean().exec()
 
       if(balance !== 2000000)  {
         class_data.push({
@@ -43,7 +46,8 @@ const generate_excel = async() => {
           "帳戶餘額": balance,
           "股票價值": stock_value,
           "擁有股票數量": stock_number,
-          "交易總次數": txn_count
+          "交易總次數": txn_count,
+          "首次交易時間": first_txn[0] && moment(first_txn[0].order_time).format("M/D HH:mm")
         })
         rank++
       }

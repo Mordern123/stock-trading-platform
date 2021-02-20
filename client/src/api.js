@@ -4,7 +4,7 @@ export const test_serverAddress = "localhost:5000";
 // export const serverAddress = "35.229.149.140:5000";
 // export const serverAddress = "140.120.53.198:5000";
 export const serverAddress = "dock.nchustock.ga:5000";
-export const baseURL = `http://${serverAddress}`;
+export const baseURL = `http://${test_serverAddress}`;
 
 const request = axios.create({ baseURL: `${baseURL}`, withCredentials: true });
 const userReq = axios.create({ baseURL: `${baseURL}/user`, withCredentials: true });
@@ -24,6 +24,7 @@ export const apiUser_get = () => userReq.post("/get");
 export const apiUser_update = (data) => userReq.post("/update", data);
 export const apiUser_account = (data) => userReq.post("/account", data);
 export const apiUser_logout = () => userReq.post("/logout");
+export const apiUser_token = () => userReq.get("/token");
 
 // Class
 export const apiClass_announceList = () => classReq.get("/list");

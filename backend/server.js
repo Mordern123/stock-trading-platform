@@ -18,7 +18,7 @@ import {
 	start_stockValue_schedule1,
 	start_stockValue_schedule2,
 	remove_closing_stock_data,
-} from "./schedule";
+} from "./utils/schedule";
 import socket from "socket.io";
 
 require("dotenv").config();
@@ -43,7 +43,6 @@ connection.once("open", () => {
 	start_stockValue_schedule2();
 	remove_closing_stock_data();
 });
-
 mongoose.connect(process.env.DB_CONN_STRING, {
 	useNewUrlParser: true,
 	useCreateIndex: true,

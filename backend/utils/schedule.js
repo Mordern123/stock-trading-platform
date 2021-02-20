@@ -1,9 +1,9 @@
 import schedule from "node-schedule";
 import { runEveryTxn, runEveryUserStock } from "./txn";
-import { remove_stock_data } from "./common/utils";
+import { remove_stock_data } from "../common/utils";
 import { getStock } from "./getStock";
 import moment from "moment";
-import Global from "./models/global_model";
+import Global from "../models/global_model";
 
 // * 收盤處理股票交易排程(每日15:00)
 export const start_txn_schedule = () => {

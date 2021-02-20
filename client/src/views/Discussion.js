@@ -132,9 +132,9 @@ export const Discussion = function() {
 			set_blocking(true);
 		}
 		try {
-			await apiClass_add_post({ title, content });
+			let result = await apiClass_add_post({ title, content });
+			console.log(result);
 			update();
-
 			await delay(2000);
 			set_title("");
 			set_content("");

@@ -5,8 +5,16 @@ import UserClass from "../models/user_class_model";
 import Comment from "../models/comment_model";
 import Global from "../models/global_model";
 import Post from "../models/post_model";
+import UserToken from "../models/user_token_model";
 import { check_permission } from "../common/auth";
 import { handle_error } from "../common/error";
+import {
+	getContractInstance,
+	string_to_bytes32,
+	contract_call,
+	contract_send,
+} from "../utils/ethereum";
+import contract_ABI from "../contract/StockToken.json";
 
 const router = Router();
 
@@ -112,16 +120,33 @@ const add_post = async (req, res) => {
 			res.status(code).send();
 			return;
 		}
-
 		const doc = await UserClass.findOne({ user: user._id }).exec();
-
-		let result = await Post.create({
+		const post_result = await Post.create({
 			class_id: doc ? doc.class_id : "GLOBAL_CLASS",
 			user: user._id,
 			title: title,
 			content: content,
 		});
-		res.json(result);
+
+		if (post_result) {
+			const uid_bytes32 = string_to_bytes32(user.student_id);
+			const contract = await getContractInstance(contract_ABI, process.env.CONTRACT_ADDRESS);
+			const txn = await contract_send(contract, "add_token", [uid_bytes32, 1]);
+			const token_result = await UserToken.create({
+				user: user._id,
+				post: post_result._id,
+				token_number: 1,
+				txn: txn,
+				txn_time: new Date(),
+			});
+			if (token_result) {
+				res.json(txn);
+			} else {
+				res.json(false);
+			}
+		} else {
+			res.json(false);
+		}
 	} catch (error) {
 		handle_error(error, res);
 	}

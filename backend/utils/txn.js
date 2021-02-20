@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import Stock from "./models/stock_model";
-import UserStock from "./models/user_stock_model";
-import UserTxn from "./models/user_txn_model";
-import Account from "./models/account_model";
-import User from "./models/user_model";
-import Global from "./models/global_model";
+import Stock from "../models/stock_model";
+import UserStock from "../models/user_stock_model";
+import UserTxn from "../models/user_txn_model";
+import Account from "../models/account_model";
+import User from "../models/user_model";
+import Global from "../models/global_model";
 import moment from "moment";
-import { closing_data_to_stock_info } from "./common/tools";
+import { closing_data_to_stock_info } from "../common/tools";
 require("dotenv").config();
 
 // * 伺服器運行處理交易執行起點
@@ -24,7 +24,7 @@ export const runEveryTxn = async () => {
 	const userTxnDocs = await UserTxn.find({
 		status: "waiting", //等待處理的交易
 		closing: true, //收盤後要處理
-		order_time: { $lte: closing_time.toDate() } //下單時間在收盤之前
+		order_time: { $lte: closing_time.toDate() }, //下單時間在收盤之前
 	})
 		.sort({ date: "asc" })
 		.exec();
@@ -94,11 +94,12 @@ export const runTxn = async (type, userTxnDoc, stockData) => {
 				new_stockInfo = current_stock_info; // ? 最新收盤資料(上一次)
 				yesterday_price = parseFloat(last_closing_data.closing_price) || 0; // ? 次新收盤價
 				current_price = parseFloat(new_stockInfo.z) || 0; // ? 最新收盤價
-				if(order_type === "limit") {
+				if (order_type === "limit") {
 					let lowest_price = parseFloat(new_stockInfo.l); //收盤最低點
 					let highest_price = parseFloat(new_stockInfo.h); //收盤最高點
-					if(lowest_price <= user_bid_price && user_bid_price <= highest_price) { //出價在區間內
-						stock_price = user_bid_price //? 限價交易計算價格用使用者出價
+					if (lowest_price <= user_bid_price && user_bid_price <= highest_price) {
+						//出價在區間內
+						stock_price = user_bid_price; //? 限價交易計算價格用使用者出價
 					} else {
 						stock_price = parseFloat(new_stockInfo.z) || 0;
 					}

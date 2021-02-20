@@ -3,7 +3,7 @@ import { handle_error } from "./error";
 import Stock from "../models/stock_model";
 import Global from "../models/global_model";
 import moment from "moment";
-import { updateTxn } from "../txn";
+import { updateTxn } from "../utils/txn";
 
 //儲存使用者搜尋紀錄
 export const add_user_search = async (user, stock) => {

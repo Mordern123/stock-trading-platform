@@ -12,10 +12,11 @@ import Chart from "components/UserProfile/chart.js";
 import Avatar from "components/UserProfile/avatar.js";
 import ProfileBox from "components/UserProfile/profileBox.js";
 import { Typography, Paper, Box, Tab, Tabs, Button } from "@material-ui/core";
+import StarsRoundedIcon from "@material-ui/icons/StarsRounded";
 import { ThemeProvider } from "@material-ui/styles";
 import { createMuiTheme } from "@material-ui/core/styles";
 import SwipeableViews from "react-swipeable-views";
-import { apiUser_get, apiGlobal, apiClass_get_user } from "../api";
+import { apiUser_get, apiGlobal, apiClass_get_user, apiUser_token } from "../api";
 import { handle_error } from "../tools";
 import clsx from "clsx";
 import "../assets/css/global.css";
@@ -39,6 +40,32 @@ const TabPanel = (props) => {
 	);
 };
 const styles = (theme) => ({
+	token_block: {
+		display: "flex",
+		marginBottom: "15px",
+		fontSize: "24px",
+		justifyContent: "center",
+		alignItems: "center",
+		color: "rgba(0, 0, 0, 0.54)",
+		fontWeight: "bold",
+		"& svg": {
+			color: "#ff9800",
+			marginRight: "5px",
+		},
+		"& .subText1": {
+			color: "#ff9800",
+			fontSize: "20px",
+		},
+		"& .subText2": {
+			marginLeft: "5px",
+			fontSize: "20px",
+		},
+		"& .subText3": {
+			marginLeft: "5px",
+			fontSize: "15px",
+			color: "#ff9800",
+		},
+	},
 	cardCategoryWhite: {
 		color: "rgba(255,255,255,.62)",
 		margin: "0",
@@ -82,7 +109,28 @@ export const UserProfile = function() {
 	const [value, setValue] = useState(1); //控制Panel轉換
 	const [class_name, set_class_name] = useState(""); //控制Panel轉換
 	const [userData, setUserData] = useState(null);
+	const [token, set_token] = useState("---");
 	const history = useHistory();
+
+	React.useEffect(() => {
+		loadData();
+	}, []);
+
+	React.useEffect(() => {
+		const load = async () => {
+			try {
+				const res = await apiUser_token();
+				if (res.data) {
+					set_token(res.data);
+				}
+				console.log(res.data);
+			} catch (error) {
+				console.log("token error");
+				console.log(error);
+			}
+		};
+		load();
+	}, []);
 
 	const handleOpen = () => {
 		setOpen(true);
@@ -112,10 +160,6 @@ export const UserProfile = function() {
 		}
 	};
 
-	React.useEffect(() => {
-		loadData();
-	}, []);
-
 	return (
 		<div>
 			<GridContainer>
@@ -124,6 +168,12 @@ export const UserProfile = function() {
 						<Avatar />
 						<ThemeProvider theme={barTheme}>
 							<div className="mt-4">
+								<h3 className={clsx(classes.token_block, "ch_font")}>
+									<StarsRoundedIcon fontSize="large" />
+									<span className="subText1">炒股幣</span>
+									<span className="subText2">{token}</span>
+									<span className="subText3">個</span>
+								</h3>
 								<h6 className={clsx(classes.cardCategory, "ch_font")}>
 									{class_name || "---"}
 								</h6>

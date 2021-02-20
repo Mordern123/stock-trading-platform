@@ -41,7 +41,8 @@ const generate_excel = async() => {
       if(balance !== 2000000)  {
         class_data.push({
           "名次": rank,
-          "學號": user.student_id.slice(0,7) + "**" + user.student_id.slice(9),
+          "學號": user.student_id,
+          // "學號": user.student_id.slice(0,7) + "**" + user.student_id.slice(9),
           "帳戶總價值": total_amount,
           "帳戶餘額": balance,
           "股票價值": stock_value,

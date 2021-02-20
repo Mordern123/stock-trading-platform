@@ -7,6 +7,13 @@ import moment from "moment";
 import crypto from "crypto";
 import { check_permission } from "../common/auth";
 import { handle_error } from "../common/error";
+import {
+	getContractInstance,
+	contract_call,
+	contract_send,
+	string_to_bytes32,
+} from "../utils/ethereum";
+import contract_ABI from "../contract/StockToken.json";
 
 const router = Router();
 
@@ -228,6 +235,25 @@ const get_user_account = async (req, res) => {
 	}
 };
 
+const get_user_token = async (req, res) => {
+	const { user, code } = await check_permission(req);
+
+	if (!user) {
+		res.clearCookie("user_token");
+		res.status(code).send();
+		return;
+	}
+
+	try {
+		const uid_bytes32 = string_to_bytes32(user.student_id);
+		const contract = await getContractInstance(contract_ABI, process.env.CONTRACT_ADDRESS);
+		const result = await contract_call(contract, "get_token", [uid_bytes32]);
+		res.json(result);
+	} catch (error) {
+		res.json(false);
+	}
+};
+
 router.route("/new").post(new_user);
 router.route("/login").post(user_login);
 router.route("/logout").post(user_logout);
@@ -235,5 +261,7 @@ router.route("/loginKey").post(get_login_key);
 router.route("/get").post(get_user_data);
 router.route("/update").post(update_user_data);
 router.route("/account").post(get_user_account);
+router.route("/token").get(get_user_token);
+// router.route("/token").post(get_user_token);
 
 export default router;

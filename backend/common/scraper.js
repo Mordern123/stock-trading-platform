@@ -2,7 +2,7 @@ import { crawl_tw_stock, txn_crawl_tw_stock } from "../website/twStock";
 import { crawl_pcHome_stock, txn_crawl_pcHome_stock } from "../website/pcHome";
 import { crawl_cnyes_stock, txn_crawl_cnyes_stock } from "../website/cnyes";
 import { txn_error } from "./utils";
-import { runTxn } from "../txn";
+import { runTxn } from "../utils/txn";
 import moment from "moment";
 
 /*

@@ -1,32 +1,10 @@
 import fs from "fs";
 import axios from "axios";
-import Stock from "./models/stock_model";
+import Stock from "../models/stock_model";
+import Global from "../models/global_model";
 import mongoose from "mongoose";
 import moment from "moment";
 require("dotenv").config();
-
-const init = () => {
-	const connection = mongoose.connection;
-	connection.once("open", () => {
-		console.log("MongoDB database connection established successfully");
-		console.log("The database is " + connection.name);
-
-		/// ? 爬前一天
-		// let date_str = moment().format("YYYY-MM-DD");
-		// let date = moment(date_str).subtract(1, "days").toDate();
-
-		// ? 爬指定日期
-		let date_str = moment("2020-09-22").format("YYYY-MM-DD");
-		let date = moment(date_str).toDate();
-
-		getStock(date); //之後判斷日期
-	});
-	mongoose.connect(process.env.DB_CONN_STRING, {
-		useNewUrlParser: true,
-		useCreateIndex: true,
-		useUnifiedTopology: true,
-	});
-};
 
 export const getStock = async (time) => {
 	try {
@@ -34,7 +12,7 @@ export const getStock = async (time) => {
 		const stock_exists = await Stock.exists({ data_time: time });
 		if (stock_exists) {
 			console.log(`${time} 收盤資料已取得`);
-			process.exit();
+			return;
 		}
 		const res = await axios.get(
 			`http://www.twse.com.tw/exchangeReport/MI_INDEX?response=json&date=${convertDate(
@@ -45,7 +23,7 @@ export const getStock = async (time) => {
 		// 沒有資料就停止程序
 		if (res.data["data9"] == null) {
 			console.log("查詢資料錯誤！");
-			process.exit();
+			// process.exit()
 		}
 		const stockData = {
 			cloumns: res.data["fields9"],
@@ -77,12 +55,23 @@ export const getStock = async (time) => {
 		// 資料匯入mongoDB
 		if (stock_array.length > 0) {
 			Stock.collection.insertMany(stock_array, () => {
+				const update = async () => {
+					let update_date = moment(time).format("YYYY-MM-DD");
+					await Global.findOneAndUpdate(
+						{ tag: "hongwei" },
+						{ stock_update_time: update_date, stock_updated: true }
+					).exec();
+				};
+				update(); //更新收盤資料日期
 				console.log(`收盤股票新增完成，完成時間:【${moment().toLocaleString()}】`);
-				process.exit();
+				console.log("----------------------------------------");
 			});
+		} else {
+			return false;
 		}
 	} catch (error) {
 		console.log(error);
+		return false;
 	}
 };
 
@@ -111,5 +100,3 @@ const getUpDown = (str) => {
 		return "";
 	}
 };
-
-init();

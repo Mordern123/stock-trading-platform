@@ -250,7 +250,7 @@ export default function SellDialog(props) {
 		} else if (order_type === "market" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，即時交易(盤中處理)，訂單於下單後40分鐘後抓取市價處理"}
+					{"提醒: 現在為開盤期間，即時交易(盤中處理)，訂單於下單後40分鐘後抓取市價處理"}
 				</p>
 			);
 		} else if (order_type === "limit" && !global.stock_closing) {

@@ -9,7 +9,6 @@ import SwipeableViews from "react-swipeable-views";
 import Material_Table from "components/Table/Material_Table";
 import { apiTxn_get_all, apiTxn_delete_txn } from "../api";
 import { handle_error, transfer_fail_msg } from "../tools";
-import CancelRoundedIcon from "@material-ui/icons/CancelRounded";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";

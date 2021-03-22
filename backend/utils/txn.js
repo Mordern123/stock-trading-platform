@@ -161,13 +161,11 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 	const { _id, user, stock_id, shares_number, order_type, closing } = userTxnDoc;
 	try {
 		// ! 收盤處理，出價小於收盤最低價(限價購買)
-		if (closing) {
-			if (order_type === "limit") {
-				let lowest_price = parseFloat(stockInfo.l); //收盤最低點
-				if (user_bid_price < lowest_price) {
-					await updateTxn(_id, "fail", 1);
-					return;
-				}
+		if (closing && order_type === "limit") {
+			let lowest_price = parseFloat(stockInfo.l); //收盤最低點
+			if (user_bid_price < lowest_price) {
+				await updateTxn(_id, "fail", 1);
+				return;
 			}
 		}
 
@@ -179,11 +177,10 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 		if (txn_value === null) {
 			await updateTxn(_id, "fail", 5);
 			return;
-		} else {
-			handling_fee = (txn_value * 0.1425) / 100; // ? 買入手續費收取0.1425%
-			handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
-			total_value = txn_value + handling_fee;
 		}
+		handling_fee = (txn_value * 0.1425) / 100; // ? 買入手續費收取0.1425%
+		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
+		total_value = txn_value + handling_fee;
 
 		// * 交易可執行
 		let userHasStock = await UserStock.exists({ user, stock_id }); //確認用戶是否擁有此股票
@@ -195,7 +192,7 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 					stock_id,
 				},
 				{
-					stockInfo,
+					stockInfo: { ...stockInfo, z: stock_price }, //? 設定最終金額
 					$inc: { shares_number }, //增加股數
 					last_update: moment().toDate(),
 				},
@@ -208,7 +205,7 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 			await new UserStock({
 				user,
 				stock_id,
-				stockInfo,
+				stockInfo: { ...stockInfo, z: stock_price }, //? 設定最終金額
 				shares_number,
 				last_update: moment().toDate(),
 			}).save();
@@ -244,13 +241,11 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 		}
 
 		// ! 收盤處理，出價大於於收盤最高價(限價賣出)
-		if (closing) {
-			if (order_type === "limit") {
-				let highest_price = parseFloat(stockInfo.h); //收盤最高點
-				if (user_bid_price > highest_price) {
-					await updateTxn(_id, "fail", 2);
-					return;
-				}
+		if (closing && order_type === "limit") {
+			let highest_price = parseFloat(stockInfo.h); //收盤最高點
+			if (user_bid_price > highest_price) {
+				await updateTxn(_id, "fail", 2);
+				return;
 			}
 		}
 
@@ -269,7 +264,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 				stock_id,
 			},
 			{
-				stockInfo,
+				stockInfo: { ...stockInfo, z: stock_price }, //? 設定最終金額
 				$inc: { shares_number: -shares_number }, //減少股數
 				last_update: moment().toDate(),
 			},

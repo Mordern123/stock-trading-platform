@@ -178,7 +178,7 @@ const user_place_order = async (req, res) => {
 
 		// ! 只有開盤時間交易需要排程
 		if (!closing) {
-			let txn_time = moment().add(40, "m").toDate(); //處理交易時間
+			let txn_time = moment().add(5, "m").toDate(); //處理交易時間
 			console.log("一筆訂單將在: " + txn_time.toLocaleString() + " 處理");
 			let j = schedule.scheduleJob(txn_time, async () => {
 				// ! 檢查訂單是否還存在

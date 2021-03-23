@@ -181,18 +181,19 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 		handling_fee = (txn_value * 0.1425) / 100; // ? 買入手續費收取0.1425%
 		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
 		total_value = txn_value + handling_fee;
+		const _stockInfo = { ...stockInfo, z: stock_price }; //? 設定最終金額
 
-		// * 交易可執行
+		//* 交易可執行
 		let userHasStock = await UserStock.exists({ user, stock_id }); //確認用戶是否擁有此股票
 		if (userHasStock) {
-			//更新擁有股數
+			//* 更新擁有股數
 			await UserStock.findOneAndUpdate(
 				{
 					user,
 					stock_id,
 				},
 				{
-					stockInfo: { ...stockInfo, z: stock_price }, //? 設定最終金額
+					stockInfo: _stockInfo,
 					$inc: { shares_number }, //增加股數
 					last_update: moment().toDate(),
 				},
@@ -205,17 +206,17 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 			await new UserStock({
 				user,
 				stock_id,
-				stockInfo: { ...stockInfo, z: stock_price }, //? 設定最終金額
+				stockInfo: _stockInfo,
 				shares_number,
 				last_update: moment().toDate(),
 			}).save();
 		}
 
-		// * 更新該用戶帳戶
+		//* 更新該用戶帳戶
 		await updateAccount(user, -total_value);
 
-		// * 更新交易狀態
-		await updateTxn(_id, "success", 6, { handling_fee });
+		//* 更新交易狀態
+		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
@@ -257,6 +258,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 		handling_fee = (txn_value * 0.4425) / 100; // ? 買入手續費收取0.1425% + 證券交易稅0.3%
 		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
 		total_value = txn_value - handling_fee;
+		const _stockInfo = { ...stockInfo, z: stock_price }; //? 設定最終金額
 
 		await UserStock.findOneAndUpdate(
 			{
@@ -264,7 +266,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 				stock_id,
 			},
 			{
-				stockInfo: { ...stockInfo, z: stock_price }, //? 設定最終金額
+				stockInfo: _stockInfo,
 				$inc: { shares_number: -shares_number }, //減少股數
 				last_update: moment().toDate(),
 			},
@@ -277,7 +279,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price) => {
 		await updateAccount(user, total_value);
 
 		// * 更新交易狀態
-		await updateTxn(_id, "success", 6, { handling_fee });
+		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
@@ -308,6 +310,7 @@ export const checkBalance = async (user, stock_price, n) => {
 export const updateTxn = async (id, status, CODE, options) => {
 	let msg;
 	let handling_fee = 0;
+	let stockInfo = null;
 	switch (CODE) {
 		case 0:
 			msg = "STOCK_NOT_FOUND"; //不存在此股票
@@ -330,6 +333,7 @@ export const updateTxn = async (id, status, CODE, options) => {
 		case 6:
 			msg = "TXN_SUCCESS"; //交易成功
 			handling_fee = options.handling_fee; //手續費紀錄
+			stockInfo = options.stockInfo;
 			break;
 		case 7:
 			msg = "OCCUR_ERROR"; //交易發生錯誤
@@ -347,12 +351,21 @@ export const updateTxn = async (id, status, CODE, options) => {
 			msg = "OCCUR_ERROR"; //交易發生錯誤
 			break;
 	}
-	await UserTxn.findByIdAndUpdate(id, {
-		status,
-		txn_time: moment().toDate(),
-		msg,
-		handling_fee,
-	});
+	if (stockInfo && handling_fee) {
+		await UserTxn.findByIdAndUpdate(id, {
+			status,
+			txn_time: moment().toDate(),
+			msg,
+			handling_fee,
+			stockInfo,
+		});
+	} else {
+		await UserTxn.findByIdAndUpdate(id, {
+			status,
+			txn_time: moment().toDate(),
+			msg,
+		});
+	}
 };
 
 // * 更新某個用戶帳戶資訊

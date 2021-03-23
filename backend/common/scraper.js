@@ -36,14 +36,13 @@ export const txn_task = async (userTxnDoc) => {
 
 	console.log("----------------------------------------");
 	console.log(`【${userTxnDoc.user}】 交易處理:`);
-	console.log(`【${website}】 取得 ${stock_id} ! 時間: ${moment().toLocaleString()}`);
 
 	// * 取得即時股票資訊
 	if (random_n === 1) {
 		// ! PCHOME爬蟲要特別處理
 		funcs[random_n](stock_id, stock_name, async (stockData) => {
 			if (stockData) {
-				await runTxn(type, userTxnDoc, stockData);
+				await runTxn(type, userTxnDoc, stockData); //* 執行交易處理
 			} else {
 				await txn_error(userTxnDoc);
 			}
@@ -52,7 +51,12 @@ export const txn_task = async (userTxnDoc) => {
 	} else {
 		const stockData = await funcs[random_n](stock_id, stock_name);
 		if (stockData) {
-			await runTxn(type, userTxnDoc, stockData);
+			console.log(
+				`【${website}】 | ${stock_id} | 價格: ${
+					stockData.z
+				} | 時間: ${moment().toLocaleString()}`
+			);
+			await runTxn(type, userTxnDoc, stockData); //* 執行交易處理
 		} else {
 			await txn_error(userTxnDoc);
 		}

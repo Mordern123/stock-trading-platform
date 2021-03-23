@@ -158,8 +158,9 @@ const user_place_order = async (req, res) => {
 		let doc = await UserClass.findOne({ user: user._id }).exec();
 		let global = await Global.findOne({ tag: "hongwei" }).lean().exec();
 		let current_time = moment().toDate(); //下單時間
-		let closing =
-			req.query.order_type === "limit" || global.shutDown_txn ? true : global.stock_closing; // ? 限價一律收盤後處理
+		// let closing =
+		// 	req.query.order_type === "limit" || global.shutDown_txn ? true : global.stock_closing; // ? 限價一律收盤後處理
+		let closing = global.shutDown_txn ? true : global.stock_closing;
 
 		// * 新增一筆訂單
 		const _userTxnDoc = await new UserTxn({
@@ -176,17 +177,29 @@ const user_place_order = async (req, res) => {
 		}).save();
 		const userTxnDoc = _userTxnDoc.toObject();
 
-		// ! 只有開盤時間交易需要排程
+		//! 只有盤中才須排程
 		if (!closing) {
-			let txn_time = moment().add(5, "m").toDate(); //處理交易時間
-			console.log("一筆訂單將在: " + txn_time.toLocaleString() + " 處理");
-			let j = schedule.scheduleJob(txn_time, async () => {
-				// ! 檢查訂單是否還存在
+			const txn_time = moment().add(5, "m").toDate(); //處理交易時間
+			const end_time = moment().set({ hour: 1, minute: 50 }).toDate(); //結束時間13:30
+			let custom_rule = null; //排程規則
+			let msg = "";
+			if (req.query.order_type === "limit") {
+				custom_rule = { start: txn_time, end: end_time, rule: "*/3 * * * *" }; //* 到收盤時每五分鐘執行一次
+				msg = `【限價單】將在: ${txn_time.toLocaleString()} ~ ${end_time.toLocaleString()} 處理`;
+			} else {
+				custom_rule = txn_time;
+				msg = `【市價單】將在: ${txn_time.toLocaleString()} 處理`;
+			}
+			console.log(msg);
+			const job = schedule.scheduleJob(custom_rule, async () => {
+				// 檢查訂單是否還存在
 				let txn_exist = await UserTxn.exists({ _id: userTxnDoc._id });
 				if (txn_exist) {
-					queue.add(() => txn_task(userTxnDoc));
+					queue.add(() => txn_task(userTxnDoc, job, msg)); //* 加入執行佇列
+				} else {
+					job.cancel();
 				}
-			}); //加入執行佇列
+			});
 		}
 
 		res.json(userTxnDoc);

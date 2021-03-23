@@ -28,8 +28,9 @@ export const remove_stock_data = async () => {
 };
 
 //處理錯誤交易
-export const txn_error = async (userTxnDoc) => {
+export const txn_error = async (userTxnDoc, job) => {
 	const { _id } = userTxnDoc;
 	await updateTxn(_id, "error", 7);
+	job.cancel();
 	console.log("----------------------------------------");
 };

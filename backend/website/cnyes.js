@@ -55,7 +55,7 @@ export const crawl_cnyes_stock = async (user, stock_id, stock_name, res) => {
 		await add_user_search(user, obj);
 		res.json(obj);
 
-		console.log("鉅亨網 >>> 已回應");
+		console.log("【鉅亨網 >>> 已回應】");
 		console.log("----------------------------------------");
 	} catch (error) {
 		handle_error(error, res);
@@ -109,7 +109,7 @@ export const txn_crawl_cnyes_stock = async (stock_id, stock_name) => {
 			request_time,
 		};
 
-		console.log("鉅亨網 >>> 已回應");
+		console.log("【鉅亨網 >>> 已回應】");
 
 		return obj;
 	} catch (error) {

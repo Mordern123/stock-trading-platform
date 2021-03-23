@@ -183,7 +183,10 @@ export const StockBuy = function() {
 			const x = document.getElementsByClassName("autocomplete-items");
 			let need_remove = true;
 			for (var i = 0; i < x.length; i++) {
-				if (e.target === x[i] || e.target === searchRef.current.childNodes[0]) {
+				if (
+					searchRef.current &&
+					(e.target === x[i] || e.target === searchRef.current.childNodes[0])
+				) {
 					need_remove = false;
 				}
 			}
@@ -270,16 +273,16 @@ export const StockBuy = function() {
 	};
 
 	const handle_keyDown = (isSearch) => {
-		return e => {
+		return (e) => {
 			if (e.key === "Enter") {
 				e.preventDefault();
-				if(isSearch) {
+				if (isSearch) {
 					handle_search_stock();
 				} else {
-					alert("請點擊右方搜尋按鈕")
+					alert("請點擊右方搜尋按鈕");
 				}
 			}
-		}
+		};
 	};
 
 	const addTimeSnack = (msg, color) => {

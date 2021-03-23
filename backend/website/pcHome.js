@@ -47,7 +47,7 @@ const complete = async (data, res, user, stock_id, stock_name, request_time) => 
 		await add_user_search(user, obj);
 		res.json(obj);
 
-		console.log("PCHOME股票 >>> 已回應");
+		console.log("【PCHOME股票 >>> 已回應】");
 		console.log("----------------------------------------");
 	} catch (error) {
 		handle_error(error, res);
@@ -120,7 +120,7 @@ const txn_complete = async (data, stock_id, stock_name, request_time) => {
 			request_time,
 		};
 
-		console.log("PCHOME股票 >>> 已回應");
+		console.log("【PCHOME股票 >>> 已回應】");
 
 		return obj;
 	} catch (error) {

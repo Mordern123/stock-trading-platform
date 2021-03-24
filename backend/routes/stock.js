@@ -80,11 +80,11 @@ const get_stock_rank = async (req, res) => {
 			.exec();
 		let rank_data = accountDocs.map((item) => {
 			let newrate;
-			if(item.initial_money){	//如果初始金額不等於0時進入
-				let rate = ((item.total_amount - item.initial_money) / item.initial_money);
-				newrate = (rate*100).toFixed(2);
-			}
-			else{
+			if (item.initial_money) {
+				//如果初始金額不等於0時進入
+				let rate = (item.total_amount - item.initial_money) / item.initial_money;
+				newrate = (rate * 100).toFixed(2);
+			} else {
 				newrate = 0;
 			}
 			return {
@@ -97,9 +97,10 @@ const get_stock_rank = async (req, res) => {
 		});
 		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
 
-		rank_data.sort(function (a, b) {  //進行排序
+		rank_data.sort(function (a, b) {
+			//進行排序
 			return b.investment_rate - a.investment_rate;
-		  });
+		});
 
 		res.json({
 			rank_data,
@@ -114,11 +115,12 @@ const get_stock_rank = async (req, res) => {
 			.exec();
 		let rank_data = accountDocs.map((item) => {
 			let newrate;
-			if(item.initial_money!=0){ //如果初始金額不等於0時進入
-				let rate = ((item.total_amount - item.initial_money) / item.initial_money);
-				newrate = (rate*100).toFixed(2);
-			}
-			else{
+			console.log(item.initial_money);
+			if (item.initial_money) {
+				//如果初始金額不等於0時進入
+				let rate = (item.total_amount - item.initial_money) / item.initial_money;
+				newrate = (rate * 100).toFixed(2);
+			} else {
 				newrate = 0;
 			}
 			return {
@@ -130,9 +132,10 @@ const get_stock_rank = async (req, res) => {
 			};
 		});
 		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
-		rank_data.sort(function (a, b) {  //進行排序
+		rank_data.sort(function (a, b) {
+			//進行排序
 			return b.investment_rate - a.investment_rate;
-		  });
+		});
 
 		res.json({
 			rank_data,
@@ -201,7 +204,7 @@ const user_place_order = async (req, res) => {
 			closing,
 		}).save();
 		const userTxnDoc = _userTxnDoc.toObject();
-		
+
 		//! 只有盤中才須排程
 		if (!closing) {
 			const txn_time = moment().add(1, "m").toDate(); //處理交易時間

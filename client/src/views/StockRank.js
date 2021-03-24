@@ -69,7 +69,7 @@ export const StockRank = function() {
 			try {
 				const res = await apiRank_list_all();
 				const res2 = await apiUser_get();
-				console.log(res);
+				console.log(res.data);
 
 				//刪除交易數量為0和總資產為0的資料
 				const noZeroTxn = res.data.rank_data.filter(

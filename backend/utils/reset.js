@@ -46,6 +46,7 @@ const reset_account = async (ids = []) => {
 			},
 		},
 		{
+			initial_money: 2000000,
 			balance: 2000000,
 			total_amount: 0,
 			stock_number: 0,

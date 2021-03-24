@@ -45,7 +45,7 @@ const get_columns = (type) => {
 			},
 			{
 				field: "stockInfo.z",
-				title: "每股價格",
+				title: "交易價格",
 			},
 			{
 				title: "每股出價",
@@ -102,7 +102,7 @@ const get_columns = (type) => {
 			},
 			{
 				field: "stockInfo.z",
-				title: "每股價格",
+				title: "交易價格",
 			},
 			{
 				title: "每股出價",

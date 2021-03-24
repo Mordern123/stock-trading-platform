@@ -97,6 +97,8 @@ export default function SellDialog(props) {
 	const [global, set_global] = useState({});
 	const history = useHistory();
 
+	console.log(order_type, bid_price, stock_num)
+
 	const handleNumberChange = (e) => {
 		let n = parseInt(e.target.value);
 		set_stock_num(n);
@@ -110,6 +112,7 @@ export default function SellDialog(props) {
 	//更改訂單類型
 	const change_orderType = (e) => {
 		set_order_type(e.target.value);
+		set_bid_price("")
 	};
 
 	const handleSellStock = async () => {
@@ -147,12 +150,12 @@ export default function SellDialog(props) {
 
 		if (stock_num) {
 			if (stock_num > 0) {
-				if (stock_num <= 1000) {
+				if (stock_num <= 1000000) {
 					try {
 						const res = await apiUserStock_sell(
 							{
 								stock_id: stockInfo.stock_id,
-								shares_number: stock_num * 1000, //一張1000股
+								shares_number: stock_num, //一張1000股
 								stockInfo: stockInfo,
 								bid_price: bid_price,
 							},
@@ -171,13 +174,13 @@ export default function SellDialog(props) {
 						handleClose();
 					}
 				} else {
-					alert("每筆訂單交易上限1000張");
+					alert("每筆訂單交易上限1000000股");
 				}
 			} else {
 				alert("輸入值要大於0");
 			}
 		} else {
-			alert("必須輸入購買張數");
+			alert("必須輸入賣出股數或輸入股數必須為整數");
 		}
 		setLoading(false);
 	};
@@ -500,7 +503,7 @@ export default function SellDialog(props) {
 									<InputAdornment
 										position="end"
 										children={
-											<Typography className={classes.text}>張</Typography>
+											<Typography className={classes.text}>股</Typography>
 										}
 									/>
 								),

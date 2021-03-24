@@ -176,11 +176,11 @@ const user_place_order = async (req, res) => {
 			closing,
 		}).save();
 		const userTxnDoc = _userTxnDoc.toObject();
-
+		
 		//! 只有盤中才須排程
 		if (!closing) {
-			const txn_time = moment().add(5, "m").toDate(); //處理交易時間
-			const end_time = moment().set({ hour: 1, minute: 50 }).toDate(); //結束時間13:30
+			const txn_time = moment().add(1, "m").toDate(); //處理交易時間
+			const end_time = moment().set({ hour: 15, minute: 50 }).toDate(); //結束時間13:30
 			let custom_rule = null; //排程規則
 			let msg = "";
 			if (req.query.order_type === "limit") {

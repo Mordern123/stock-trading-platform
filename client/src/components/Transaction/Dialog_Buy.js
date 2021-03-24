@@ -147,17 +147,17 @@ export default function BuyDialog(props) {
 			setLoading(false);
 			return;
 		}
-
+		
 		if (stock_num) {
 			if (stock_num > 0) {
-				if (stock_num <= 1000) {
+				if (stock_num <= 1000000) {
 					// if (stock_num * 1000 * stockInfo.z > account.balance) //購買總金額超過餘額
 					try {
 						const res = await apiUserStock_buy(
 							{
 								stock_id: stockInfo.stock_id,
 								stockInfo: stockInfo,
-								shares_number: stock_num * 1000, //一張1000股
+								shares_number: stock_num, //一張1000股
 								bid_price: bid_price,
 							},
 							{ order_type }
@@ -174,13 +174,13 @@ export default function BuyDialog(props) {
 						handle_error(error, history);
 					}
 				} else {
-					alert("每筆訂單交易上限1000張");
+					alert("每筆訂單交易上限1000000股");
 				}
 			} else {
-				alert("購買張數需大於0");
+				alert("購買股數需大於0");
 			}
 		} else {
-			alert("必須輸入購買張數");
+			alert("必須輸入購買股數或輸入股數必須為整數");
 		}
 
 		setLoading(false);
@@ -574,7 +574,7 @@ export default function BuyDialog(props) {
 									<InputAdornment
 										position="end"
 										children={
-											<Typography className={classes.text}>張</Typography>
+											<Typography className={classes.text}>股</Typography>
 										}
 									/>
 								),

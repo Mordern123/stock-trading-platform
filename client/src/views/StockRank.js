@@ -17,7 +17,7 @@ const tips = [
 	"貼心提醒: 股票排名更新時間為開盤每日 8:30 和 15:10 喔",
 ];
 
-const column = ["名次", "學號", "帳戶總價值", "擁有股票種類", "總交易次數"];
+const column = ["名次", "學號", "擁有股票種類", "總交易次數", "帳戶總價值","投資報酬率"];
 
 const styles = {
 	cardCategoryWhite: {
@@ -69,6 +69,7 @@ export const StockRank = function() {
 			try {
 				const res = await apiRank_list_all();
 				const res2 = await apiUser_get();
+				console.log(res);
 
 				//刪除交易數量為0和總資產為0的資料
 				const noZeroTxn = res.data.rank_data.filter(
@@ -84,9 +85,10 @@ export const StockRank = function() {
 					return [
 						index + 1,
 						item.student_id,
-						item.total_amount,
 						item.stock_number,
 						item.txn_count,
+						item.total_amount,
+						item.investment_rate+"%",
 					];
 				});
 

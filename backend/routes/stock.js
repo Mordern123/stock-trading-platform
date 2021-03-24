@@ -79,14 +79,27 @@ const get_stock_rank = async (req, res) => {
 			.lean()
 			.exec();
 		let rank_data = accountDocs.map((item) => {
+			let newrate;
+			if(item.initial_money){	//如果初始金額不等於0時進入
+				let rate = ((item.total_amount - item.initial_money) / item.initial_money);
+				newrate = (rate*100).toFixed(2);
+			}
+			else{
+				newrate = 0;
+			}
 			return {
 				student_id: item.user.student_id,
 				total_amount: item.total_amount || 0,
 				stock_number: item.stock_number,
 				txn_count: item.txn_count,
+				investment_rate: newrate,
 			};
 		});
 		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
+
+		rank_data.sort(function (a, b) {  //進行排序
+			return b.investment_rate - a.investment_rate;
+		  });
 
 		res.json({
 			rank_data,
@@ -100,14 +113,26 @@ const get_stock_rank = async (req, res) => {
 			.lean()
 			.exec();
 		let rank_data = accountDocs.map((item) => {
+			let newrate;
+			if(item.initial_money!=0){ //如果初始金額不等於0時進入
+				let rate = ((item.total_amount - item.initial_money) / item.initial_money);
+				newrate = (rate*100).toFixed(2);
+			}
+			else{
+				newrate = 0;
+			}
 			return {
 				student_id: item.user.student_id,
 				total_amount: item.total_amount || 0,
 				stock_number: item.stock_number,
 				txn_count: item.txn_count,
+				investment_rate: newrate,
 			};
 		});
 		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
+		rank_data.sort(function (a, b) {  //進行排序
+			return b.investment_rate - a.investment_rate;
+		  });
 
 		res.json({
 			rank_data,

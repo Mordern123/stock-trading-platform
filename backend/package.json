@@ -12,6 +12,7 @@
     "value": "babel-node ./utils/manual_value.js",
     "reset": "babel-node ./utils/reset.js",
     "check": "babel-node ./utils/check.js",
+    "initial_money": "babel-node ./utils/initial_money.js",
     "score": "babel-node ./utils/score.js"
   },
   "author": "",

@@ -37,14 +37,13 @@ export const txn_task = async (userTxnDoc, job, msg) => {
 	console.log("----------------------------------------");
 	console.log(`【${userTxnDoc.user}】 交易處理:`);
 	console.log(msg);
-	console.log("......");
+	console.log("----------------------------------------");
 
 	// * 取得即時股票資訊
 	if (random_n === 1) {
 		// ! PCHOME爬蟲要特別處理
 		funcs[random_n](stock_id, stock_name, async (stockData) => {
 			if (stockData) {
-				console.log("......");
 				console.log(
 					`【${website}】 | ${stock_id} | 價格: ${
 						stockData.z
@@ -54,12 +53,10 @@ export const txn_task = async (userTxnDoc, job, msg) => {
 			} else {
 				await txn_error(userTxnDoc, job);
 			}
-			console.log("----------------------------------------");
 		});
 	} else {
 		const stockData = await funcs[random_n](stock_id, stock_name);
 		if (stockData) {
-			console.log("......");
 			console.log(
 				`【${website}】 | ${stock_id} | 價格: ${
 					stockData.z
@@ -69,7 +66,6 @@ export const txn_task = async (userTxnDoc, job, msg) => {
 		} else {
 			await txn_error(userTxnDoc, job);
 		}
-		console.log("----------------------------------------");
 	}
 };
 

@@ -115,7 +115,6 @@ const get_stock_rank = async (req, res) => {
 			.exec();
 		let rank_data = accountDocs.map((item) => {
 			let newrate;
-			console.log(item.initial_money);
 			if (item.initial_money) {
 				//如果初始金額不等於0時進入
 				let rate = (item.total_amount - item.initial_money) / item.initial_money;
@@ -207,13 +206,14 @@ const user_place_order = async (req, res) => {
 
 		//! 只有盤中才須排程
 		if (!closing) {
-			const txn_time = moment().add(1, "m").toDate(); //處理交易時間
-			const end_time = moment().set({ hour: 15, minute: 50 }).toDate(); //結束時間13:30
+			const txn_time = moment().add(40, "m").toDate(); //即時交易處理時間
+			const start_time = moment().toDate(); //限價交易開始處理時間
+			const end_time = moment().set({ hour: 13, minute: 30 }).toDate(); //限價交易結束時間13:30
 			let custom_rule = null; //排程規則
 			let msg = "";
 			if (req.query.order_type === "limit") {
-				custom_rule = { start: txn_time, end: end_time, rule: "*/3 * * * *" }; //* 到收盤時每五分鐘執行一次
-				msg = `【限價單】將在: ${txn_time.toLocaleString()} ~ ${end_time.toLocaleString()} 處理`;
+				custom_rule = { start: start_time, end: end_time, rule: "0 */30 * * * *" }; //* 到收盤時每30分鐘執行一次
+				msg = `【限價單】將在: ${start_time.toLocaleString()} ~ ${end_time.toLocaleString()} 處理`;
 			} else {
 				custom_rule = txn_time;
 				msg = `【市價單】將在: ${txn_time.toLocaleString()} 處理`;

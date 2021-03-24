@@ -1,25 +1,55 @@
 import schedule from "node-schedule";
-import { runEveryTxn, runEveryUserStock } from "./txn";
+import { runEveryTxn, runEveryUserStock, runEveryLimitTxn, runEveryPendingTxn } from "./txn";
 import { remove_stock_data } from "../common/utils";
 import { getStock } from "./getStock";
 import moment from "moment";
 import Global from "../models/global_model";
 
-// * 收盤處理股票交易排程(每日15:00)
-export const start_txn_schedule = () => {
+// * 開盤處理掛單排程(每日10:00)
+export const start_pending_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.minute = new schedule.Range(0, 59, 60); //每60分鐘一次
-	// rule.hour = [new schedule.Range(0, 8), new schedule.Range(15, 23)]; //15點到隔天早上8點
-	rule.hour = 15; //每日15:00
+	rule.hour = 10;
+	rule.minute = 00;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
 		console.log("----------------------------------------");
-		console.log(`交易開始處理時間: ${fireDate.toLocaleString()}`);
-		await runEveryTxn();
+		console.log(`掛單開始排程時間: ${fireDate.toLocaleString()}`);
+		await runEveryPendingTxn(fireDate);
 		console.log("----------------------------------------");
 	});
 };
+
+// * 處理當日限價單(每日13:35)
+export const start_limit_txn_schedule = () => {
+	var rule = new schedule.RecurrenceRule();
+	rule.hour = 13;
+	rule.minute = 35;
+	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
+
+	schedule.scheduleJob(rule, async function (fireDate) {
+		console.log("----------------------------------------");
+		console.log(`限價交易開始處理時間: ${fireDate.toLocaleString()}`);
+		await runEveryLimitTxn();
+		console.log("----------------------------------------");
+	});
+};
+
+// * 收盤處理股票交易排程(每日15:00)
+// export const start_txn_schedule = () => {
+// 	var rule = new schedule.RecurrenceRule();
+// 	rule.minute = new schedule.Range(0, 59, 60); //每60分鐘一次
+// 	// rule.hour = [new schedule.Range(0, 8), new schedule.Range(15, 23)]; //15點到隔天早上8點
+// 	rule.hour = 15; //每日15:00
+// 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
+
+// 	schedule.scheduleJob(rule, async function (fireDate) {
+// 		console.log("----------------------------------------");
+// 		console.log(`交易開始處理時間: ${fireDate.toLocaleString()}`);
+// 		await runEveryTxn();
+// 		console.log("----------------------------------------");
+// 	});
+// };
 
 // * 計算股票總價值排程1(每日15:10)
 export const start_stockValue_schedule1 = () => {

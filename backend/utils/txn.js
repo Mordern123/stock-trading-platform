@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import schedule from "node-schedule";
 import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTxn from "../models/user_txn_model";
@@ -6,6 +7,8 @@ import Account from "../models/account_model";
 import User from "../models/user_model";
 import Global from "../models/global_model";
 import moment from "moment";
+import { queue } from "../server";
+import { txn_task } from "../common/scraper";
 import { closing_data_to_stock_info } from "../common/tools";
 require("dotenv").config();
 
@@ -37,6 +40,87 @@ export const runEveryTxn = async () => {
 	}
 
 	console.log(`所有交易處理完成`);
+	console.log(`處理結束，共${userTxnDocs.length}筆`);
+};
+
+// * 伺服器處理當日限價單執行起點
+export const runEveryLimitTxn = async () => {
+	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
+
+	// ! 停止所有交易
+	if (globalDoc.shutDown_txn) {
+		console.log(`停止交易時間，不處理任何交易`);
+		return;
+	}
+
+	// * 取得要排程的訂單(由早到晚)
+	const userTxnDocs = await UserTxn.find({
+		status: "waiting",
+		closing: false,
+		order_type: "limit",
+		order_time: { $lte: moment().set({ hour: 13, minute: 30 }).toDate() }, //13:30
+	})
+		.sort({ date: "asc" })
+		.exec();
+
+	// * 處理每筆訂單
+	for (let i = 0; i < userTxnDocs.length; i++) {
+		console.log(`正在處理第${i + 1}筆...`);
+		let { _id } = userTxnDocs[i];
+		await updateTxn(_id, "fail", null); //更改交易為失敗
+	}
+
+	console.log(`所有交易處理完成`);
+	console.log(`處理結束，共${userTxnDocs.length}筆`);
+};
+
+// * 伺服器運行處理掛單執行起點
+export const runEveryPendingTxn = async (executed_time) => {
+	console.log(executed_time);
+	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
+
+	// ! 停止所有交易
+	if (globalDoc.shutDown_txn) {
+		console.log(`停止交易時間，不處理任何交易`);
+		return;
+	}
+
+	// * 取得要排程的訂單(由早到晚 + 包含市價、限價)
+	const userTxnDocs = await UserTxn.find({
+		status: "waiting",
+		closing: true,
+		order_time: { $lte: executed_time },
+	})
+		.sort({ date: "asc" })
+		.exec();
+
+	// * 排程每筆訂單(市價、限價)
+	for (let i = 0; i < userTxnDocs.length; i++) {
+		console.log(`正在處理第${i + 1}筆...`);
+		const { order_type } = userTxnDocs[i];
+		const start_time = moment().toDate(); //限價交易開始處理時間
+		const end_time = moment().set({ hour: 1, minute: 45 }).toDate(); //限價交易結束時間13:30
+		let custom_rule = null; //排程規則
+		let msg = "";
+		if (order_type === "limit") {
+			custom_rule = { start: start_time, end: end_time, rule: "0 */30 * * * *" }; //* 到收盤時每30分鐘執行一次
+			msg = `【限價單】將在: ${start_time.toLocaleString()} ~ ${end_time.toLocaleString()} 處理`;
+		} else if (order_type === "market") {
+			custom_rule = start_time;
+			msg = `【市價單】將在: ${start_time.toLocaleString()} 處理`;
+		}
+		console.log(msg);
+		const job = schedule.scheduleJob(custom_rule, async () => {
+			// 檢查訂單是否還存在
+			let txn_exist = await UserTxn.exists({ _id: userTxnDocs[i]._id });
+			if (txn_exist) {
+				queue.add(() => txn_task(userTxnDocs[i], job, msg)); //* 加入執行佇列
+			} else {
+				job.cancel();
+			}
+		});
+	}
+	console.log(`所有交易排程完成`);
 	console.log(`處理結束，共${userTxnDocs.length}筆`);
 };
 
@@ -346,7 +430,7 @@ export const checkBalance = async (user, stock_price, n) => {
 };
 
 // * 更新交易結果訊息
-export const updateTxn = async (id, status, CODE, options) => {
+export const updateTxn = async (id, status, CODE = null, options) => {
 	let msg;
 	let handling_fee = 0;
 	let stockInfo = null;
@@ -398,11 +482,16 @@ export const updateTxn = async (id, status, CODE, options) => {
 			handling_fee,
 			stockInfo,
 		});
-	} else {
+	} else if (CODE !== null) {
 		await UserTxn.findByIdAndUpdate(id, {
 			status,
 			txn_time: moment().toDate(),
 			msg,
+		});
+	} else {
+		await UserTxn.findByIdAndUpdate(id, {
+			status,
+			txn_time: moment().toDate(),
 		});
 	}
 };

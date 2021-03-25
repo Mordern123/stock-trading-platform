@@ -30,10 +30,14 @@ const get_columns = (type) => {
 			{
 				title: "訂單類型",
 				render: (rowData) => {
-					if (rowData.order_type === "market") {
-						return "市價";
-					} else if (rowData.order_type === "limit") {
-						return "限價";
+					if (rowData.order_type === "market" && rowData.closing) {
+						return `市價(委託)`;
+					} else if (rowData.order_type === "market" && !rowData.closing) {
+						return `市價(盤中)`;
+					} else if (rowData.order_type === "limit" && rowData.closing) {
+						return "限價(委託)";
+					} else if (rowData.order_type === "limit" && !rowData.closing) {
+						return "限價(盤中)";
 					} else {
 						return "---";
 					}
@@ -74,7 +78,7 @@ const get_columns = (type) => {
 				title: "交易處理時間",
 			},
 		];
-	} else {
+	} else if (type === "success") {
 		return [
 			{
 				field: "stock_id",
@@ -87,10 +91,14 @@ const get_columns = (type) => {
 			{
 				title: "訂單類型",
 				render: (rowData) => {
-					if (rowData.order_type === "market") {
-						return "市價";
-					} else if (rowData.order_type === "limit") {
-						return "限價";
+					if (rowData.order_type === "market" && rowData.closing) {
+						return `市價(委託)`;
+					} else if (rowData.order_type === "market" && !rowData.closing) {
+						return `市價(盤中)`;
+					} else if (rowData.order_type === "limit" && rowData.closing) {
+						return "限價(委託)";
+					} else if (rowData.order_type === "limit" && !rowData.closing) {
+						return "限價(盤中)";
 					} else {
 						return "---";
 					}
@@ -103,6 +111,63 @@ const get_columns = (type) => {
 			{
 				field: "stockInfo.z",
 				title: "交易價格",
+			},
+			{
+				title: "每股出價",
+				render: (rowData) => {
+					if (rowData.bid_price > 0) {
+						return rowData.bid_price;
+					} else {
+						return "無";
+					}
+				},
+			},
+			{
+				field: "shares_number",
+				title: "交易股數",
+			},
+			{
+				field: "order_time",
+				title: "下單時間",
+			},
+			{
+				field: "txn_time",
+				title: "交易處理時間",
+			},
+		];
+	} else if (type === "waiting") {
+		return [
+			{
+				field: "stock_id",
+				title: "證券代號",
+			},
+			{
+				field: "stockInfo.stock_name",
+				title: "證券名稱",
+			},
+			{
+				title: "訂單類型",
+				render: (rowData) => {
+					if (rowData.order_type === "market" && rowData.closing) {
+						return `市價(委託)`;
+					} else if (rowData.order_type === "market" && !rowData.closing) {
+						return `市價(盤中)`;
+					} else if (rowData.order_type === "limit" && rowData.closing) {
+						return "限價(委託)";
+					} else if (rowData.order_type === "limit" && !rowData.closing) {
+						return "限價(盤中)";
+					} else {
+						return "---";
+					}
+				},
+			},
+			{
+				field: "type",
+				title: "交易類型",
+			},
+			{
+				field: "stockInfo.z",
+				title: "每股價格",
 			},
 			{
 				title: "每股出價",

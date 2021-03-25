@@ -9,7 +9,7 @@ import Global from "../models/global_model";
 export const start_pending_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
 	rule.hour = 10;
-	rule.minute = 00;
+	rule.minute = 0;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {

@@ -15,6 +15,7 @@ import { task, txn_task } from "../common/scraper";
 import { add_user_search } from "../common/utils";
 import { handle_error } from "../common/error";
 import { closing_data_to_stock_info } from "../common/tools";
+import { MARKET_ORDER_TIME } from "../common/time";
 
 moment.locale("zh-tw");
 
@@ -204,26 +205,15 @@ const user_place_order = async (req, res) => {
 		}).save();
 		const userTxnDoc = _userTxnDoc.toObject();
 
-		//! 只有盤中才須排程
-		if (!closing) {
-			const txn_time = moment().add(40, "m").toDate(); //即時交易處理時間
-			const start_time = moment().toDate(); //限價交易開始處理時間
-			const end_time = moment().set({ hour: 13, minute: 30 }).toDate(); //限價交易結束時間13:30
-			let custom_rule = null; //排程規則
-			let msg = "";
-			if (req.query.order_type === "limit") {
-				custom_rule = { start: start_time, end: end_time, rule: "0 */30 * * * *" }; //* 到收盤時每30分鐘執行一次
-				msg = `【限價單】將在: ${start_time.toLocaleString()} ~ ${end_time.toLocaleString()} 處理`;
-			} else {
-				custom_rule = txn_time;
-				msg = `【市價單】將在: ${txn_time.toLocaleString()} 處理`;
-			}
-			console.log(msg);
-			const job = schedule.scheduleJob(custom_rule, async () => {
+		//! 只有盤中市價才須排程
+		if (!closing && req.query.order_type === "market") {
+			const txn_time = moment().add(MARKET_ORDER_TIME, "m").toDate(); //即時交易處理時間
+			console.log(`【市價單】將在: ${txn_time.toLocaleString()} 處理`);
+			const job = schedule.scheduleJob(txn_time, async () => {
 				// 檢查訂單是否還存在
 				let txn_exist = await UserTxn.exists({ _id: userTxnDoc._id });
 				if (txn_exist) {
-					queue.add(() => txn_task(userTxnDoc, job, msg)); //* 加入執行佇列
+					queue.add(() => txn_task(userTxnDoc, job)); //* 加入執行佇列
 				} else {
 					job.cancel();
 				}

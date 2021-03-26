@@ -1,36 +1,22 @@
 import schedule from "node-schedule";
-import { runEveryTxn, runEveryUserStock, runEveryLimitTxn, runEveryPendingTxn } from "./txn";
+import { runEveryTxn, runEveryUserStock, runEveryPendingTxn } from "./txn";
 import { remove_stock_data } from "../common/utils";
 import { getStock } from "./getStock";
 import moment from "moment";
 import Global from "../models/global_model";
+import { PENDING_ORDER_START, PENDING_ORDER_END, PENDING_ORDER_TIME } from "../common/time";
 
-// * 開盤處理掛單排程(每日10:00)
+// * 盤中定時處理訂單(每日10:00~13:30)
 export const start_pending_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 10;
-	rule.minute = 0;
+	rule.hour = new schedule.Range(PENDING_ORDER_START, PENDING_ORDER_END);
+	rule.minute = new schedule.Range(0, 59, PENDING_ORDER_TIME);
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
 		console.log("----------------------------------------");
-		console.log(`掛單開始排程時間: ${fireDate.toLocaleString()}`);
+		console.log(`盤中定時交易開始處理時間: ${fireDate.toLocaleString()}`);
 		await runEveryPendingTxn(fireDate);
-		console.log("----------------------------------------");
-	});
-};
-
-// * 處理當日限價單(每日13:35)
-export const start_limit_txn_schedule = () => {
-	var rule = new schedule.RecurrenceRule();
-	rule.hour = 13;
-	rule.minute = 35;
-	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
-
-	schedule.scheduleJob(rule, async function (fireDate) {
-		console.log("----------------------------------------");
-		console.log(`限價交易開始處理時間: ${fireDate.toLocaleString()}`);
-		await runEveryLimitTxn();
 		console.log("----------------------------------------");
 	});
 };

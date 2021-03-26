@@ -25,7 +25,7 @@ export const task = async (user, stock_id, stock_name, res) => {
 };
 
 // * 系統處理交易搜尋爬蟲程序
-export const txn_task = async (userTxnDoc, job, msg) => {
+export const txn_task = async (userTxnDoc, job = null) => {
 	let {
 		stockInfo: { stock_id, stock_name },
 		type,
@@ -33,11 +33,6 @@ export const txn_task = async (userTxnDoc, job, msg) => {
 	let funcs = [txn_crawl_tw_stock, txn_crawl_pcHome_stock, txn_crawl_cnyes_stock];
 	let random_n = Math.floor(Math.random() * funcs.length); //隨機取數
 	let website = get_website_name(random_n);
-
-	console.log("----------------------------------------");
-	console.log(`【${userTxnDoc.user}】 交易處理:`);
-	console.log(msg);
-	console.log("----------------------------------------");
 
 	// * 取得即時股票資訊
 	if (random_n === 1) {

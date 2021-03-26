@@ -13,7 +13,6 @@ import txnRouter from "./routes/transaction";
 import Global from "./models/global_model";
 import {
 	// start_txn_schedule,
-	start_limit_txn_schedule,
 	start_pending_txn_schedule,
 	start_get_closingStock_schedule,
 	start_closing_schedule,
@@ -40,7 +39,6 @@ connection.once("open", () => {
 
 	// * 啟動排程
 	// start_txn_schedule();
-	start_limit_txn_schedule();
 	start_pending_txn_schedule();
 	start_get_closingStock_schedule();
 	start_closing_schedule();

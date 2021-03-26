@@ -97,7 +97,7 @@ export default function SellDialog(props) {
 	const [global, set_global] = useState({});
 	const history = useHistory();
 
-	console.log(order_type, bid_price, stock_num)
+	console.log(order_type, bid_price, stock_num);
 
 	const handleNumberChange = (e) => {
 		let n = parseInt(e.target.value);
@@ -112,7 +112,7 @@ export default function SellDialog(props) {
 	//更改訂單類型
 	const change_orderType = (e) => {
 		set_order_type(e.target.value);
-		set_bid_price("")
+		set_bid_price("");
 	};
 
 	const handleSellStock = async () => {
@@ -241,25 +241,25 @@ export default function SellDialog(props) {
 		if (order_type === "market" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，即時交易(盤中處理)，金額將以下次收盤價計算"}
+					{"提醒: 現在為收盤期間，市價交易(委託單)，將於下一個開盤日進行處理"}
 				</p>
 			);
 		} else if (order_type === "limit" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，限價交易(盤後處理)，訂單將於下一個收盤日之後處理"}
+					{"提醒: 現在為收盤期間，限價交易(委託單)，將於下一個開盤日進行處理"}
 				</p>
 			);
 		} else if (order_type === "market" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為開盤期間，即時交易(盤中處理)，訂單於下單後40分鐘後抓取市價處理"}
+					{"提醒: 現在為開盤期間，市價交易(市價單)，訂單於下單後40分鐘後抓取市價處理"}
 				</p>
 			);
 		} else if (order_type === "limit" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為開盤期間，限價交易(盤後處理)，訂單將於今日收盤後進行處理"}
+					{"提醒: 現在為開盤期間，限價交易(限價單)，訂單存活期限為一天"}
 				</p>
 			);
 		} else {
@@ -455,10 +455,10 @@ export default function SellDialog(props) {
 									<em>請選擇交易類型</em>
 								</MenuItem>
 								<MenuItem className="ch_font" value={"market"}>
-									即時交易(盤中處理)
+									市價交易(市價單)
 								</MenuItem>
 								<MenuItem className="ch_font" value={"limit"}>
-									限價交易(盤後處理)
+									限價交易(限價單)
 								</MenuItem>
 							</Select>
 						</FormControl>

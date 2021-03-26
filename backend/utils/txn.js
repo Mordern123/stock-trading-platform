@@ -10,12 +10,15 @@ import moment from "moment";
 import { queue } from "../server";
 import { txn_task } from "../common/scraper";
 import { closing_data_to_stock_info } from "../common/tools";
+import { CLOSING_HOURS, CLOSING_MINUTES } from "../common/time";
 require("dotenv").config();
 
 // * 伺服器運行處理交易執行起點
 export const runEveryTxn = async () => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
-	const closing_time = moment(globalDoc.stock_update_time).hour(13).minute(30); //13:30收盤
+	const closing_time = moment(globalDoc.stock_update_time)
+		.hour(CLOSING_HOURS)
+		.minute(CLOSING_MINUTES); //13:30收盤
 
 	// ! 停止所有交易
 	if (globalDoc.shutDown_txn) {
@@ -44,7 +47,7 @@ export const runEveryTxn = async () => {
 };
 
 // * 伺服器處理當日限價單執行起點
-export const runEveryLimitTxn = async () => {
+export const runEveryPendingTxn = async (executed_time) => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
 
 	// ! 停止所有交易
@@ -53,75 +56,45 @@ export const runEveryLimitTxn = async () => {
 		return;
 	}
 
-	// * 取得要排程的訂單(由早到晚)
-	const userTxnDocs = await UserTxn.find({
+	// * 取得等待中限價單(由早到晚)
+	const limitTxnDocs = await UserTxn.find({
 		status: "waiting",
-		closing: false,
 		order_type: "limit",
-		order_time: { $lte: moment().set({ hour: 13, minute: 30 }).toDate() }, //13:30
+		order_time: { $lte: executed_time },
 	})
 		.sort({ date: "asc" })
 		.exec();
 
-	// * 處理每筆訂單
-	for (let i = 0; i < userTxnDocs.length; i++) {
-		console.log(`正在處理第${i + 1}筆...`);
-		let { _id } = userTxnDocs[i];
-		await updateTxn(_id, "fail", null); //更改交易為失敗
-	}
-
-	console.log(`所有交易處理完成`);
-	console.log(`處理結束，共${userTxnDocs.length}筆`);
-};
-
-// * 伺服器運行處理掛單執行起點
-export const runEveryPendingTxn = async (executed_time) => {
-	console.log(executed_time);
-	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
-
-	// ! 停止所有交易
-	if (globalDoc.shutDown_txn) {
-		console.log(`停止交易時間，不處理任何交易`);
-		return;
-	}
-
-	// * 取得要排程的訂單(由早到晚 + 包含市價、限價)
-	const userTxnDocs = await UserTxn.find({
+	// * 取得等待中市價委託單(前一天)
+	const marketTxnDocs = await UserTxn.find({
 		status: "waiting",
+		order_type: "market",
 		closing: true,
 		order_time: { $lte: executed_time },
 	})
 		.sort({ date: "asc" })
 		.exec();
 
-	// * 排程每筆訂單(市價、限價)
-	for (let i = 0; i < userTxnDocs.length; i++) {
+	// * 處理每筆限價單
+	console.log("開始處理限價單...");
+	for (let i = 0; i < limitTxnDocs.length; i++) {
 		console.log(`正在處理第${i + 1}筆...`);
-		const { order_type } = userTxnDocs[i];
-		const start_time = moment().toDate(); //限價交易開始處理時間
-		const end_time = moment().set({ hour: 1, minute: 45 }).toDate(); //限價交易結束時間13:30
-		let custom_rule = null; //排程規則
-		let msg = "";
-		if (order_type === "limit") {
-			custom_rule = { start: start_time, end: end_time, rule: "0 */30 * * * *" }; //* 到收盤時每30分鐘執行一次
-			msg = `【限價單】將在: ${start_time.toLocaleString()} ~ ${end_time.toLocaleString()} 處理`;
-		} else if (order_type === "market") {
-			custom_rule = start_time;
-			msg = `【市價單】將在: ${start_time.toLocaleString()} 處理`;
-		}
-		console.log(msg);
-		const job = schedule.scheduleJob(custom_rule, async () => {
-			// 檢查訂單是否還存在
-			let txn_exist = await UserTxn.exists({ _id: userTxnDocs[i]._id });
-			if (txn_exist) {
-				queue.add(() => txn_task(userTxnDocs[i], job, msg)); //* 加入執行佇列
-			} else {
-				job.cancel();
-			}
-		});
+		queue.add(() => txn_task(limitTxnDocs[i])); //* 加入執行佇列
 	}
-	console.log(`所有交易排程完成`);
-	console.log(`處理結束，共${userTxnDocs.length}筆`);
+	console.log("-----------------------------");
+
+	// * 處理每筆市價委託單
+	console.log("開始處理市價委託單...");
+	for (let i = 0; i < marketTxnDocs.length; i++) {
+		console.log(`正在處理第${i + 1}筆...`);
+		queue.add(() => txn_task(marketTxnDocs[i])); //* 加入執行佇列
+	}
+	console.log("-----------------------------");
+
+	console.log(`所有交易處理完成`);
+	console.log(
+		`處理結束，限價單共${limitTxnDocs.length}筆、市價委託單共${marketTxnDocs.length}筆`
+	);
 };
 
 // * 伺服器運行計算股票總價值起點
@@ -138,7 +111,7 @@ export const runEveryUserStock = async () => {
 };
 
 // * 處理交易入口
-export const runTxn = async (type, userTxnDoc, stockData, job) => {
+export const runTxn = async (type, userTxnDoc, stockData, job = null) => {
 	const {
 		_id,
 		user,
@@ -153,74 +126,45 @@ export const runTxn = async (type, userTxnDoc, stockData, job) => {
 		// ! 檢查訂單是否還存在
 		let txn_exist = await UserTxn.exists({ _id: _id });
 		if (!txn_exist) {
-			job.cancel();
+			if (job) job.cancel();
 			return;
 		}
 
 		// ! 開盤市價交易，需要即時股票資訊
 		if (order_type === "market" && !closing && !stockData) {
 			await updateTxn(_id, "fail", 7);
-			job.cancel();
+			if (job) job.cancel();
 			return;
 		}
 
-		// * 開盤/收盤預設變數
+		// * 預設變數
 		let new_stockInfo; //使用的股票資料
 		let yesterday_price; //昨日收盤價
 		let current_price; //目前股價
 		let stock_price; //運算股價
 		let user_bid_price = bid_price || 0; //用戶出價
 
-		if (closing) {
-			//* 處理收盤交易
-			const closing_data = await getStock(stock_id); // ? 最新收盤資料(上一次)
-			const last_closing_data = await getStock(stock_id, 1); // ? 次新的收盤資料(上上一次)
-			const current_stock_info = closing_data_to_stock_info(closing_data);
-
-			// ! 檢查是否有收盤資料
-			if (last_closing_data) {
-				new_stockInfo = current_stock_info; // ? 最新收盤資料(上一次)
-				yesterday_price = parseFloat(last_closing_data.closing_price) || 0; // ? 次新收盤價
-				current_price = parseFloat(new_stockInfo.z) || 0; // ? 最新收盤價
-				if (order_type === "limit") {
-					let lowest_price = parseFloat(new_stockInfo.l); //收盤最低點
-					let highest_price = parseFloat(new_stockInfo.h); //收盤最高點
-					if (lowest_price <= user_bid_price && user_bid_price <= highest_price) {
-						//出價在區間內
-						stock_price = user_bid_price; //? 限價交易計算價格用使用者出價
-					} else {
-						stock_price = parseFloat(new_stockInfo.z) || 0;
-					}
-				} else {
-					stock_price = parseFloat(new_stockInfo.z) || 0;
-				}
-			} else {
-				await updateTxn(_id, "fail", 7);
-				return;
-			}
-		} else {
-			// * 處理開盤交易
-			new_stockInfo = parseFloat(stockData.z) > 0 ? stockData : stockInfo; // ? 如果即時股價為0則改用下單時抓尋時的股票資料
-			yesterday_price = parseFloat(new_stockInfo.y) || 0; //昨日收盤
-			current_price = parseFloat(new_stockInfo.z) || 0; //目前成交價
-			if (order_type === "limit") {
-				let lowest_price = yesterday_price - yesterday_price * 0.1; //允許最低價格
-				let highest_price = yesterday_price + yesterday_price * 0.1; //允許最高價格
-				if (lowest_price <= user_bid_price && user_bid_price <= highest_price) {
-					//出價在區間內
-					stock_price = user_bid_price; //? 限價交易計算價格用使用者出價
-				} else {
-					stock_price = current_price; //目前股價
-				}
+		// * 處理開盤交易
+		new_stockInfo = parseFloat(stockData.z) > 0 ? stockData : stockInfo; // ? 如果即時股價為0則改用下單時抓尋時的股票資料
+		yesterday_price = parseFloat(new_stockInfo.y) || 0; //昨日收盤
+		current_price = parseFloat(new_stockInfo.z) || 0; //目前成交價
+		if (order_type === "limit") {
+			let lowest_price = yesterday_price - yesterday_price * 0.1; //允許最低價格
+			let highest_price = yesterday_price + yesterday_price * 0.1; //允許最高價格
+			if (lowest_price <= user_bid_price && user_bid_price <= highest_price) {
+				//出價在區間內
+				stock_price = user_bid_price; //? 限價交易計算價格用使用者出價
 			} else {
 				stock_price = current_price; //目前股價
 			}
+		} else {
+			stock_price = current_price; //目前股價
 		}
 
 		// ! 檢查股票價格不能為0
 		if (!stock_price || !current_price) {
 			await updateTxn(_id, "fail", 8);
-			job.cancel();
+			if (job) job.cancel();
 			return;
 		}
 
@@ -240,7 +184,7 @@ export const runTxn = async (type, userTxnDoc, stockData, job) => {
 			} else {
 				await updateTxn(_id, "fail", 10);
 			}
-			job.cancel();
+			if (job) job.cancel();
 			return;
 		}
 
@@ -253,12 +197,12 @@ export const runTxn = async (type, userTxnDoc, stockData, job) => {
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
-		job.cancel();
+		if (job) job.cancel();
 	}
 };
 
 // * 處理買入交易
-const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) => {
+const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = null) => {
 	const { _id, user, stock_id, shares_number, order_type, closing } = userTxnDoc;
 	try {
 		// // ! 收盤處理，出價小於收盤最低價(限價購買)
@@ -272,9 +216,14 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) =
 
 		// ! 出價小於收盤最低價(限價購買)
 		if (order_type === "limit") {
-			let current_price = parseFloat(stockInfo.z); //即時股價
+			const current_price = parseFloat(stockInfo.z); //即時股價
+			console.log(1, user_bid_price, current_price);
 			if (user_bid_price < current_price) {
-				await updateTxn(_id, "waiting", 1);
+				console.log(2);
+				const closing = moment().isSameOrAfter(
+					moment().set({ hour: CLOSING_HOURS, minute: CLOSING_MINUTES })
+				); //已收盤
+				if (closing) await updateTxn(_id, "fail", 1);
 				return;
 			}
 		}
@@ -285,14 +234,16 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) =
 		let txn_value = await checkBalance(user, stock_price, shares_number); //交易金額
 		if (txn_value === null) {
 			await updateTxn(_id, "fail", 5);
-			job.cancel();
+			if (job) job.cancel();
 			return;
 		}
+
 		handling_fee = (txn_value * 0.1425) / 100; // ? 買入手續費收取0.1425%
 		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
 		total_value = txn_value + handling_fee;
 		const _stockInfo = { ...stockInfo, z: stock_price }; //? 設定最終金額
 
+		console.log(3);
 		//* 交易可執行
 		let userHasStock = await UserStock.exists({ user, stock_id }); //確認用戶是否擁有此股票
 		if (userHasStock) {
@@ -327,11 +278,12 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) =
 
 		//* 更新交易狀態
 		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
-		job.cancel();
+		console.log(4);
+		if (job) job.cancel();
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
-		job.cancel();
+		if (job) job.cancel();
 	}
 };
 
@@ -364,9 +316,14 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 
 		//! 出價大於於收盤最高價(限價賣出)
 		if (order_type === "limit") {
-			let current_price = parseFloat(stockInfo.z); //即時股價
+			const current_price = parseFloat(stockInfo.z); //即時股價
+			console.log(1, user_bid_price, current_price);
 			if (user_bid_price > current_price) {
-				await updateTxn(_id, "waiting", 2);
+				console.log(2);
+				const closing = moment().isSameOrAfter(
+					moment().set({ hour: CLOSING_HOURS, minute: CLOSING_MINUTES })
+				); //已收盤
+				if (closing) await updateTxn(_id, "fail", 2);
 				return;
 			}
 		}
@@ -380,6 +337,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
 		total_value = txn_value - handling_fee;
 		const _stockInfo = { ...stockInfo, z: stock_price }; //? 設定最終金額
+		console.log(3);
 
 		await UserStock.findOneAndUpdate(
 			{
@@ -401,11 +359,12 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 
 		// * 更新交易狀態
 		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
-		job.cancel();
+		if (job) job.cancel();
+		console.log(4);
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);
-		job.cancel();
+		if (job) job.cancel();
 	}
 };
 

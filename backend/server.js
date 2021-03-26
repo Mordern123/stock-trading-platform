@@ -12,7 +12,6 @@ import stockRouter from "./routes/stock";
 import txnRouter from "./routes/transaction";
 import Global from "./models/global_model";
 import {
-	// start_txn_schedule,
 	start_pending_txn_schedule,
 	start_get_closingStock_schedule,
 	start_closing_schedule,
@@ -38,7 +37,6 @@ connection.once("open", () => {
 	console.log("The database is " + connection.name);
 
 	// * 啟動排程
-	// start_txn_schedule();
 	start_pending_txn_schedule();
 	start_get_closingStock_schedule();
 	start_closing_schedule();
@@ -91,21 +89,6 @@ app.get("/global", async (req, res) => {
 app.get("/job", async (req, res) => {
 	const list = schedule.scheduledJobs;
 	res.json(list);
-});
-
-//取得列隊等待工作
-app.get("/test", async (req, res) => {
-	const startTime = moment().add(3, "s").toDate();
-	const endTime = moment().add(1, "m").second(10).toDate();
-	console.log(startTime);
-	console.log(endTime);
-	const job = schedule.scheduleJob(
-		{ start: startTime, end: endTime, rule: "*/5 * * * * *" },
-		function (d) {
-			queue.add(() => console.log("Time for tea!", d));
-		}
-	);
-	res.json(true);
 });
 
 global.online_count = 0; //上線平台總人數

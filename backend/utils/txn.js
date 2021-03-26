@@ -10,15 +10,15 @@ import moment from "moment";
 import { queue } from "../server";
 import { txn_task } from "../common/scraper";
 import { closing_data_to_stock_info } from "../common/tools";
-import { CLOSING_HOURS, CLOSING_MINUTES } from "../common/time";
+import { CLOSING_HOUR, CLOSING_MINUTE } from "../common/time";
 require("dotenv").config();
 
 // * 伺服器運行處理交易執行起點
 export const runEveryTxn = async () => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
 	const closing_time = moment(globalDoc.stock_update_time)
-		.hour(CLOSING_HOURS)
-		.minute(CLOSING_MINUTES); //13:30收盤
+		.hour(CLOSING_HOUR)
+		.minute(CLOSING_MINUTE); //13:30收盤
 
 	// ! 停止所有交易
 	if (globalDoc.shutDown_txn) {
@@ -221,7 +221,7 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = 
 			if (user_bid_price < current_price) {
 				console.log(2);
 				const closing = moment().isSameOrAfter(
-					moment().set({ hour: CLOSING_HOURS, minute: CLOSING_MINUTES })
+					moment().set({ hour: CLOSING_HOUR, minute: CLOSING_MINUTE })
 				); //已收盤
 				if (closing) await updateTxn(_id, "fail", 1);
 				return;
@@ -321,7 +321,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 			if (user_bid_price > current_price) {
 				console.log(2);
 				const closing = moment().isSameOrAfter(
-					moment().set({ hour: CLOSING_HOURS, minute: CLOSING_MINUTES })
+					moment().set({ hour: CLOSING_HOUR, minute: CLOSING_MINUTE })
 				); //已收盤
 				if (closing) await updateTxn(_id, "fail", 2);
 				return;

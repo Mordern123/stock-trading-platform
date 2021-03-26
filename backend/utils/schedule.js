@@ -4,13 +4,30 @@ import { remove_stock_data } from "../common/utils";
 import { getStock } from "./getStock";
 import moment from "moment";
 import Global from "../models/global_model";
-import { PENDING_ORDER_START, PENDING_ORDER_END, PENDING_ORDER_TIME } from "../common/time";
+import {
+	OPENING_HOUR,
+	OPENING_MINUTE,
+	CLOSING_HOUR,
+	CLOSING_MINUTE,
+	PENDING_ORDER_START_HOUR,
+	PENDING_ORDER_END_HOUR,
+	PENDING_ORDER_MINUTE,
+	CALCULATE_STOCK_VALUE_HOUR_1,
+	CALCULATE_STOCK_VALUE_MINUTE_1,
+	CALCULATE_STOCK_VALUE_HOUR_2,
+	CALCULATE_STOCK_VALUE_MINUTE_2,
+	GET_CLOSING_STOCK_HOUR,
+	GET_CLOSING_STOCK_MINUTE,
+	REMOVE_CLOSING_STOCK_DAY,
+	REMOVE_CLOSING_STOCK_HOUR,
+	REMOVE_CLOSING_STOCK_MINUTE,
+} from "../common/time";
 
 // * 盤中定時處理訂單(每日10:00~13:30)
 export const start_pending_txn_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = new schedule.Range(PENDING_ORDER_START, PENDING_ORDER_END);
-	rule.minute = new schedule.Range(0, 59, PENDING_ORDER_TIME);
+	rule.hour = new schedule.Range(PENDING_ORDER_START_HOUR, PENDING_ORDER_END_HOUR);
+	rule.minute = new schedule.Range(0, 59, PENDING_ORDER_MINUTE);
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
@@ -21,27 +38,11 @@ export const start_pending_txn_schedule = () => {
 	});
 };
 
-// * 收盤處理股票交易排程(每日15:00)
-// export const start_txn_schedule = () => {
-// 	var rule = new schedule.RecurrenceRule();
-// 	rule.minute = new schedule.Range(0, 59, 60); //每60分鐘一次
-// 	// rule.hour = [new schedule.Range(0, 8), new schedule.Range(15, 23)]; //15點到隔天早上8點
-// 	rule.hour = 15; //每日15:00
-// 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
-
-// 	schedule.scheduleJob(rule, async function (fireDate) {
-// 		console.log("----------------------------------------");
-// 		console.log(`交易開始處理時間: ${fireDate.toLocaleString()}`);
-// 		await runEveryTxn();
-// 		console.log("----------------------------------------");
-// 	});
-// };
-
 // * 計算股票總價值排程1(每日15:10)
 export const start_stockValue_schedule1 = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 15;
-	rule.minute = 10;
+	rule.hour = CALCULATE_STOCK_VALUE_HOUR_1;
+	rule.minute = CALCULATE_STOCK_VALUE_MINUTE_1;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
@@ -55,8 +56,8 @@ export const start_stockValue_schedule1 = () => {
 // * 計算股票總價值排程2(每日8:30)
 export const start_stockValue_schedule2 = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 8;
-	rule.minute = 30;
+	rule.hour = CALCULATE_STOCK_VALUE_HOUR_2;
+	rule.minute = CALCULATE_STOCK_VALUE_MINUTE_2;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
@@ -70,8 +71,8 @@ export const start_stockValue_schedule2 = () => {
 // * 取得收盤資料排程(每日14:30)
 export const start_get_closingStock_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 14;
-	rule.minute = 30;
+	rule.hour = GET_CLOSING_STOCK_HOUR;
+	rule.minute = GET_CLOSING_STOCK_MINUTE;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
@@ -86,8 +87,8 @@ export const start_get_closingStock_schedule = () => {
 // * 進入收盤狀態排程(每日13:30)
 export const start_closing_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 13;
-	rule.minute = 30;
+	rule.hour = CLOSING_HOUR;
+	rule.minute = CLOSING_MINUTE;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
@@ -101,8 +102,8 @@ export const start_closing_schedule = () => {
 // * 進入開盤狀態排程(每日9:00)
 export const start_opening_schedule = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.hour = 9;
-	rule.minute = 0;
+	rule.hour = OPENING_HOUR;
+	rule.minute = OPENING_MINUTE;
 	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
 
 	schedule.scheduleJob(rule, async function (fireDate) {
@@ -124,9 +125,9 @@ export const start_opening_schedule = () => {
 // * 每個禮拜刪除收盤資料(每個禮拜天11:30)
 export const remove_closing_stock_data = () => {
 	var rule = new schedule.RecurrenceRule();
-	rule.minute = 30; //23:30分
-	rule.hour = 23; //每個禮拜天11點
-	rule.dayOfWeek = 0; //每個禮拜天
+	rule.dayOfWeek = REMOVE_CLOSING_STOCK_DAY; //每個禮拜天
+	rule.hour = REMOVE_CLOSING_STOCK_HOUR; //每個禮拜天11點
+	rule.minute = REMOVE_CLOSING_STOCK_MINUTE; //23:30分
 
 	schedule.scheduleJob(rule, async function (fireDate) {
 		console.log("----------------------------------------");

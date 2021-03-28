@@ -169,7 +169,8 @@ const get_user_stock = async (req, res) => {
 const user_place_order = async (req, res) => {
 	try {
 		let { user, code } = await check_permission(req);
-		let { stock_id, stockInfo, shares_number, bid_price } = req.body; //前端傳送值
+		let { stock_id, stockInfo, bid_price } = req.body; //前端傳送值
+		const shares_number = parseInt(req.body.shares_number);
 
 		if (!user) {
 			res.clearCookie("user_token");
@@ -181,14 +182,15 @@ const user_place_order = async (req, res) => {
 		if (!["buy", "sell"].includes(req.params.type)) throw false; //檢查交易類型
 		if (!["market", "limit"].includes(req.query.order_type)) throw false; //檢查委託單類型
 		if (req.query.order_type === "limit" && !bid_price && bid_price <= 0) throw false; //檢查限價交易資料
+		if (!(shares_number && 1 <= shares_number && shares_number <= 1000000)) throw false; //檢查股票數量
 
 		// ? 變數
-		let doc = await UserClass.findOne({ user: user._id }).exec();
-		let global = await Global.findOne({ tag: "hongwei" }).lean().exec();
-		let current_time = moment().toDate(); //下單時間
+		const doc = await UserClass.findOne({ user: user._id }).exec();
+		const global = await Global.findOne({ tag: "hongwei" }).lean().exec();
+		const current_time = moment().toDate(); //下單時間
 		// let closing =
 		// 	req.query.order_type === "limit" || global.shutDown_txn ? true : global.stock_closing; // ? 限價一律收盤後處理
-		let closing = global.shutDown_txn ? true : global.stock_closing;
+		const closing = global.shutDown_txn ? true : global.stock_closing;
 
 		// * 新增一筆訂單
 		const _userTxnDoc = await new UserTxn({

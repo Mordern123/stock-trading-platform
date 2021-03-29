@@ -97,8 +97,6 @@ export default function SellDialog(props) {
 	const [global, set_global] = useState({});
 	const history = useHistory();
 
-	console.log(order_type, bid_price, stock_num);
-
 	const handleNumberChange = (e) => {
 		let n = parseInt(e.target.value);
 		set_stock_num(n);

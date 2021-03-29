@@ -15,7 +15,7 @@ import { task, txn_task } from "../common/scraper";
 import { add_user_search } from "../common/utils";
 import { handle_error } from "../common/error";
 import { closing_data_to_stock_info } from "../common/tools";
-import { MARKET_ORDER_TIME } from "../common/time";
+import { MARKET_ORDER_MINUTE } from "../common/time";
 
 moment.locale("zh-tw");
 
@@ -84,7 +84,7 @@ const get_stock_rank = async (req, res) => {
 			if (item.initial_money) {
 				//如果初始金額不等於0時進入
 				let rate = (item.total_amount - item.initial_money) / item.initial_money;
-				newrate = (rate * 100).toFixed(2);
+				newrate = (rate * 100).toFixed(3);
 			} else {
 				newrate = 0;
 			}
@@ -119,7 +119,7 @@ const get_stock_rank = async (req, res) => {
 			if (item.initial_money) {
 				//如果初始金額不等於0時進入
 				let rate = (item.total_amount - item.initial_money) / item.initial_money;
-				newrate = (rate * 100).toFixed(2);
+				newrate = (rate * 100).toFixed(3);
 			} else {
 				newrate = 0;
 			}
@@ -207,7 +207,7 @@ const user_place_order = async (req, res) => {
 
 		//! 只有盤中市價才須排程
 		if (!closing && req.query.order_type === "market") {
-			const txn_time = moment().add(MARKET_ORDER_TIME, "m").toDate(); //即時交易處理時間
+			const txn_time = moment().add(MARKET_ORDER_MINUTE, "m").toDate(); //即時交易處理時間
 			console.log(`【市價單】將在: ${txn_time.toLocaleString()} 處理`);
 			const job = schedule.scheduleJob(txn_time, async () => {
 				// 檢查訂單是否還存在

@@ -33,7 +33,7 @@ export const start_pending_txn_schedule = () => {
 	schedule.scheduleJob(rule, async function (fireDate) {
 		console.log("----------------------------------------");
 		console.log(`盤中定時交易開始處理時間: ${fireDate.toLocaleString()}`);
-		await runEveryPendingTxn(fireDate);
+		await runEveryPendingTxn(moment.toDate());
 		console.log("----------------------------------------");
 	});
 };

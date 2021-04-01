@@ -31,6 +31,6 @@ export const remove_stock_data = async () => {
 export const txn_error = async (userTxnDoc, job) => {
 	const { _id } = userTxnDoc;
 	await updateTxn(_id, "error", 7);
-	job.cancel();
+	if (job) job.cancel();
 	console.log("----------------------------------------");
 };

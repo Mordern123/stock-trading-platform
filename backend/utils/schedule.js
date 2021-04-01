@@ -1,5 +1,5 @@
 import schedule from "node-schedule";
-import { runEveryTxn, runEveryUserStock, runEveryPendingTxn } from "./txn";
+import { runEveryUserStock, runEveryPendingTxn } from "./txn";
 import { remove_stock_data } from "../common/utils";
 import { getStock } from "./getStock";
 import moment from "moment";

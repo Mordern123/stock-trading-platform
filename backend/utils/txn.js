@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-import schedule from "node-schedule";
 import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTxn from "../models/user_txn_model";
@@ -12,39 +10,6 @@ import { txn_task } from "../common/scraper";
 import { closing_data_to_stock_info } from "../common/tools";
 import { CLOSING_HOUR, CLOSING_MINUTE } from "../common/time";
 require("dotenv").config();
-
-// * 伺服器運行處理交易執行起點
-export const runEveryTxn = async () => {
-	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
-	const closing_time = moment(globalDoc.stock_update_time)
-		.hour(CLOSING_HOUR)
-		.minute(CLOSING_MINUTE); //13:30收盤
-
-	// ! 停止所有交易
-	if (globalDoc.shutDown_txn) {
-		console.log(`停止交易時間，不處理任何交易`);
-		return;
-	}
-
-	// * 取得要處理的交易資料(由早到晚)
-	const userTxnDocs = await UserTxn.find({
-		status: "waiting", //等待處理的交易
-		closing: true, //收盤後要處理
-		order_time: { $lte: closing_time.toDate() }, //下單時間在收盤之前
-	})
-		.sort({ date: "asc" })
-		.exec();
-
-	// * 處理每筆訂單
-	for (let i = 0; i < userTxnDocs.length; i++) {
-		console.log(`正在處理第${i + 1}筆...`);
-		let { type } = userTxnDocs[i];
-		await runTxn(type, userTxnDocs[i], null);
-	}
-
-	console.log(`所有交易處理完成`);
-	console.log(`處理結束，共${userTxnDocs.length}筆`);
-};
 
 // * 伺服器處理當日限價單執行起點
 export const runEveryPendingTxn = async (executed_time) => {

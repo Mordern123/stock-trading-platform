@@ -13,7 +13,8 @@
     "reset": "babel-node ./utils/reset.js",
     "check": "babel-node ./utils/check.js",
     "init-m": "babel-node ./utils/initial_money.js",
-    "score": "babel-node ./utils/score.js"
+    "score": "babel-node ./utils/score.js",
+    "614": "pm2 start \"C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js\" --name \"server\" -- run win-start"
   },
   "author": "",
   "license": "ISC",

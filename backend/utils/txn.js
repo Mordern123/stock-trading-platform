@@ -243,7 +243,6 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = 
 		total_value = txn_value + handling_fee;
 		const _stockInfo = { ...stockInfo, z: stock_price }; //? 設定最終金額
 
-		console.log(3);
 		//* 交易可執行
 		let userHasStock = await UserStock.exists({ user, stock_id }); //確認用戶是否擁有此股票
 		if (userHasStock) {
@@ -278,7 +277,6 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = 
 
 		//* 更新交易狀態
 		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
-		console.log(4);
 		if (job) job.cancel();
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
@@ -337,7 +335,6 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 		handling_fee = handling_fee < 20 ? 20 : handling_fee; // ? 不足20元算20
 		total_value = txn_value - handling_fee;
 		const _stockInfo = { ...stockInfo, z: stock_price }; //? 設定最終金額
-		console.log(3);
 
 		await UserStock.findOneAndUpdate(
 			{
@@ -360,7 +357,6 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 		// * 更新交易狀態
 		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
 		if (job) job.cancel();
-		console.log(4);
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
 		console.log(error);

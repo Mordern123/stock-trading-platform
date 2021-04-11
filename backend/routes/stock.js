@@ -16,6 +16,7 @@ import { add_user_search } from "../common/utils";
 import { handle_error } from "../common/error";
 import { closing_data_to_stock_info } from "../common/tools";
 import { MARKET_ORDER_MINUTE } from "../common/time";
+import { runMarketTxn } from "../utils/txn";
 
 moment.locale("zh-tw");
 
@@ -211,15 +212,7 @@ const user_place_order = async (req, res) => {
 		if (!closing && req.query.order_type === "market") {
 			const txn_time = moment().add(MARKET_ORDER_MINUTE, "m").toDate(); //即時交易處理時間
 			console.log(`【市價單】將在: ${txn_time.toLocaleString()} 處理`);
-			const job = schedule.scheduleJob(txn_time, async () => {
-				// 檢查訂單是否還存在
-				let txn_exist = await UserTxn.exists({ _id: userTxnDoc._id });
-				if (txn_exist) {
-					queue.add(() => txn_task(userTxnDoc, job)); //* 加入執行佇列
-				} else {
-					job.cancel();
-				}
-			});
+			const job = schedule.scheduleJob(txn_time, () => runMarketTxn(userTxnDoc, job));
 		}
 
 		res.json(userTxnDoc);

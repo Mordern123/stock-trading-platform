@@ -5,15 +5,38 @@ import Account from "../models/account_model";
 import User from "../models/user_model";
 import Global from "../models/global_model";
 import moment from "moment";
-import { queue } from "../server";
+import PQueue from "p-queue";
 import { txn_task } from "../common/scraper";
 import { closing_data_to_stock_info } from "../common/tools";
 import { CLOSING_HOUR, CLOSING_MINUTE } from "../common/time";
 require("dotenv").config();
 
-// * 伺服器處理當日限價單執行起點
-export const runEveryPendingTxn = async (executed_time) => {
+// * 伺服器處理市價單
+export const runMarketTxn = async (userTxnDoc, job = null) => {
 	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
+
+	// ! 停止所有交易
+	if (globalDoc.shutDown_txn) {
+		console.log(`停止交易時間，不處理任何交易`);
+		return;
+	}
+
+	// ! 檢查訂單是否還存在
+	let txn_exist = await UserTxn.exists({ _id: userTxnDoc._id });
+	if (!txn_exist) {
+		job.cancel();
+		return;
+	}
+
+	const stock_collection = await getTxnStockCollection([userTxnDoc]);
+	const { stock_id } = userTxnDoc;
+	await runTxn(userTxnDoc, stock_collection[stock_id], job);
+};
+
+// * 伺服器處理當日限價單執行起點
+export const runEveryPendingTxn = async () => {
+	const globalDoc = await Global.findOne({ tag: "hongwei" }).lean().exec();
+	const executed_time = moment().toDate();
 
 	// ! 停止所有交易
 	if (globalDoc.shutDown_txn) {
@@ -27,7 +50,7 @@ export const runEveryPendingTxn = async (executed_time) => {
 		order_type: "limit",
 		order_time: { $lte: executed_time },
 	})
-		.sort({ date: "asc" })
+		.sort({ order_time: "asc" })
 		.exec();
 
 	// * 取得等待中市價委託單(前一天)
@@ -37,14 +60,18 @@ export const runEveryPendingTxn = async (executed_time) => {
 		closing: true,
 		order_time: { $lte: executed_time },
 	})
-		.sort({ date: "asc" })
+		.sort({ order_times: "asc" })
 		.exec();
+
+	const stock_collection = await getTxnStockCollection(limitTxnDocs.concat(marketTxnDocs));
+	console.log(stock_collection);
 
 	// * 處理每筆限價單
 	console.log("開始處理限價單...");
 	for (let i = 0; i < limitTxnDocs.length; i++) {
 		console.log(`正在處理第${i + 1}筆...`);
-		queue.add(() => txn_task(limitTxnDocs[i])); //* 加入執行佇列
+		const { stock_id } = limitTxnDocs[i];
+		await runTxn(limitTxnDocs[i], stock_collection[stock_id]);
 	}
 	console.log("-----------------------------");
 
@@ -52,7 +79,8 @@ export const runEveryPendingTxn = async (executed_time) => {
 	console.log("開始處理市價委託單...");
 	for (let i = 0; i < marketTxnDocs.length; i++) {
 		console.log(`正在處理第${i + 1}筆...`);
-		queue.add(() => txn_task(marketTxnDocs[i])); //* 加入執行佇列
+		const { stock_id } = marketTxnDocs[i];
+		await runTxn(marketTxnDocs[i], stock_collection[stock_id]);
 	}
 	console.log("-----------------------------");
 
@@ -76,13 +104,14 @@ export const runEveryUserStock = async () => {
 };
 
 // * 處理交易入口
-export const runTxn = async (type, userTxnDoc, stockData, job = null) => {
+export const runTxn = async (userTxnDoc, stockData, job = null) => {
 	const {
 		_id,
 		user,
 		stock_id,
 		bid_price,
 		shares_number,
+		type,
 		order_type,
 		stockInfo,
 		closing,
@@ -486,4 +515,51 @@ export const updateStockValue = async (user) => {
 			new: true,
 		}
 	);
+};
+
+// * 取得欲處理交易之所有股票資料
+export const getTxnStockCollection = async (userTxnDocs = []) => {
+	console.log("start");
+	const txn_queue = new PQueue({ concurrency: 3, interval: 1000, intervalCap: 3 }); //工作管理佇列，每1秒reset，1秒內不能同時執行超過3個程序
+	const stock_collection = {}; //交易會用到的股票資料
+	const stock_ids = userTxnDocs
+		.map((item) => item.stock_id)
+		.filter((value, index, self) => {
+			return self.indexOf(value) === index;
+		});
+	console.log(stock_ids);
+	for (let i = 0; i < userTxnDocs.length; i++) {
+		const addQueue = async () => {
+			const { stock_id } = userTxnDocs[i];
+			if (!(stock_id in stock_collection)) {
+				await txn_queue.add(async () => {
+					try {
+						const stock_data = await txn_task(userTxnDocs[i]);
+						stock_collection[stock_id] = stock_data;
+					} catch (error) {
+						console.log(error);
+						addQueue();
+					}
+				}); //* 加入執行佇列
+			}
+		};
+		addQueue();
+	}
+	//! 每5秒檢查一次
+	let times = 0;
+	await new Promise((resolve, reject) => {
+		const id = setInterval(() => {
+			console.log(`check: ${Object.keys(stock_collection).length} times: ${times}`);
+			if (
+				Object.keys(stock_collection).length === stock_ids.length ||
+				times > stock_ids.length * 2
+			) {
+				clearInterval(id);
+				txn_queue.clear();
+				resolve();
+			}
+			times++;
+		}, 5000);
+	});
+	return stock_collection;
 };

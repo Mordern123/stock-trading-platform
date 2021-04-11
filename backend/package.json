@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "614": "pm2 start \"C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js\" --name \"server\" -- run win-start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js --exec babel-node --inspect=10000",
     "win-start": "cross-env ./node_modules/.bin/babel-node server.js",
@@ -13,8 +14,7 @@
     "reset": "babel-node ./utils/reset.js",
     "check": "babel-node ./utils/check.js",
     "init-m": "babel-node ./utils/initial_money.js",
-    "score": "babel-node ./utils/score.js",
-    "614": "pm2 start \"C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js\" --name \"server\" -- run win-start"
+    "score": "babel-node ./utils/score.js"
   },
   "author": "",
   "license": "ISC",
@@ -26,6 +26,7 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "form-data": "^2.3.3",
     "moment": "^2.24.0",
     "mongoose": "^5.9.5",
     "mongoose-long": "^0.2.1",

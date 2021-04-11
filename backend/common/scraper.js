@@ -24,43 +24,21 @@ export const task = async (user, stock_id, stock_name, res) => {
 	console.log(`【${website}】 取得 ${stock_id} ! 時間: ${moment().toDate().toLocaleString()}`);
 };
 
-// * 系統處理交易搜尋爬蟲程序
+// * 系統取得股票爬蟲程序
 export const txn_task = async (userTxnDoc, job = null) => {
+	let funcs = [txn_crawl_tw_stock, txn_crawl_pcHome_stock, txn_crawl_cnyes_stock];
+	// let funcs = [txn_crawl_cnyes_stock, txn_crawl_pcHome_stock];
+	let random_n = Math.floor(Math.random() * funcs.length); //隨機取數
+	// let random_n = 0;
+	let website = get_website_name(random_n);
 	let {
 		stockInfo: { stock_id, stock_name },
-		type,
 	} = userTxnDoc;
-	let funcs = [txn_crawl_tw_stock, txn_crawl_pcHome_stock, txn_crawl_cnyes_stock];
-	let random_n = Math.floor(Math.random() * funcs.length); //隨機取數
-	let website = get_website_name(random_n);
-
-	// * 取得即時股票資訊
-	if (random_n === 1) {
-		// ! PCHOME爬蟲要特別處理
-		funcs[random_n](stock_id, stock_name, async (stockData) => {
-			if (stockData) {
-				console.log(
-					`【${website}】 | ${stock_id} | 價格: ${
-						stockData.z
-					} | 時間: ${moment().toDate().toLocaleString()}`
-				);
-				await runTxn(type, userTxnDoc, stockData, job); //* 執行交易處理
-			} else {
-				await txn_error(userTxnDoc, job);
-			}
-		});
-	} else {
+	try {
 		const stockData = await funcs[random_n](stock_id, stock_name);
-		if (stockData) {
-			console.log(
-				`【${website}】 | ${stock_id} | 價格: ${
-					stockData.z
-				} | 時間: ${moment().toDate().toLocaleString()}`
-			);
-			await runTxn(type, userTxnDoc, stockData, job); //* 執行交易處理
-		} else {
-			await txn_error(userTxnDoc, job);
-		}
+		return stockData;
+	} catch (error) {
+		throw error;
 	}
 };
 

@@ -5,6 +5,9 @@ import { add_user_search } from "../common/utils";
 import { to_num, to_ud } from "../common/tools";
 import { handle_error } from "../common/error";
 import step from "step";
+import axios from "axios";
+import FormData from "form-data";
+import request from "request";
 
 // 使用者搜尋成功回傳資料處理
 const complete = async (data, res, user, stock_id, stock_name, request_time) => {
@@ -82,7 +85,7 @@ export const crawl_pcHome_stock = async (user, stock_id, stock_name, res) => {
 };
 
 // 系統搜尋成功回傳資料處理
-const txn_complete = async (data, stock_id, stock_name, request_time) => {
+const txn_complete = async (data, stock_id, stock_name, request_time, addQueue) => {
 	try {
 		var result = [];
 
@@ -124,17 +127,15 @@ const txn_complete = async (data, stock_id, stock_name, request_time) => {
 
 		return obj;
 	} catch (error) {
-		console.log(error);
-		return error;
+		throw error;
 	}
 };
 
 // 系統搜尋爬蟲執行點
-export const txn_crawl_pcHome_stock = async (stock_id, stock_name, execute) => {
-	try {
-		const url = `https://pchome.megatime.com.tw/stock/sid${stock_id}.html`;
-		let request_time = moment().toDate();
-
+export const txn_crawl_pcHome_stock = async (stock_id, stock_name) => {
+	const url = `https://pchome.megatime.com.tw/stock/sid${stock_id}.html`;
+	let request_time = moment().toDate();
+	return new Promise(function (resolve, reject) {
 		rest.post(url, {
 			multipart: true,
 			data: {
@@ -142,20 +143,18 @@ export const txn_crawl_pcHome_stock = async (stock_id, stock_name, execute) => {
 			},
 		})
 			.on("complete", async (data) => {
-				let result = await txn_complete(data, stock_id, stock_name, request_time);
-				execute(result);
-				return result;
+				try {
+					let result = await txn_complete(data, stock_id, stock_name, request_time);
+					resolve(result);
+				} catch (error) {
+					reject(error);
+				}
 			})
 			.on("fail", function (data, response) {
-				console.log(error);
-				return false;
+				reject(error);
 			})
 			.on("error", function (error, response) {
-				console.log(error);
-				return false;
+				reject(error);
 			});
-	} catch (error) {
-		console.log(error);
-		return false;
-	}
+	});
 };

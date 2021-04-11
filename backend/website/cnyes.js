@@ -65,6 +65,7 @@ export const crawl_cnyes_stock = async (user, stock_id, stock_name, res) => {
 //系統搜尋爬蟲
 export const txn_crawl_cnyes_stock = async (stock_id, stock_name) => {
 	try {
+		console.log("爬取鉅亨");
 		const url = "https://invest.cnyes.com/twstock/tws/" + stock_id;
 		let request_time = moment().toDate();
 		let result = [];
@@ -113,7 +114,7 @@ export const txn_crawl_cnyes_stock = async (stock_id, stock_name) => {
 
 		return obj;
 	} catch (error) {
-		console.log(error);
-		return false;
+		console.log("鉅亨error");
+		throw error;
 	}
 };

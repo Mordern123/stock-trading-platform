@@ -98,8 +98,7 @@ export const txn_crawl_tw_stock = async (stock_id, stock_name) => {
 
 		return obj;
 	} catch (error) {
-		console.log(error);
-		return false;
+		throw error;
 	}
 };
 

@@ -64,7 +64,6 @@ export const runEveryPendingTxn = async () => {
 		.exec();
 
 	const stock_collection = await getTxnStockCollection(limitTxnDocs.concat(marketTxnDocs));
-	console.log(stock_collection);
 
 	// * 處理每筆限價單
 	console.log("開始處理限價單...");
@@ -197,7 +196,7 @@ export const runTxn = async (userTxnDoc, stockData, job = null) => {
 
 // * 處理買入交易
 const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = null) => {
-	const { _id, user, stock_id, shares_number, order_type, closing } = userTxnDoc;
+	const { _id, user, stock_id, shares_number, order_type } = userTxnDoc;
 	try {
 		// // ! 收盤處理，出價小於收盤最低價(限價購買)
 		// if (closing && order_type === "limit") {
@@ -211,9 +210,9 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = 
 		// ! 出價小於收盤最低價(限價購買)
 		if (order_type === "limit") {
 			const current_price = parseFloat(stockInfo.z); //即時股價
-			console.log(1, user_bid_price, current_price);
+			console.log(`限價買入: ${user_bid_price} ${current_price}`);
 			if (user_bid_price < current_price) {
-				console.log(2);
+				console.log(`買入價過低`);
 				const closing = moment().isSameOrAfter(
 					moment().set({ hour: CLOSING_HOUR, minute: CLOSING_MINUTE })
 				); //已收盤
@@ -271,6 +270,7 @@ const runBuy = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job = 
 
 		//* 更新交易狀態
 		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
+		console.log("買入成功");
 		if (job) job.cancel();
 	} catch (error) {
 		await updateTxn(_id, "error", 7);
@@ -309,9 +309,9 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 		//! 出價大於於收盤最高價(限價賣出)
 		if (order_type === "limit") {
 			const current_price = parseFloat(stockInfo.z); //即時股價
-			console.log(1, user_bid_price, current_price);
+			console.log(`限價賣出: ${user_bid_price} ${current_price}`);
 			if (user_bid_price > current_price) {
-				console.log(2);
+				console.log(`賣出價過高`);
 				const closing = moment().isSameOrAfter(
 					moment().set({ hour: CLOSING_HOUR, minute: CLOSING_MINUTE })
 				); //已收盤
@@ -350,6 +350,7 @@ const runSell = async (userTxnDoc, stockInfo, stock_price, user_bid_price, job) 
 
 		// * 更新交易狀態
 		await updateTxn(_id, "success", 6, { handling_fee, stockInfo: _stockInfo });
+		console.log("賣出成功");
 		if (job) job.cancel();
 	} catch (error) {
 		await updateTxn(_id, "error", 7);

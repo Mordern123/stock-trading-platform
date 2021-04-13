@@ -1,5 +1,6 @@
 import schedule from "node-schedule";
 import { runEveryUserStock, runEveryPendingTxn } from "./txn";
+import { runEveryWaitingTxn } from "./manual_txn";
 import { remove_stock_data } from "../common/utils";
 import { getStock } from "./getStock";
 import moment from "moment";
@@ -21,6 +22,8 @@ import {
 	REMOVE_CLOSING_STOCK_DAY,
 	REMOVE_CLOSING_STOCK_HOUR,
 	REMOVE_CLOSING_STOCK_MINUTE,
+	CHECK_WAITING_TXN_HOUR,
+	CHECK_WAITING_TXN_MINUTE,
 } from "../common/time";
 
 // * 盤中定時處理訂單(每日10:00~13:30)
@@ -133,6 +136,21 @@ export const remove_closing_stock_data = () => {
 		console.log("----------------------------------------");
 		console.log(`刪除收盤資料: ${fireDate.toLocaleString()}`);
 		remove_stock_data();
+		console.log("----------------------------------------");
+	});
+};
+
+// * 每天額外檢查交易確保所有waiting交易結束
+export const check_waiting_txn_data = () => {
+	var rule = new schedule.RecurrenceRule();
+	rule.hour = CHECK_WAITING_TXN_HOUR;
+	rule.minute = CHECK_WAITING_TXN_MINUTE;
+	rule.dayOfWeek = new schedule.Range(1, 5); //每個禮拜一到五
+
+	schedule.scheduleJob(rule, async function (fireDate) {
+		console.log("----------------------------------------");
+		console.log(`檢查等待交易資料: ${fireDate.toLocaleString()}`);
+		runEveryWaitingTxn();
 		console.log("----------------------------------------");
 	});
 };

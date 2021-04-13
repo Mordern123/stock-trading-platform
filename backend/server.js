@@ -19,6 +19,7 @@ import {
 	start_stockValue_schedule1,
 	start_stockValue_schedule2,
 	remove_closing_stock_data,
+	check_waiting_txn_data,
 } from "./utils/schedule";
 import socket from "socket.io";
 import moment from "moment";
@@ -44,6 +45,7 @@ connection.once("open", () => {
 	start_stockValue_schedule1();
 	start_stockValue_schedule2();
 	remove_closing_stock_data();
+	check_waiting_txn_data();
 });
 mongoose.connect(process.env.DB_CONN_STRING, {
 	useNewUrlParser: true,

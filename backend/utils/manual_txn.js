@@ -38,6 +38,7 @@ export const runEveryWaitingTxn = async () => {
 	// * 取得要處理的交易資料(由早到晚)
 	const userTxnDocs = await UserTxn.find({
 		status: "waiting", //等待處理的交易
+		order_type: "limit",
 		order_time: { $lte: moment().set({ hour: CLOSING_HOUR, minute: CLOSING_MINUTE }).toDate() },
 	})
 		.sort({ order_time: "asc" })

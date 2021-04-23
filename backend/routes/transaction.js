@@ -131,7 +131,7 @@ const delete_user_txn = async (req, res) => {
 	const { id } = req.query;
 	const { user, code } = await check_permission(req);
 	const currentDateTime = moment().format('YYYY/MM/DD HH:mm:ss');
-	const closingFalseTime = moment().set('hours', 9);
+	const closingFalseTime = moment().set({'hours': 8, 'minute': 59});
 	const closingTrueTime = moment().set({'hours': 13, 'minute': 30});
 
 	if (!user) {

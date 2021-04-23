@@ -3,6 +3,7 @@ import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";
 import UserTxn from "../models/user_txn_model";
+import Global from "../models/global_model";
 import UserClass from "../models/user_class_model";
 import User from "../models/user_model";
 import moment from "moment";
@@ -142,6 +143,7 @@ const delete_user_txn = async (req, res) => {
 	
 	if (id) {
 		const txnDoc = await UserTxn.findById(id).exec();
+		const globalDoc = await Global.findOne({ tag: "hongwei" }).exec();
 		console.log(txnDoc.order_time);
 		if(txnDoc.order_type === "market" ){
 			if(!txnDoc.closing){
@@ -155,7 +157,8 @@ const delete_user_txn = async (req, res) => {
 				}
 			}
 			else{
-				if(moment(currentDateTime).isBetween(closingFalseTime,closingTrueTime)){
+				//如果在開盤且3~10之間 就不能取消訂單
+				if(!globalDoc.stock_closing && moment(currentDateTime).isBetween(closingFalseTime,closingTrueTime)){
 					res.json(false);
 				}
 				else{

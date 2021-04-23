@@ -49,7 +49,7 @@ const userStock_columns = [
 	},
 	{
 		field: "stockInfo.z",
-		title: "近期買入價",
+		title: "近期買賣價格",
 	},
 	{
 		field: "createdAt",

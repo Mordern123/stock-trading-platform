@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { application, Router } from "express";
 import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";
@@ -126,22 +126,50 @@ const get_user_txn = async (req, res) => {
 		res.json(false);
 	}
 };
-
+	
 const delete_user_txn = async (req, res) => {
 	const { id } = req.query;
 	const { user, code } = await check_permission(req);
+	const currentDateTime = moment().format('YYYY/MM/DD HH:mm:ss');
+	const closingFalseTime = moment().set('hours', 9);
+	const closingTrueTime = moment().set({'hours': 13, 'minute': 30});
 
 	if (!user) {
 		res.clearCookie("user_token");
 		res.status(code).send();
 		return;
 	}
-
+	
 	if (id) {
-		const doc = await UserTxn.findByIdAndDelete(id).exec();
-		res.json(true);
-	} else {
-		res.json(false);
+		const txnDoc = await UserTxn.findById(id).exec();
+		console.log(txnDoc.order_time);
+		if(txnDoc.order_type === "market" ){
+			if(!txnDoc.closing){
+				const order_timeUpdate = moment(txnDoc.order_time).add(10, 'm');
+				if(moment(currentDateTime).isBefore(order_timeUpdate)){
+					const doc = await UserTxn.findByIdAndDelete(id).exec();
+					res.json(true);
+				}
+				else{
+					res.json(false);
+				}
+			}
+			else{
+				if(moment(currentDateTime).isBetween(closingFalseTime,closingTrueTime)){
+					res.json(false);
+				}
+				else{
+					const doc = await UserTxn.findByIdAndDelete(id).exec();
+					res.json(true);
+				}
+			}
+		}
+		else{
+			const doc = await UserTxn.findByIdAndDelete(id).exec();
+			res.json(true);
+		}
+	} else { 
+		res.status(404).send();
 	}
 };
 
@@ -222,7 +250,7 @@ const get_class_txn_avg = async (req, res) => {
 router.route("/get/all").get(get_all_txn);
 router.route("/get/user/:type").get(get_user_txn);
 router.route("/get/class/avg").get(get_class_txn_avg);
-//! 暫時移除取消訂單功能
-// router.route("/user").delete(delete_user_txn);
+//暫時移除取消訂單功能
+router.route("/user").delete(delete_user_txn);
 
 export default router;

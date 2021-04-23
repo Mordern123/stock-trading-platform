@@ -11,6 +11,7 @@ import { apiTxn_get_all, apiTxn_delete_txn } from "../api";
 import { handle_error, transfer_fail_msg } from "../tools";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
+import CancelRoundedIcon from "@material-ui/icons/CancelRounded";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
@@ -288,10 +289,16 @@ export const StockStatus = function() {
 
 	const handle_cancel_order = async () => {
 		try {
-			await apiTxn_delete_txn({ id: current_data._id });
-			await update();
+			const des = await apiTxn_delete_txn({ id: current_data._id });
+			await update();	
+			if(des.data == false){
+				alert("該筆訂單已超過可取消時間");
+			}
+			else{
+				alert("已成功取消該筆訂單");
+			}				
 			close_modal();
-		} catch (error) {
+		} catch (error) {			
 			handle_error(error, history);
 			close_modal();
 		}
@@ -400,15 +407,15 @@ export const StockStatus = function() {
 								noDataDisplay="沒有任何待處理交易紀錄"
 								isLoading={loading}
 								headerStyle={{ backgroundColor: "#e1f5fe" }}
-								// actions={[
-								// 	{
-								// 		icon: () => (
-								// 			<CancelRoundedIcon style={{ color: "#e57373" }} />
-								// 		),
-								// 		tooltip: "取消訂單",
-								// 		onClick: open_modal,
-								// 	},
-								// ]}
+								actions={[
+									{
+										icon: () => (
+											<CancelRoundedIcon style={{ color: "#e57373" }} />
+										),
+										tooltip: "取消訂單",
+										onClick: open_modal,
+									},
+								]}
 								actionsColumnIndex={-1}
 							/>
 						</TabPanel>

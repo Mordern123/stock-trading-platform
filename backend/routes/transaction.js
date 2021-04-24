@@ -3,6 +3,7 @@ import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";
 import UserTxn from "../models/user_txn_model";
+import Global from "../models/global_model";
 import UserClass from "../models/user_class_model";
 import User from "../models/user_model";
 import moment from "moment";
@@ -126,22 +127,50 @@ const get_user_txn = async (req, res) => {
 		res.json(false);
 	}
 };
-
+	
 const delete_user_txn = async (req, res) => {
 	const { id } = req.query;
 	const { user, code } = await check_permission(req);
+	const currentDateTime = moment().format('YYYY/MM/DD HH:mm:ss');
 
 	if (!user) {
 		res.clearCookie("user_token");
 		res.status(code).send();
 		return;
 	}
-
+	
 	if (id) {
-		const doc = await UserTxn.findByIdAndDelete(id).exec();
-		res.json(true);
-	} else {
-		res.json(false);
+		const txnDoc = await UserTxn.findById(id).exec();
+		const globalDoc = await Global.findOne({ tag: "hongwei" }).exec();
+		console.log(txnDoc.order_time);
+		if(txnDoc.order_type === "market" ){
+			if(!txnDoc.closing){
+				const order_timeUpdate = moment(txnDoc.order_time).add(10, 'm');
+				if(moment(currentDateTime).isBefore(order_timeUpdate)){
+					const doc = await UserTxn.findByIdAndDelete(id).exec();
+					res.json(true);
+				}
+				else{
+					res.json(false);
+				}
+			}
+			else{
+				//如果在開盤且3~10之間 就不能取消訂單
+				if(!globalDoc.stock_closing){
+					res.json(false);
+				}
+				else{
+					const doc = await UserTxn.findByIdAndDelete(id).exec();
+					res.json(true);
+				}
+			}
+		}
+		else{
+			const doc = await UserTxn.findByIdAndDelete(id).exec();
+			res.json(true);
+		}
+	} else { 
+		res.status(404).send();
 	}
 };
 
@@ -222,7 +251,7 @@ const get_class_txn_avg = async (req, res) => {
 router.route("/get/all").get(get_all_txn);
 router.route("/get/user/:type").get(get_user_txn);
 router.route("/get/class/avg").get(get_class_txn_avg);
-//! 暫時移除取消訂單功能
-// router.route("/user").delete(delete_user_txn);
+//暫時移除取消訂單功能
+router.route("/user").delete(delete_user_txn);
 
 export default router;

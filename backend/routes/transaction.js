@@ -132,8 +132,6 @@ const delete_user_txn = async (req, res) => {
 	const { id } = req.query;
 	const { user, code } = await check_permission(req);
 	const currentDateTime = moment().format('YYYY/MM/DD HH:mm:ss');
-	const closingFalseTime = moment().set({'hours': 8, 'minute': 59});
-	const closingTrueTime = moment().set({'hours': 13, 'minute': 30});
 
 	if (!user) {
 		res.clearCookie("user_token");
@@ -158,7 +156,7 @@ const delete_user_txn = async (req, res) => {
 			}
 			else{
 				//如果在開盤且3~10之間 就不能取消訂單
-				if(!globalDoc.stock_closing && moment(currentDateTime).isBetween(closingFalseTime,closingTrueTime)){
+				if(!globalDoc.stock_closing){
 					res.json(false);
 				}
 				else{

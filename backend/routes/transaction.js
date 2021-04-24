@@ -1,4 +1,4 @@
-import { application, Router } from "express";
+import { Router } from "express";
 import Stock from "../models/stock_model";
 import UserStock from "../models/user_stock_model";
 import UserTrack from "../models/user_track_model";

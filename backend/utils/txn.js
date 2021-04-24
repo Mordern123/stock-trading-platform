@@ -7,7 +7,7 @@ import Global from "../models/global_model";
 import moment from "moment";
 import PQueue from "p-queue";
 import { txn_task } from "../common/scraper";
-import { closing_data_to_stock_info } from "../common/tools";
+import { closing_data_to_stock_info, to_num } from "../common/tools";
 import { CLOSING_HOUR, CLOSING_MINUTE } from "../common/time";
 require("dotenv").config();
 
@@ -495,7 +495,7 @@ export const updateStockValue = async (user) => {
 
 		if (stock) {
 			//計算股票總價值
-			let stock_price = parseFloat(stock.closing_price) || 0;
+			let stock_price = to_num(stock.closing_price) || 0;
 			let stock_value = stock_price * shares_number; //計算最新成交價*擁有股數
 			total_value += stock_value;
 		}

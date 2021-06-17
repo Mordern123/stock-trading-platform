@@ -39,6 +39,11 @@ const accountSchema = new Schema(
 			required: true,
 			default: 0,
 		},
+		investment_rate: {
+			type: Schema.Types.Decimal128,
+			required: true,
+			default: 0,
+		},
 		txn_count: {
 			type: Schema.Types.Long,
 			required: true,

@@ -14,6 +14,7 @@
     "reset": "babel-node ./utils/reset.js",
     "check": "babel-node ./utils/check.js",
     "init-m": "babel-node ./utils/initial_money.js",
+    "rate": "babel-node ./utils/rate.js",
     "score": "babel-node ./utils/score.js"
   },
   "author": "",
@@ -32,6 +33,7 @@
     "mongoose-long": "^0.2.1",
     "morgan": "^1.10.0",
     "node-cmd": "^3.0.0",
+    "node-mongotools": "^1.1.4",
     "node-schedule": "^1.3.2",
     "nodemon": "^2.0.4",
     "p-queue": "^6.5.0",

@@ -150,14 +150,14 @@ export default function BuyDialog(props) {
 
 		if (stock_num) {
 			if (stock_num > 0) {
-				if (stock_num <= 1000) {
+				if (stock_num <= 1000000) {
 					// if (stock_num * 1000 * stockInfo.z > account.balance) //購買總金額超過餘額
 					try {
 						const res = await apiUserStock_buy(
 							{
 								stock_id: stockInfo.stock_id,
 								stockInfo: stockInfo,
-								shares_number: stock_num * 1000, //一張1000股
+								shares_number: stock_num, //一張1000股
 								bid_price: bid_price,
 							},
 							{ order_type }
@@ -174,13 +174,13 @@ export default function BuyDialog(props) {
 						handle_error(error, history);
 					}
 				} else {
-					alert("每筆訂單交易上限1000張");
+					alert("每筆訂單交易上限1000000股");
 				}
 			} else {
-				alert("購買張數需大於0");
+				alert("購買股數需大於0");
 			}
 		} else {
-			alert("必須輸入購買張數");
+			alert("必須輸入購買股數或輸入股數必須為整數");
 		}
 
 		setLoading(false);
@@ -280,6 +280,7 @@ export default function BuyDialog(props) {
 	React.useEffect(() => {
 		const load = async () => {
 			let res = await apiGlobal();
+			console.log(res.data);
 			set_global(res.data);
 		};
 		load();
@@ -299,25 +300,25 @@ export default function BuyDialog(props) {
 		if (order_type === "market" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，即時交易(盤中處理)，金額將以下次收盤價計算"}
+					{"提醒: 現在為收盤期間，市價交易(委託單)，將於下一個開盤日進行處理"}
 				</p>
 			);
 		} else if (order_type === "limit" && global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，限價交易(盤後處理)，訂單將於下一個收盤日之後處理"}
+					{"提醒: 現在為收盤期間，限價交易(委託單)，將於下一個開盤日進行處理"}
 				</p>
 			);
 		} else if (order_type === "market" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為收盤期間，即時交易(盤中處理)，訂單於下單後40分鐘後抓取市價處理"}
+					{"提醒: 現在為開盤期間，市價交易(市價單)，訂單於下單後40分鐘後抓取市價處理"}
 				</p>
 			);
 		} else if (order_type === "limit" && !global.stock_closing) {
 			return (
 				<p className="ch_font text-danger text-center">
-					{"提醒: 現在為開盤期間，限價交易(盤後處理)，訂單將於今日收盤後進行處理"}
+					{"提醒: 現在為開盤期間，限價交易(限價單)，訂單存活期限為一天"}
 				</p>
 			);
 		} else {
@@ -525,10 +526,10 @@ export default function BuyDialog(props) {
 									<em>請選擇交易類型</em>
 								</MenuItem>
 								<MenuItem className="ch_font" value={"market"}>
-									即時交易(盤中處理)
+									市價交易(市價單)
 								</MenuItem>
 								<MenuItem className="ch_font" value={"limit"}>
-									限價交易(盤後處理)
+									限價交易(限價單)
 								</MenuItem>
 							</Select>
 						</FormControl>
@@ -573,7 +574,7 @@ export default function BuyDialog(props) {
 									<InputAdornment
 										position="end"
 										children={
-											<Typography className={classes.text}>張</Typography>
+											<Typography className={classes.text}>股</Typography>
 										}
 									/>
 								),

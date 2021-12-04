@@ -1,74 +1,76 @@
 [
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "uid",
-                "type": "bytes32"
-            },
-            {
-                "name": "add_number",
-                "type": "uint32"
-            }
-        ],
-        "name": "add_token",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": false,
-        "inputs": [
-            {
-                "name": "uid",
-                "type": "bytes32"
-            },
-            {
-                "name": "token_number",
-                "type": "uint32"
-            }
-        ],
-        "name": "set_token",
-        "outputs": [],
-        "payable": false,
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "uid",
-                "type": "bytes32"
-            }
-        ],
-        "name": "get_token",
-        "outputs": [
-            {
-                "name": "",
-                "type": "uint32"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": false,
-                "name": "uid",
-                "type": "bytes32"
-            },
-            {
-                "indexed": false,
-                "name": "n",
-                "type": "uint256"
-            }
-        ],
-        "name": "user_token_log",
-        "type": "event"
-    }
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bytes32",
+				"name": "uid",
+				"type": "bytes32"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "n",
+				"type": "uint256"
+			}
+		],
+		"name": "user_token_log",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "uid",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint32",
+				"name": "add_number",
+				"type": "uint32"
+			}
+		],
+		"name": "add_token",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "uid",
+				"type": "bytes32"
+			}
+		],
+		"name": "get_token",
+		"outputs": [
+			{
+				"internalType": "uint32",
+				"name": "",
+				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes32",
+				"name": "uid",
+				"type": "bytes32"
+			},
+			{
+				"internalType": "uint32",
+				"name": "token_number",
+				"type": "uint32"
+			}
+		],
+		"name": "set_token",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	}
 ]

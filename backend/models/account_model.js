@@ -29,8 +29,18 @@ const accountSchema = new Schema(
 			required: true,
 			default: 0,
 		},
+		initial_money: {
+			type: Schema.Types.Long,
+			required: true,
+			default: 2000000,
+		},
 		total_amount: {
 			type: Schema.Types.Long,
+			required: true,
+			default: 0,
+		},
+		investment_rate: {
+			type: Schema.Types.Decimal128,
 			required: true,
 			default: 0,
 		},

@@ -34,12 +34,13 @@ import localforage from "localforage";
 
 //提醒教學資訊
 const tips = [
-	"貼心提醒: 開盤時間，下訂單後40分鐘會處理交易",
+	"貼心提醒: 開盤時間，市價單會在下訂單後40分鐘會處理交易",
 	"貼心提醒: 搜尋股價請確定下單類型和金額再下單",
 	"貼心提醒: 若即時股價有誤可嘗試重新搜尋喔",
-	"貼心提醒: 【交易狀態】可以取消未處理訂單",
-	"貼心提醒: 收盤後訂單會在開盤每日15:00處理",
-	"貼心提醒: 股票總價值是開盤每日8:30、15:10更新",
+	// "貼心提醒: 【交易狀態】可以取消未處理訂單",
+	"貼心提醒: 限價單之有效期限為一天",
+	"貼心提醒: 收盤後下單皆為委託單，會於下次開盤後進行處理",
+	"貼心提醒: 股票總價值是開盤每日8:30、15:00更新",
 	"貼心提醒: 此平台僅提供【台灣證券交易所】可搜尋之股票",
 ];
 
@@ -183,7 +184,10 @@ export const StockBuy = function() {
 			const x = document.getElementsByClassName("autocomplete-items");
 			let need_remove = true;
 			for (var i = 0; i < x.length; i++) {
-				if (e.target === x[i] || e.target === searchRef.current.childNodes[0]) {
+				if (
+					searchRef.current &&
+					(e.target === x[i] || e.target === searchRef.current.childNodes[0])
+				) {
 					need_remove = false;
 				}
 			}
@@ -270,16 +274,16 @@ export const StockBuy = function() {
 	};
 
 	const handle_keyDown = (isSearch) => {
-		return e => {
+		return (e) => {
 			if (e.key === "Enter") {
 				e.preventDefault();
-				if(isSearch) {
+				if (isSearch) {
 					handle_search_stock();
 				} else {
-					alert("請點擊右方搜尋按鈕")
+					alert("請點擊右方搜尋按鈕");
 				}
 			}
-		}
+		};
 	};
 
 	const addTimeSnack = (msg, color) => {

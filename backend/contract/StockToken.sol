@@ -1,4 +1,4 @@
-pragma solidity >=0.4.22 <0.8.0;
+pragma solidity >=0.4.22 <0.9.0;
 
 contract StockToken {
     mapping(bytes32 => uint32) private user_tokens;

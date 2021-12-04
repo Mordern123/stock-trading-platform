@@ -15,6 +15,8 @@ import { task, txn_task } from "../common/scraper";
 import { add_user_search } from "../common/utils";
 import { handle_error } from "../common/error";
 import { closing_data_to_stock_info } from "../common/tools";
+import { MARKET_ORDER_MINUTE } from "../common/time";
+import { runMarketTxn } from "../utils/txn";
 
 moment.locale("zh-tw");
 
@@ -79,14 +81,28 @@ const get_stock_rank = async (req, res) => {
 			.lean()
 			.exec();
 		let rank_data = accountDocs.map((item) => {
+			let newrate;
+			if (item.initial_money) {
+				//如果初始金額不等於0時進入
+				let rate = (item.total_amount - item.initial_money) / item.initial_money;
+				newrate = (rate * 100).toFixed(3);
+			} else {
+				newrate = 0;
+			}
 			return {
 				student_id: item.user.student_id,
 				total_amount: item.total_amount || 0,
 				stock_number: item.stock_number,
 				txn_count: item.txn_count,
+				investment_rate: newrate,
 			};
 		});
 		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
+
+		rank_data.sort(function (a, b) {
+			//進行排序
+			return b.investment_rate - a.investment_rate;
+		});
 
 		res.json({
 			rank_data,
@@ -100,14 +116,27 @@ const get_stock_rank = async (req, res) => {
 			.lean()
 			.exec();
 		let rank_data = accountDocs.map((item) => {
+			let newrate;
+			if (item.initial_money) {
+				//如果初始金額不等於0時進入
+				let rate = (item.total_amount - item.initial_money) / item.initial_money;
+				newrate = (rate * 100).toFixed(3);
+			} else {
+				newrate = 0;
+			}
 			return {
 				student_id: item.user.student_id,
 				total_amount: item.total_amount || 0,
 				stock_number: item.stock_number,
 				txn_count: item.txn_count,
+				investment_rate: newrate,
 			};
 		});
 		const updateTime = moment().calendar(null, { lastWeek: "dddd HH:mm" }); //ex: 星期三 10:55
+		rank_data.sort(function (a, b) {
+			//進行排序
+			return b.investment_rate - a.investment_rate;
+		});
 
 		res.json({
 			rank_data,
@@ -141,7 +170,8 @@ const get_user_stock = async (req, res) => {
 const user_place_order = async (req, res) => {
 	try {
 		let { user, code } = await check_permission(req);
-		let { stock_id, stockInfo, shares_number, bid_price } = req.body; //前端傳送值
+		let { stock_id, stockInfo, bid_price } = req.body; //前端傳送值
+		const shares_number = parseInt(req.body.shares_number);
 
 		if (!user) {
 			res.clearCookie("user_token");
@@ -153,13 +183,15 @@ const user_place_order = async (req, res) => {
 		if (!["buy", "sell"].includes(req.params.type)) throw false; //檢查交易類型
 		if (!["market", "limit"].includes(req.query.order_type)) throw false; //檢查委託單類型
 		if (req.query.order_type === "limit" && !bid_price && bid_price <= 0) throw false; //檢查限價交易資料
+		if (!(shares_number && 1 <= shares_number && shares_number <= 1000000)) throw false; //檢查股票數量
 
 		// ? 變數
-		let doc = await UserClass.findOne({ user: user._id }).exec();
-		let global = await Global.findOne({ tag: "hongwei" }).lean().exec();
-		let current_time = moment().toDate(); //下單時間
-		let closing =
-			req.query.order_type === "limit" || global.shutDown_txn ? true : global.stock_closing; // ? 限價一律收盤後處理
+		const doc = await UserClass.findOne({ user: user._id }).exec();
+		const global = await Global.findOne({ tag: "hongwei" }).lean().exec();
+		const current_time = moment().toDate(); //下單時間
+		// let closing =
+		// 	req.query.order_type === "limit" || global.shutDown_txn ? true : global.stock_closing; // ? 限價一律收盤後處理
+		const closing = global.shutDown_txn ? true : global.stock_closing;
 
 		// * 新增一筆訂單
 		const _userTxnDoc = await new UserTxn({
@@ -176,17 +208,11 @@ const user_place_order = async (req, res) => {
 		}).save();
 		const userTxnDoc = _userTxnDoc.toObject();
 
-		// ! 只有開盤時間交易需要排程
-		if (!closing) {
-			let txn_time = moment().add(40, "m").toDate(); //處理交易時間
-			console.log("一筆訂單將在: " + txn_time.toLocaleString() + " 處理");
-			let j = schedule.scheduleJob(txn_time, async () => {
-				// ! 檢查訂單是否還存在
-				let txn_exist = await UserTxn.exists({ _id: userTxnDoc._id });
-				if (txn_exist) {
-					queue.add(() => txn_task(userTxnDoc));
-				}
-			}); //加入執行佇列
+		//! 只有盤中市價才須排程
+		if (!closing && req.query.order_type === "market") {
+			const txn_time = moment().add(MARKET_ORDER_MINUTE, "m").toDate(); //即時交易處理時間
+			console.log(`【市價單】將在: ${txn_time.toLocaleString()} 處理`);
+			const job = schedule.scheduleJob(txn_time, () => runMarketTxn(userTxnDoc, job));
 		}
 
 		res.json(userTxnDoc);

@@ -9,9 +9,9 @@ import SwipeableViews from "react-swipeable-views";
 import Material_Table from "components/Table/Material_Table";
 import { apiTxn_get_all, apiTxn_delete_txn } from "../api";
 import { handle_error, transfer_fail_msg } from "../tools";
-import CancelRoundedIcon from "@material-ui/icons/CancelRounded";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
+import CancelRoundedIcon from "@material-ui/icons/CancelRounded";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
@@ -31,10 +31,14 @@ const get_columns = (type) => {
 			{
 				title: "訂單類型",
 				render: (rowData) => {
-					if (rowData.order_type === "market") {
-						return "市價";
-					} else if (rowData.order_type === "limit") {
-						return "限價";
+					if (rowData.order_type === "market" && rowData.closing) {
+						return `市價(委託)`;
+					} else if (rowData.order_type === "market" && !rowData.closing) {
+						return `市價(盤中)`;
+					} else if (rowData.order_type === "limit" && rowData.closing) {
+						return "限價(委託)";
+					} else if (rowData.order_type === "limit" && !rowData.closing) {
+						return "限價(盤中)";
 					} else {
 						return "---";
 					}
@@ -46,7 +50,7 @@ const get_columns = (type) => {
 			},
 			{
 				field: "stockInfo.z",
-				title: "每股價格",
+				title: "交易價格",
 			},
 			{
 				title: "每股出價",
@@ -75,7 +79,7 @@ const get_columns = (type) => {
 				title: "交易處理時間",
 			},
 		];
-	} else {
+	} else if (type === "success") {
 		return [
 			{
 				field: "stock_id",
@@ -88,10 +92,71 @@ const get_columns = (type) => {
 			{
 				title: "訂單類型",
 				render: (rowData) => {
-					if (rowData.order_type === "market") {
-						return "市價";
-					} else if (rowData.order_type === "limit") {
-						return "限價";
+					if (rowData.order_type === "market" && rowData.closing) {
+						return `市價(委託)`;
+					} else if (rowData.order_type === "market" && !rowData.closing) {
+						return `市價(盤中)`;
+					} else if (rowData.order_type === "limit" && rowData.closing) {
+						return "限價(委託)";
+					} else if (rowData.order_type === "limit" && !rowData.closing) {
+						return "限價(盤中)";
+					} else {
+						return "---";
+					}
+				},
+			},
+			{
+				field: "type",
+				title: "交易類型",
+			},
+			{
+				field: "stockInfo.z",
+				title: "交易價格",
+			},
+			{
+				title: "每股出價",
+				render: (rowData) => {
+					if (rowData.bid_price > 0) {
+						return rowData.bid_price;
+					} else {
+						return "無";
+					}
+				},
+			},
+			{
+				field: "shares_number",
+				title: "交易股數",
+			},
+			{
+				field: "order_time",
+				title: "下單時間",
+			},
+			{
+				field: "txn_time",
+				title: "交易處理時間",
+			},
+		];
+	} else if (type === "waiting") {
+		return [
+			{
+				field: "stock_id",
+				title: "證券代號",
+			},
+			{
+				field: "stockInfo.stock_name",
+				title: "證券名稱",
+			},
+			{
+				title: "訂單類型",
+				render: (rowData) => {
+					if (rowData.order_type === "market" && rowData.closing) {
+						return `市價(委託)`;
+					} else if (rowData.order_type === "market" && !rowData.closing) {
+						return `市價(盤中)`;
+					} else if (rowData.order_type === "limit" && rowData.closing) {
+						return "限價(委託)";
+					} else if (rowData.order_type === "limit" && !rowData.closing) {
+						return "限價(盤中)";
 					} else {
 						return "---";
 					}
@@ -224,10 +289,16 @@ export const StockStatus = function() {
 
 	const handle_cancel_order = async () => {
 		try {
-			await apiTxn_delete_txn({ id: current_data._id });
-			await update();
+			const des = await apiTxn_delete_txn({ id: current_data._id });
+			await update();	
+			if(des.data == false){
+				alert("該筆訂單已超過可取消時間");
+			}
+			else{
+				alert("已成功取消該筆訂單");
+			}				
 			close_modal();
-		} catch (error) {
+		} catch (error) {			
 			handle_error(error, history);
 			close_modal();
 		}
@@ -279,6 +350,8 @@ export const StockStatus = function() {
 			setValue(0);
 		}
 	}, []);
+
+	console.log(successData);
 
 	return (
 		<GridContainer>
@@ -334,15 +407,15 @@ export const StockStatus = function() {
 								noDataDisplay="沒有任何待處理交易紀錄"
 								isLoading={loading}
 								headerStyle={{ backgroundColor: "#e1f5fe" }}
-								// actions={[
-								// 	{
-								// 		icon: () => (
-								// 			<CancelRoundedIcon style={{ color: "#e57373" }} />
-								// 		),
-								// 		tooltip: "取消訂單",
-								// 		onClick: open_modal,
-								// 	},
-								// ]}
+								actions={[
+									{
+										icon: () => (
+											<CancelRoundedIcon style={{ color: "#e57373" }} />
+										),
+										tooltip: "取消訂單",
+										onClick: open_modal,
+									},
+								]}
 								actionsColumnIndex={-1}
 							/>
 						</TabPanel>

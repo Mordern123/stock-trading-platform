@@ -21,42 +21,24 @@ export const task = async (user, stock_id, stock_name, res) => {
 
 	console.log("----------------------------------------");
 	console.log(`【${user.user_name}/${user._id}】 搜尋:`);
-	console.log(`【${website}】 取得 ${stock_id} ! 時間: ${moment().toLocaleString()}`);
+	console.log(`【${website}】 取得 ${stock_id} ! 時間: ${moment().toDate().toLocaleString()}`);
 };
 
-// * 系統處理交易搜尋爬蟲程序
-export const txn_task = async (userTxnDoc) => {
+// * 系統取得股票爬蟲程序
+export const txn_task = async (userTxnDoc, job = null) => {
+	let funcs = [txn_crawl_tw_stock, txn_crawl_pcHome_stock, txn_crawl_cnyes_stock];
+	// let funcs = [txn_crawl_cnyes_stock, txn_crawl_pcHome_stock];
+	let random_n = Math.floor(Math.random() * funcs.length); //隨機取數
+	// let random_n = 0;
+	let website = get_website_name(random_n);
 	let {
 		stockInfo: { stock_id, stock_name },
-		type,
 	} = userTxnDoc;
-	let funcs = [txn_crawl_tw_stock, txn_crawl_pcHome_stock, txn_crawl_cnyes_stock];
-	let random_n = Math.floor(Math.random() * funcs.length); //隨機取數
-	let website = get_website_name(random_n);
-
-	console.log("----------------------------------------");
-	console.log(`【${userTxnDoc.user}】 交易處理:`);
-	console.log(`【${website}】 取得 ${stock_id} ! 時間: ${moment().toLocaleString()}`);
-
-	// * 取得即時股票資訊
-	if (random_n === 1) {
-		// ! PCHOME爬蟲要特別處理
-		funcs[random_n](stock_id, stock_name, async (stockData) => {
-			if (stockData) {
-				await runTxn(type, userTxnDoc, stockData);
-			} else {
-				await txn_error(userTxnDoc);
-			}
-			console.log("----------------------------------------");
-		});
-	} else {
+	try {
 		const stockData = await funcs[random_n](stock_id, stock_name);
-		if (stockData) {
-			await runTxn(type, userTxnDoc, stockData);
-		} else {
-			await txn_error(userTxnDoc);
-		}
-		console.log("----------------------------------------");
+		return stockData;
+	} catch (error) {
+		throw error;
 	}
 };
 

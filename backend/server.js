@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import schedule from "node-schedule";
 import mongoose from "mongoose";
 import { Server } from "http";
 import logger from "morgan";
@@ -11,15 +12,17 @@ import stockRouter from "./routes/stock";
 import txnRouter from "./routes/transaction";
 import Global from "./models/global_model";
 import {
-	start_txn_schedule,
+	start_pending_txn_schedule,
 	start_get_closingStock_schedule,
 	start_closing_schedule,
 	start_opening_schedule,
 	start_stockValue_schedule1,
 	start_stockValue_schedule2,
 	remove_closing_stock_data,
+	check_waiting_txn_data,
 } from "./utils/schedule";
 import socket from "socket.io";
+import moment from "moment";
 
 require("dotenv").config();
 
@@ -34,14 +37,15 @@ connection.once("open", () => {
 	console.log("MongoDB database connection established successfully");
 	console.log("The database is " + connection.name);
 
-	//啟動排程
-	start_txn_schedule();
+	// * 啟動排程
+	start_pending_txn_schedule();
 	start_get_closingStock_schedule();
 	start_closing_schedule();
 	start_opening_schedule();
 	start_stockValue_schedule1();
 	start_stockValue_schedule2();
 	remove_closing_stock_data();
+	check_waiting_txn_data();
 });
 mongoose.connect(process.env.DB_CONN_STRING, {
 	useNewUrlParser: true,
@@ -71,7 +75,7 @@ app.use(
 app.use(cookieParser("hongwei0417")); //cookie簽章
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(logger("common"));
+app.use(logger("dev"));
 app.use("/user", userRouter);
 app.use("/class", classRouter);
 app.use("/stock", stockRouter);
@@ -81,6 +85,12 @@ app.use("/txn", txnRouter);
 app.get("/global", async (req, res) => {
 	const doc = await Global.findOne({ tag: "hongwei" }).exec();
 	res.json(doc);
+});
+
+//取得列隊等待工作
+app.get("/job", async (req, res) => {
+	const list = schedule.scheduledJobs;
+	res.json(list);
 });
 
 global.online_count = 0; //上線平台總人數

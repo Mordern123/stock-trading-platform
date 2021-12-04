@@ -132,7 +132,7 @@ const SnackMessage = React.forwardRef((props, ref) => {
 							<Typography
 								variant="body1"
 								className={classes.text}
-							>{`買入數量： ${stock_num * 1000} 股`}</Typography>
+							>{`買入數量： ${stock_num} 股`}</Typography>
 						</MenuItem>
 						<Divider />
 						<MenuItem className={classes.text}>

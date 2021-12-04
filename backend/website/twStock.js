@@ -47,7 +47,7 @@ export const crawl_tw_stock = async (user, stock_id, stock_name, res) => {
 		await add_user_search(user, obj);
 		res.json(obj);
 
-		console.log("台灣證券交易所 >>> 已回應");
+		console.log("【台灣證券交易所 >>> 已回應】");
 		console.log("----------------------------------------");
 	} catch (error) {
 		handle_error(error, res);
@@ -94,12 +94,11 @@ export const txn_crawl_tw_stock = async (stock_id, stock_name) => {
 			request_time,
 		};
 
-		console.log("台灣證券交易所 >>> 已回應");
+		console.log("【台灣證券交易所 >>> 已回應】");
 
 		return obj;
 	} catch (error) {
-		console.log(error);
-		return false;
+		throw error;
 	}
 };
 
